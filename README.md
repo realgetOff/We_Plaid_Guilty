@@ -19,3 +19,7 @@
   Authentication (Go), User Management, REST API.
 - **mforest-** — Frontend  
   User Interface (React), Drawing Canvas, UX, API Integration.
+
+<p align="center">
+  <img src="readme_img/team.png">
+</p>

@@ -26,8 +26,8 @@
 ## Run the project
 ### Install
 ```
-git clone https://github.com/realgetOff/Joe_Jack_William_Averell-WePlaidGuilty.git ft_transcendance
-cd ft_transcendance
+git clone https://github.com/realgetOff/We_Plaid_Guilty.git
+cd We_Plaid_Guilty
 ```
 ### Run
 ```

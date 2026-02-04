@@ -22,3 +22,16 @@
 <p align="center">
   <img src="readme_img/team.png">
 </p>
+
+## Run the project
+### Install
+```
+git clone https://github.com/realgetOff/We_Plaid_Guilty.git
+cd We_Plaid_Guilty
+```
+### Run
+```
+cd ft_transcendance
+npm install
+npm run dev
+```

@@ -24,7 +24,12 @@
 </p>
 
 ## Run the project
-
+### Install
+```
+git clone https://github.com/realgetOff/Joe_Jack_William_Averell-WePlaidGuilty.git ft_transcendance
+cd ft_transcendance
+```
+### Run
 ```
 cd ft_transcendance
 npm install

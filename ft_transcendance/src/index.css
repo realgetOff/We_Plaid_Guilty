@@ -1,0 +1,45 @@
+:root
+{
+  --bg-dark: #121212;
+  --bg-card: #1e1e1e;
+  --bg-navbar: #1a1a1a;
+  --text-main: #ffffff;
+  --text-dim: #b3b3b3;
+  --accent: #646cff;
+  --canvas-paper: #ffffff;
+}
+
+body
+{
+  margin: 0;
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  font-family: Inter, system-ui, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+button
+{
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  background-color: var(--bg-card);
+  color: var(--text-main);
+  cursor: pointer;
+  transition: border-color 0.25s, transform 0.1s;
+}
+
+button:hover
+{
+  border-color: var(--accent);
+}
+
+button:active
+{
+  transform: scale(0.95);
+}

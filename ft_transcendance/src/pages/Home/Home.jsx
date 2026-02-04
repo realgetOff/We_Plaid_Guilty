@@ -15,10 +15,10 @@ import React from 'react';
 const Home = () =>
 {
     return (
-        <div style={{ padding: '20px' }}>
-            <h1>Pu***Slayer</h1>
-            <p>Welcome to ft_transcendance.</p>
-        </div>
+        <div>
+            <h1>We Plaid Guilty</h1>
+			<p>Welcome to ft_transcendance.</p>
+       	</div>
     );
 };
 

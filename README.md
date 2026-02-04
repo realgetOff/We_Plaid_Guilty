@@ -5,7 +5,6 @@
 <br>
 
 *This project has been created as part of the 42 curriculum by &lt;mforest-&gt;, &lt;pmilner-&gt;, &lt;lviravon&gt; &amp; &lt;namichel&gt;*
-
 <br>
 
 ## The Crew

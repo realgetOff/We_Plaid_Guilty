@@ -1,4 +1,4 @@
-#We Plaid Guilty | Joe,Jack,William & Averell aka. ft_transcendance
+# We Plaid Guilty | Joe,Jack,William & Averell aka. ft_transcendance
 
 - **namichel** — DevOps  
   Network Architecture, Docker Config, CI/CD, WebSockets Management.

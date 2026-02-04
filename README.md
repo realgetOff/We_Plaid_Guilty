@@ -22,3 +22,11 @@
 <p align="center">
   <img src="readme_img/team.png">
 </p>
+
+## Run the project
+
+```
+cd ft_transcendance
+npm install
+npm run dev
+```

@@ -64,6 +64,15 @@ color: #fff;
   font-weight: bold;
 }
 
+.hc-main-container
+{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 20px);
+  margin-top: 20px;
+}
+
 .hc-window
 {
   width: 800px;
@@ -73,17 +82,6 @@ color: #fff;
   box-shadow: 2px 2px 0px #000000;
   display: flex;
   flex-direction: column;
-  animation: hc-open .15s ease-out;
-  color: #000000;
-}
-
-.hc-main-container
-{
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: calc(100vh - 20px);
-  padding-top: 20px;
 }
 
 @keyframes hc-open

@@ -5,21 +5,35 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: mforest- <marvin@d42.fr>                   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/02/04 04:06:53 by mforest-          #+#    #+#             */
-/*   Updated: 2026/02/04 04:06:53 by mforest-         ###   ########.fr       */
+/*   Created: 2026/02/20 03:59:25 by mforest-          #+#    #+#             */
+/*   Updated: 2026/02/20 03:59:25 by mforest-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 import React from 'react';
+import './Home.css';
 
-const Home = () =>
-{
-    return (
-        <div style={{ padding: '20px' }}>
-            <h1>Pu***Slayer</h1>
-            <p>Welcome to ft_transcendance.</p>
-        </div>
-    );
+const Home = () => {
+  return (
+    <div className="home">
+
+      <div className="home__icon" aria-hidden="true">🎨</div>
+      <h1 className="home__title">We Plaid Guilty</h1>
+      <hr className="home__divider" />
+      <p className="home__subtitle">
+        Welcome to ft_transcendence.<br />
+        A Gartic Phone experience — draw, guess, laugh.
+      </p>
+      <div className="home__info-box">
+        <strong>How to play:</strong><br />
+        ① Buy a gun.<br />
+        ② Call local Domino's Pizza.<br />
+        ③ Ask for 20 giant pizza, 42 Angouleme.<br />
+        ④ Force lviravon to work (and abuse him btw).
+      </div>
+
+    </div>
+  );
 };
 
 export default Home;

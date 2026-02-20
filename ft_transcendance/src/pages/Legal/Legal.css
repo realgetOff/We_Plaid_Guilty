@@ -1,0 +1,72 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Legal.css                                          :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mforest- <marvin@d42.fr>                   +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/02/20 03:59:17 by mforest-          #+#    #+#             */
+/*   Updated: 2026/02/20 03:59:17 by mforest-         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+.legal
+{
+  max-width: 620px;
+  font-family: 'Courier New', Courier, monospace;
+  color: #000000;
+}
+
+.legal__title
+{
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 4px;
+  color: #000000;
+}
+
+.legal__date
+{
+  font-size: 10px;
+  color: #777777;
+  font-weight: bold;
+  margin-bottom: 16px;
+}
+
+.legal__section
+{
+  margin-bottom: 14px;
+}
+
+.legal__section h3
+{
+  font-size: 12px;
+  font-weight: bold;
+  margin-bottom: 4px;
+  border-bottom: 1px solid #cccccc;
+  padding-bottom: 2px;
+  color: #000000;
+}
+
+.legal__section p
+{
+  font-size: 11px;
+  line-height: 1.8;
+  color: #222222;
+}
+
+.legal__back
+{
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: bold;
+  color: #000000;
+  text-decoration: underline;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.legal__back:hover
+{
+color: #555555;
+}

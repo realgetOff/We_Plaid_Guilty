@@ -1,0 +1,56 @@
+---
+- name: "Setup AlmaLinux"
+  hosts: alma
+  become: true
+  tasks:
+
+    - name: "Update OS"
+      dnf:
+        name: "*"
+        state: latest
+        update_cache: true
+
+    - name: "EPEL"
+      dnf:
+        name: "epel-release"
+        state: present
+
+    - name: "Get packages"
+      dnf:
+        name:
+          - "git"
+          - "htop"
+          - "curl"
+          - "wget"
+          - "tar"
+          - "pip"
+        state: present
+
+    - name: "Rename"
+      hostname:
+        name: gartic-server
+
+    - name: "Load Vault secrets"
+      include_vars:
+        file: "{{ playbook_dir }}/secrets.yml"
+      ignore_errors: true
+
+    - name: "Proccess Security_OS"
+      include_role:
+        name: security_os
+
+    - name: "Proccess Docker Install"
+      include_role:
+        name: docker_install
+
+
+    - name: "Vault"
+      include_role:
+        name: security_vault
+
+    - name: "Gathering Facts"
+      debug:
+        msg:
+          - "Name: {{ ansible_hostname }}"
+          - "OS: {{ ansible_distribution }} {{ ansible_distribution_version }}"
+          - "Total uptime: {{ (ansible_uptime_seconds / 3600) | round(2) }} heures"

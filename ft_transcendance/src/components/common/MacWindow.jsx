@@ -20,6 +20,9 @@ const ROUTE_META =
   '/':        { title: 'ft_transcendence — HyperCard Gartic Edition', card: '🎨 Home' },
   '/privacy': { title: 'ft_transcendence — Privacy Policy',           card: '🔒 Privacy Policy' },
   '/tos':     { title: 'ft_transcendence — Terms of Service',         card: '📋 Terms of Service' },
+  '/game':    { title: 'ft_transcendence — HyperCard Gartic Edition', card: '🎲 Game'  },
+  '/game/create':    { title: 'ft_transcendence — HyperCard Gartic Edition', card: '🎲 Game'  },
+  // '/game/create/{ code }':    { title: 'ft_transcendence — HyperCard Gartic Edition', card: '🎲 Game'  },
 };
 
 const MacWindow = ({ children }) =>
@@ -51,6 +54,7 @@ const MacWindow = ({ children }) =>
           ft_transcendence v1.0 · HyperCard Edition
         </span>
         <div className="hc-footer__links">
+	  	  <Link to="/"        className="hc-footer__link">Home</Link>
           <Link to="/privacy" className="hc-footer__link">Privacy Policy</Link>
           <Link to="/tos"     className="hc-footer__link">Terms of Service</Link>
         </div>

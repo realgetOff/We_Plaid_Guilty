@@ -10,8 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-.home
-{
+.home {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -21,8 +20,7 @@
   text-align: center;
 }
 
-.home__icon
-{
+.home__icon {
   width: 72px;
   height: 72px;
   border: 2px solid #000000;
@@ -34,8 +32,7 @@
   box-shadow: 3px 3px 0 #444444;
 }
 
-.home__title
-{
+.home__title {
   font-size: 22px;
   font-weight: bold;
   font-family: 'Courier New', Courier, monospace;
@@ -43,15 +40,13 @@
   color: #000000;
 }
 
-.home__divider
-{
+.home__divider {
   width: 220px;
   border: none;
   border-top: 1px solid #000000;
 }
 
-.home__subtitle
-{
+.home__subtitle {
   font-size: 12px;
   font-weight: bold;
   color: #555555;
@@ -59,8 +54,7 @@
   line-height: 1.7;
 }
 
-.home__info-box
-{
+.home__info-box {
   border: 1px solid #000000;
   padding: 10px 16px;
   font-size: 11px;
@@ -72,4 +66,28 @@
   box-shadow: inset 1px 1px 0 #999999;
   max-width: 380px;
   text-align: left;
+}
+
+.home__play-btn {
+  border: 1px solid #000000;
+  background: #000000;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: bold;
+  font-family: 'Courier New', Courier, monospace;
+  padding: 8px 32px;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 #444444;
+  outline: 3px solid #000000;
+  outline-offset: 2px;
+  letter-spacing: 0.5px;
+}
+
+.home__play-btn:hover {
+  background: #333333;
+}
+
+.home__play-btn:active {
+  box-shadow: none;
+  transform: translate(1px, 1px);
 }

@@ -10,7 +10,8 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-.creategame {
+.creategame
+{
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -19,7 +20,8 @@
   color: #000000;
 }
 
-.creategame__card {
+.creategame__card
+{
   width: 100%;
   max-width: 560px;
   border: 1px solid #000000;
@@ -27,12 +29,14 @@
   box-shadow: 2px 2px 0 #000000;
 }
 
-.creategame__card--grow {
+.creategame__card--grow
+{
   max-width: 100%;
   flex: 1;
 }
 
-.creategame__card-header {
+.creategame__card-header
+{
   background: #000000;
   color: #ffffff;
   padding: 6px 14px;
@@ -43,43 +47,50 @@
   letter-spacing: 0.3px;
 }
 
-.creategame__card-header-count {
+.creategame__card-header-count
+{
   margin-left: auto;
   font-size: 11px;
   opacity: 0.7;
 }
 
-.creategame__card-body {
+.creategame__card-body
+{
   padding: 14px 16px;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.creategame__card-body--center {
+.creategame__card-body--center
+{
   align-items: center;
   text-align: center;
 }
 
-.creategame__card-body--list {
+.creategame__card-body--list
+{
   padding: 0;
   gap: 0;
 }
 
-.creategame__hint {
+.creategame__hint
+{
   font-size: 11px;
   font-weight: bold;
   color: #555555;
 }
 
-.creategame__code-row {
+.creategame__code-row
+{
   display: flex;
   align-items: center;
   gap: 12px;
   margin-top: 4px;
 }
 
-.creategame__code {
+.creategame__code
+{
   font-size: 42px;
   font-weight: bold;
   letter-spacing: 10px;
@@ -90,14 +101,16 @@
   user-select: all;
 }
 
-.creategame__columns {
+.creategame__columns
+{
   display: flex;
   gap: 14px;
   width: 100%;
   max-width: 560px;
 }
 
-.creategame__player-row {
+.creategame__player-row
+{
   display: flex;
   align-items: center;
   gap: 8px;
@@ -107,11 +120,13 @@
   font-weight: bold;
 }
 
-.creategame__player-row:last-child {
+.creategame__player-row:last-child
+{
   border-bottom: none;
 }
 
-.creategame__player-dot {
+.creategame__player-dot
+{
   width: 7px;
   height: 7px;
   border-radius: 50%;
@@ -119,11 +134,13 @@
   flex-shrink: 0;
 }
 
-.creategame__player-name {
+.creategame__player-name
+{
   flex: 1;
 }
 
-.creategame__badge {
+.creategame__badge
+{
   font-size: 9px;
   font-weight: bold;
   background: #000000;
@@ -131,14 +148,16 @@
   padding: 1px 5px;
 }
 
-.creategame__waiting {
+.creategame__waiting
+{
   padding: 10px 14px;
   font-size: 11px;
   font-weight: bold;
   color: #888888;
 }
 
-.creategame__label {
+.creategame__label
+{
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -147,7 +166,8 @@
   color: #000000;
 }
 
-.creategame__select {
+.creategame__select
+{
   border: 1px solid #000000;
   padding: 4px 22px 4px 6px;
   font-size: 12px;
@@ -162,20 +182,23 @@
   outline: none;
 }
 
-.creategame__actions {
+.creategame__actions
+{
   display: flex;
   gap: 10px;
   width: 100%;
   max-width: 560px;
 }
 
-.creategame__start-hint {
+.creategame__start-hint
+{
   font-size: 10px;
   font-weight: bold;
   color: #aa0000;
 }
 
-.creategame__btn {
+.creategame__btn
+{
   border: 1px solid #000000;
   font-size: 12px;
   font-weight: bold;
@@ -185,39 +208,79 @@
   box-shadow: 1px 1px 0 #000000;
 }
 
-.creategame__btn:active:not(:disabled) {
+.creategame__btn:active:not(:disabled)
+{
   box-shadow: none;
   transform: translate(1px, 1px);
 }
 
-.creategame__btn--copy {
+.creategame__btn--copy
+{
   background: #ffffff;
   color: #000000;
 }
-.creategame__btn--copy:hover {
+.creategame__btn--copy:hover
+{
   background: #dddddd;
 }
 
-.creategame__btn--leave {
+.creategame__btn--leave
+{
   background: #ffffff;
   color: #000000;
 }
-.creategame__btn--leave:hover {
+.creategame__btn--leave:hover
+{
   background: #dddddd;
 }
 
-.creategame__btn--start {
+.creategame__btn--start
+{
   flex: 1;
   background: #000000;
   color: #ffffff;
   outline: 3px solid #000000;
   outline-offset: 2px;
 }
-.creategame__btn--start:hover:not(:disabled) {
+.creategame__btn--start:hover:not(:disabled)
+{
   background: #333333;
 }
-.creategame__btn--start:disabled {
+
+.creategame__btn--start:disabled
+{
   opacity: 0.35;
   cursor: not-allowed;
   box-shadow: none;
+}
+
+.creategame__guard
+{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+  font-family: 'Courier New', Courier, monospace;
+  color: #000000;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.creategame__guard-spinner
+{
+  font-size: 20px;
+  animation: creategame-blink .7s steps(1) infinite;
+}
+
+@keyframes creategame-blink
+{
+  0%, 100%
+  {
+    opacity: 1;
+  }
+  50%
+  {
+    opacity: 0;
+  }
 }

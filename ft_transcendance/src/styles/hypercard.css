@@ -36,8 +36,8 @@
 
 .hc-menubar__apple:hover
 {
-background: #000;
-color: #fff;
+  background: #000;
+  color: #fff;
 }
 
 .hc-menubar__item
@@ -52,8 +52,8 @@ color: #fff;
 }
 .hc-menubar__item:hover
 {
-background: #000;
-color: #fff;
+  background: #000;
+  color: #fff;
 }
 
 .hc-menubar__clock
@@ -214,7 +214,7 @@ color: #fff;
 }
 .hc-footer__link:hover
 {
-color: #555555;
+  color: #555555;
 }
 
 @media (max-width: 640px)

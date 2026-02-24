@@ -10,26 +10,28 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-import React       from 'react';
-import { Link,
-         useLocation } from 'react-router-dom';
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import '../../styles/hypercard.css';
 
-const ROUTE_META =
+const getRouteMeta = (pathname) =>
 {
-  '/':        { title: 'ft_transcendence — HyperCard Gartic Edition', card: '🎨 Home' },
-  '/privacy': { title: 'ft_transcendence — Privacy Policy',           card: '🔒 Privacy Policy' },
-  '/tos':     { title: 'ft_transcendence — Terms of Service',         card: '📋 Terms of Service' },
-  '/game':    { title: 'ft_transcendence — HyperCard Gartic Edition', card: '🎲 Game'  },
-  '/game/create':    { title: 'ft_transcendence — HyperCard Gartic Edition', card: '🎲 Game'  },
-  // '/game/create/{ code }':    { title: 'ft_transcendence — HyperCard Gartic Edition', card: '🎲 Game'  },
+  if (pathname === '/')              return { title: 'ft_transcendence — HyperCard Gartic Edition', card: '🎨 Home'            };
+  if (pathname === '/privacy')       return { title: 'ft_transcendence — Privacy Policy',           card: '🔒 Privacy Policy'  };
+  if (pathname === '/tos')           return { title: 'ft_transcendence — Terms of Service',         card: '📋 Terms of Service'};
+  if (pathname === '/game')          return { title: 'ft_transcendence — HyperCard Gartic Edition', card: '🎲 Game'            };
+  if (pathname === '/game/create')   return { title: 'ft_transcendence — HyperCard Gartic Edition', card: '✏ Create Game'     };
+  if (pathname.startsWith('/game/join'))   return { title: 'ft_transcendence — HyperCard Gartic Edition', card: '🔑 Join Game' };
+  if (pathname.startsWith('/game/lobby'))  return { title: 'ft_transcendence — HyperCard Gartic Edition', card: '💭 Lobby'     };
+  if (pathname.startsWith('/game/play'))   return { title: 'ft_transcendence — HyperCard Gartic Edition', card: '🎨 Draw!'     };
+  return { title: 'ft_transcendence — page not found', card: '⚠ error 404' };
 };
 
 const MacWindow = ({ children }) =>
 {
   const location = useLocation();
-  const meta = ROUTE_META[location.pathname] || ROUTE_META['/'];
-
+  const meta = getRouteMeta(location.pathname);
+	
   return (
     <div className="hc-window" role="main">
 

@@ -10,11 +10,12 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-import React         from 'react';
-import { Link }      from 'react-router-dom';
+import React from 'react';
+import { Link } from 'react-router-dom';
 import './Legal.css';
 
-const Privacy = () => {
+const Privacy = () =>
+{
   return (
     <div className="legal">
       <h2 className="legal__title">Privacy Policy</h2>

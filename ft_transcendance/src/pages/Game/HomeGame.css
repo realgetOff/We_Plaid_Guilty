@@ -10,7 +10,8 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-.homegame {
+.homegame
+{
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -21,7 +22,8 @@
   color: #000000;
 }
 
-.homegame__card {
+.homegame__card
+{
   width: 100%;
   max-width: 380px;
   border: 1px solid #000000;
@@ -29,7 +31,8 @@
   box-shadow: 2px 2px 0 #000000;
 }
 
-.homegame__card-header {
+.homegame__card-header
+{
   background: #000000;
   color: #ffffff;
   padding: 6px 14px;
@@ -38,32 +41,37 @@
   letter-spacing: 0.3px;
 }
 
-.homegame__card-body {
+.homegame__card-body
+{
   padding: 14px 16px;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.homegame__card-desc {
+.homegame__card-desc
+{
   font-size: 11px;
   font-weight: bold;
   color: #444444;
   line-height: 1.6;
 }
 
-.homegame__separator {
+.homegame__separator
+{
   font-size: 11px;
   font-weight: bold;
   color: #888888;
 }
 
-.homegame__join-row {
+.homegame__join-row
+{
   display: flex;
   gap: 8px;
 }
 
-.homegame__input {
+.homegame__input
+{
   flex: 1;
   border: 1px solid #000000;
   padding: 5px 8px;
@@ -79,27 +87,32 @@
   text-transform: uppercase;
 }
 
-.homegame__input:focus {
+.homegame__input:focus
+{
   box-shadow: inset 1px 1px 0 #000000;
 }
 
-.homegame__input--error {
+.homegame__input--error
+{
   border-color: #aa0000;
   box-shadow: inset 1px 1px 0 #aa0000;
 }
 
-.homegame__input::placeholder {
+.homegame__input::placeholder
+{
   color: #cccccc;
   letter-spacing: 8px;
 }
 
-.homegame__error {
+.homegame__error
+{
   font-size: 10px;
   font-weight: bold;
   color: #aa0000;
 }
 
-.homegame__btn {
+.homegame__btn
+{
   border: 1px solid #000000;
   font-size: 12px;
   font-weight: bold;
@@ -110,27 +123,32 @@
   white-space: nowrap;
 }
 
-.homegame__btn:active {
+.homegame__btn:active
+{
   box-shadow: none;
   transform: translate(1px, 1px);
 }
 
-.homegame__btn--primary {
+.homegame__btn--primary
+{
   background: #000000;
   color: #ffffff;
   width: 100%;
   outline: 3px solid #000000;
   outline-offset: 2px;
 }
-.homegame__btn--primary:hover {
+.homegame__btn--primary:hover
+{
   background: #333333;
 }
 
-.homegame__btn--secondary {
+.homegame__btn--secondary
+{
   background: #ffffff;
   color: #000000;
 }
-.homegame__btn--secondary:hover {
+.homegame__btn--secondary:hover
+{
   background: #dddddd;
 }
 

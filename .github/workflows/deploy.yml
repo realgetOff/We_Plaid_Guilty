@@ -3,6 +3,16 @@ name: Deploy
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action'
+        required: true
+        type: choice
+        options:
+          - deploy
+          - destroy
+          - destroy-full
 
 jobs:
   deploy:
@@ -36,4 +46,10 @@ jobs:
         run: |
           echo "$ANSIBLE_VAULT_PASSWORD" > ~/.vault_pass
           chmod 600 ~/.vault_pass
-          make deploy-ci DEPLOY_USER=$DEPLOY_USER
+          if [ "${{ github.event.inputs.action }}" = "destroy" ]; then
+            make destroy
+          elif [ "${{ github.event.inputs.action }}" = "destroy-full" ]; then
+            make destroy-full
+          else
+            make deploy-ci DEPLOY_USER=$DEPLOY_USER
+          fi

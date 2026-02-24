@@ -1,4 +1,4 @@
-.PHONY: init plan show deploy deploy-ci destroy help
+.PHONY: init plan show deploy deploy-ci destroy help destroy-full
 
 # Couleurs
 GREEN  = \033[0;32m
@@ -74,3 +74,9 @@ deploy-ci:
 	  --vault-password-file ~/.vault_pass
 	aws s3 cp ansible/secrets.yml s3://transcendance-secrets-437836833311/secrets.yml
 	@echo "$(GREEN)Déployé par $$DEPLOY_USER — terminé !$(RESET)"
+
+destroy-full:
+	@echo "$(YELLOW)Destruction COMPLÈTE (KMS + S3 inclus)...$(RESET)"
+	aws s3 rm s3://transcendance-secrets-437836833311 --recursive || true
+	cd terraform && terraform destroy -auto-approve
+	rm -f ansible/secrets.yml

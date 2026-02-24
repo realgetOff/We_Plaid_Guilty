@@ -1,8 +1,8 @@
-
+# 
 # terraform {
   # backend "local" {}
 # }
-
+# 
 terraform {
   backend "s3" {
     bucket = "transcendance-secrets-437836833311"

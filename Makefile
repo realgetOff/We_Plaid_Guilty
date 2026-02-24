@@ -61,6 +61,7 @@ deploy:
 
 deploy-ci:
 	@echo "$(YELLOW)Déployé par : $(DEPLOY_USER)$(RESET)"
+	cd terraform && terraform init
 	cd terraform && terraform apply -auto-approve
 	@echo "$(YELLOW)Récupération des secrets...$(RESET)"
 	aws s3 cp s3://$(BUCKET)/secrets.yml ansible/secrets.yml || true

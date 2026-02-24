@@ -13,3 +13,8 @@ variable "project_name" {
   type = string
   default = "AlmaLinux-Trans-42"
 }
+
+variable "admin_public_key" {
+  description = "Clé SSH admin"
+  type        = string
+}

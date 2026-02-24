@@ -17,6 +17,8 @@ import Navbar from './components/common/Navbar';
 import MacWindow from './components/common/MacWindow';
 import Home from './pages/Home/Home';
 import Privacy from './pages/Legal/Privacy';
+import HomeGame from './pages/Game/HomeGame';
+import CreateGame from './pages/Game/CreateGame';
 import Tos from './pages/Legal/Tos';
 import './styles/global.css';
 import './styles/hypercard.css';
@@ -32,6 +34,8 @@ const App = () => {
             <Route path="/" element={<Home />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/tos" element={<Tos />} />
+	  		<Route path="/game" element={< HomeGame />} />
+	  		<Route path="/game/create" element={<CreateGame />} />
           </Routes>
         </MacWindow>
       </main>

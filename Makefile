@@ -79,7 +79,8 @@ destroy-full:
 	@echo "$(YELLOW)Destruction COMPLÈTE...$(RESET)"
 	cd terraform && terraform init
 	cd terraform && terraform state pull > /tmp/tf-backup.tfstate
-	cd terraform && terraform destroy -auto-approve
+	cd terraform && terraform init -migrate-state -backend=false -force-copy || true
+	cd terraform && terraform destroy -auto-approve -state=/tmp/tf-backup.tfstate
 	aws s3 rm s3://transcendance-secrets-437836833311 --recursive || true
 	rm -f ansible/secrets.yml
 	@echo "$(GREEN)Destruction complète terminée !$(RESET)"

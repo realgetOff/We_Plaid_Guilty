@@ -37,6 +37,8 @@ destroy:
 deploy:
 	@echo "$(YELLOW)Déploiement de l'infra...$(RESET)"
 	cd terraform && terraform apply -auto-approve
+	@echo "$(YELLOW)Récupération des secrets...$(RESET)"
+	aws s3 cp s3://$(shell cd terraform && terraform output -raw secret_bucket)/secrets.yml ansible/secrets.yml
 	@echo "$(YELLOW)Lancement du playbook Ansible...$(RESET)"
 	@read -p "Ansible Vault password: " ANSIBLE_VAULT_PASSWORD && \
 	echo "$$ANSIBLE_VAULT_PASSWORD" > ~/.vault_pass && \
@@ -46,4 +48,16 @@ deploy:
 	  -e "ansible_vault_password=$$ANSIBLE_VAULT_PASSWORD" \
 	  -e "aws_account_id=$$(cd ../terraform && terraform output -raw aws_account_id)" \
 	  --vault-password-file ~/.vault_pass
+	@echo "$(YELLOW)Upload secrets mis à jour...$(RESET)"
+	aws s3 cp ansible/secrets.yml s3://$(shell cd terraform && terraform output -raw secret_bucket)/secrets.yml
 	@echo "$(GREEN)Déploiement terminé !$(RESET)"
+
+deploy-ci:
+	cd terraform && terraform apply -auto-approve
+	aws s3 cp s3://$(shell cd terraform && terraform output -raw secret_bucket)/secrets.yml ansible/secrets.yml
+	cd ansible && ansible-playbook setup_alma.yml \
+	  -e "kms_key_id=$$(cd ../terraform && terraform output -raw kms_key_id)" \
+	  -e "ansible_vault_password=$$ANSIBLE_VAULT_PASSWORD" \
+	  -e "aws_account_id=$$(cd ../terraform && terraform output -raw aws_account_id)" \
+	  --vault-password-file ~/.vault_pass
+	aws s3 cp ansible/secrets.yml s3://$(shell cd terraform && terraform output -raw secret_bucket)/secrets.yml

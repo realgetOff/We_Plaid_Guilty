@@ -88,6 +88,16 @@
   register: vault_init_result
   no_log: true
 
+- name: "Set active root token"
+  set_fact:
+    active_root_token: "{{ vault_init_result.json.root_token if (vault_init_result is defined and vault_init_result.json is defined) else vault_root_token }}"
+  no_log: true
+
+- name: "Vérification de la présence du token"
+  fail:
+    msg: "Erreur : active_root_token est vide. Vérifiez que secrets.yml est présent ou que l'initialisation a réussi."
+  when: active_root_token == "" or active_root_token is none
+
 - name: "Create vault pass file"
   copy:
     content: "{{ ansible_vault_password }}"
@@ -124,7 +134,7 @@
     url: "{{ vault_api_url }}/v1/sys/mounts/secret"
     method: GET
     headers:
-      X-Vault-Token: "{{ vault_init_result.json.root_token if not vault_init_status.json.initialized else vault_root_token }}"
+      X-Vault-Token: "{{ active_root_token }}"
     status_code: [200, 404, 400]
   delegate_to: "{{ inventory_hostname }}"
   register: kv_status
@@ -134,7 +144,7 @@
     url: "{{ vault_api_url }}/v1/sys/mounts/secret"
     method: POST
     headers:
-      X-Vault-Token: "{{ vault_init_result.json.root_token if not vault_init_status.json.initialized else vault_root_token }}"
+      X-Vault-Token: "{{ active_root_token }}"
     body_format: json
     body:
       type: "kv"
@@ -149,7 +159,7 @@
     url: "{{ vault_api_url }}/v1/sys/auth"
     method: GET
     headers:
-      X-Vault-Token: "{{ vault_root_token }}"
+      X-Vault-Token: "{{ active_root_token }}"
     status_code: [200]
   register: auth_methods
 
@@ -158,7 +168,7 @@
     url: "{{ vault_api_url }}/v1/sys/auth/aws"
     method: POST
     headers:
-      X-Vault-Token: "{{ vault_root_token }}"
+      X-Vault-Token: "{{ active_root_token }}"
     body_format: json
     body:
       type: "aws"
@@ -170,7 +180,7 @@
     url: "{{ vault_api_url }}/v1/sys/policies/acl/app-policy"
     method: POST
     headers:
-      X-Vault-Token: "{{ vault_root_token }}"
+      X-Vault-Token: "{{ active_root_token }}"
     body_format: json
     body:
       policy: |
@@ -184,7 +194,7 @@
     url: "{{ vault_api_url }}/v1/auth/aws/role/app-role"
     method: POST
     headers:
-      X-Vault-Token: "{{ vault_root_token }}"
+      X-Vault-Token: "{{ active_root_token }}"
     body_format: json
     body:
       auth_type: "iam"

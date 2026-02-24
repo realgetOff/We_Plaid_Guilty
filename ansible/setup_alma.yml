@@ -30,11 +30,6 @@
       hostname:
         name: gartic-server
 
-    - name: "Load Vault secrets"
-      include_vars:
-        file: "{{ playbook_dir }}/secrets.yml"
-      ignore_errors: true
-
     - name: "Proccess Security_OS"
       include_role:
         name: security_os
@@ -43,6 +38,10 @@
       include_role:
         name: docker_install
 
+    - name: "Load Vault secrets"
+      include_vars:
+        file: "{{ playbook_dir }}/secrets.yml"
+      when: lookup('fileglob', playbook_dir + '/secrets.yml') != []
 
     - name: "Vault"
       include_role:

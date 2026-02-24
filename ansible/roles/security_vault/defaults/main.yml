@@ -4,6 +4,7 @@ vault_port: 8200
 vault_base_dir: "/opt/vault"
 vault_container_name: "vault"
 vault_user_id: "100"
+vault_root_token: ""
 kms_key_id: ""
 aws_region: "eu-north-1"
 vault_recovery_shares: 5

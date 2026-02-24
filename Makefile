@@ -77,6 +77,7 @@ deploy-ci:
 
 destroy-full:
 	@echo "$(YELLOW)Destruction COMPLÈTE...$(RESET)"
+	cd terraform && terraform init
 	cd terraform && terraform state pull > /tmp/tf-backup.tfstate
 	cd terraform && terraform destroy -auto-approve
 	aws s3 rm s3://transcendance-secrets-437836833311 --recursive || true

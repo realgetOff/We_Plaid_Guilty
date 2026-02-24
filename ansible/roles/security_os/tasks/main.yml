@@ -1,4 +1,19 @@
 ---
+
+- name: "Create user for each team member"
+  user:
+    name: "{{ item.name }}"
+    groups: wheel
+    append: yes
+  loop: "{{ team_ssh_keys }}"
+
+- name: "Add SSH keys for each team member"
+  authorized_key:
+    user: "{{ item.name }}"
+    key: "{{ item.key }}"
+    state: present
+  loop: "{{ team_ssh_keys }}"
+
 - name: "Firewalld"
   dnf:
     name: firewalld

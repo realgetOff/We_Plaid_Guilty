@@ -23,10 +23,17 @@ jobs:
       - name: Install Ansible
         run: pip install ansible
 
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
       - name: Deploy
         env:
           ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
+          DEPLOY_USER: ${{ github.actor }}
         run: |
           echo "$ANSIBLE_VAULT_PASSWORD" > ~/.vault_pass
           chmod 600 ~/.vault_pass
-          make deploy-ci
+          make deploy-ci DEPLOY_USER=$DEPLOY_USER

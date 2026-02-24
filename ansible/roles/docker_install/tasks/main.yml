@@ -35,6 +35,13 @@
     groups: docker
     append: yes
 
+- name: "Add team to docker"
+  user:
+    name: "{{item.name}}"
+    groups: docker
+    append: yes
+  loop: "{{ team_ssh_keys }}"
+
 - name: "Reset connection"
   meta: reset_connection
 

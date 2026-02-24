@@ -14,7 +14,3 @@ output "kms_key_id" {
 output "aws_account_id" {
   value = data.aws_caller_identity.current.account_id
 }
-
-output "secret_bucket" {
-  value = aws_s3_bucket.secrets.id
-}

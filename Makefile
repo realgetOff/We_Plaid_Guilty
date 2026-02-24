@@ -1,4 +1,4 @@
-.PHONY: init plan show deploy deploy-ci destroy help destroy-full
+.PHONY: init plan show deploy deploy-ci destroy destroy-full bootstrap help
 
 # Couleurs
 GREEN  = \033[0;32m
@@ -6,17 +6,33 @@ YELLOW = \033[0;33m
 RESET  = \033[0m
 
 # Variables
-BUCKET     := $(shell cd terraform && terraform output -raw secret_bucket 2>/dev/null)
+BUCKET     := transcendance-secrets-437836833311
 DEPLOY_USER ?= manual
 
 help:
 	@echo "$(GREEN)Commandes disponibles :$(RESET)"
+	@echo "  make bootstrap  - Crée le bucket S3 permanent (une seule fois)"
 	@echo "  make init       - Initialise Terraform"
 	@echo "  make plan       - Affiche le plan Terraform"
 	@echo "  make show       - Affiche l'état Terraform"
 	@echo "  make deploy     - Lance l'infra + Ansible (interactif)"
 	@echo "  make deploy-ci  - Lance l'infra + Ansible (CI/CD)"
 	@echo "  make destroy    - Détruit l'infra (garde KMS + S3)"
+	@echo "  make destroy-full - Détruit l'infra + vide S3"
+
+bootstrap:
+	@echo "$(YELLOW)Création du bucket S3 permanent...$(RESET)"
+	aws s3 mb s3://$(BUCKET) --region eu-north-1 || true
+	aws s3api put-bucket-versioning \
+	  --bucket $(BUCKET) \
+	  --versioning-configuration Status=Enabled || true
+	aws s3api put-bucket-encryption \
+	  --bucket $(BUCKET) \
+	  --server-side-encryption-configuration '{"Rules":[{"ApplyServerSideEncryptionByDefault":{"SSEAlgorithm":"AES256"}}]}' || true
+	aws s3api put-public-access-block \
+	  --bucket $(BUCKET) \
+	  --public-access-block-configuration "BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true" || true
+	@echo "$(GREEN)Bootstrap terminé — bucket $(BUCKET) prêt !$(RESET)"
 
 init:
 	@echo "$(YELLOW)Initialisation Terraform...$(RESET)"
@@ -40,6 +56,15 @@ destroy:
 	  -compact-warnings \
 	  -auto-approve
 
+destroy-full:
+	@echo "$(YELLOW)Destruction COMPLÈTE...$(RESET)"
+	cd terraform && terraform init
+	cd terraform && terraform destroy -auto-approve
+	aws s3 rm s3://$(BUCKET) --recursive || true
+	aws s3 rb s3://$(BUCKET) || true
+	rm -f ansible/secrets.yml
+	@echo "$(GREEN)Destruction complète terminée !$(RESET)"
+
 deploy:
 	@echo "$(YELLOW)Déploiement de l'infra...$(RESET)"
 	cd terraform && terraform apply -auto-approve
@@ -61,27 +86,19 @@ deploy:
 
 deploy-ci:
 	@echo "$(YELLOW)Déployé par : $(DEPLOY_USER)$(RESET)"
+	make bootstrap
 	cd terraform && terraform init
 	cd terraform && terraform apply -auto-approve
+	@echo "$(YELLOW)Récupération des secrets...$(RESET)"
+	aws s3 cp s3://$(BUCKET)/secrets.yml ansible/secrets.yml || true
 	echo "$$ANSIBLE_VAULT_PASSWORD" > ~/.vault_pass
 	chmod 600 ~/.vault_pass
-	aws s3 cp s3://transcendance-secrets-437836833311/secrets.yml ansible/secrets.yml || true
 	cd ansible && ansible-playbook setup_alma.yml \
 	  -e "kms_key_id=$$(cd ../terraform && terraform output -raw kms_key_id)" \
 	  -e "ansible_vault_password=$$ANSIBLE_VAULT_PASSWORD" \
 	  -e "aws_account_id=$$(cd ../terraform && terraform output -raw aws_account_id)" \
 	  -e "deploy_user=$$DEPLOY_USER" \
 	  --vault-password-file ~/.vault_pass
-	aws s3 cp ansible/secrets.yml s3://transcendance-secrets-437836833311/secrets.yml
+	@echo "$(YELLOW)Upload secrets...$(RESET)"
+	aws s3 cp ansible/secrets.yml s3://$(BUCKET)/secrets.yml
 	@echo "$(GREEN)Déployé par $$DEPLOY_USER — terminé !$(RESET)"
-
-destroy-full:
-	@echo "$(YELLOW)Destruction COMPLÈTE...$(RESET)"
-	cd terraform && terraform init
-	cd terraform && terraform state pull > /tmp/tf-backup.tfstate
-	cd terraform && terraform state rm aws_s3_bucket.secrets aws_s3_bucket_versioning.secrets aws_s3_bucket_server_side_encryption_configuration.secrets aws_s3_bucket_public_access_block.secrets
-	cd terraform && terraform destroy -auto-approve
-	aws s3 rm s3://transcendance-secrets-437836833311 --recursive || true
-	aws s3 rb s3://transcendance-secrets-437836833311 || true
-	rm -f ansible/secrets.yml
-	@echo "$(GREEN)Destruction complète terminée !$(RESET)"

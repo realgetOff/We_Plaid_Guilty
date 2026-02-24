@@ -76,7 +76,9 @@ deploy-ci:
 	@echo "$(GREEN)Déployé par $$DEPLOY_USER — terminé !$(RESET)"
 
 destroy-full:
-	@echo "$(YELLOW)Destruction COMPLÈTE (KMS + S3 inclus)...$(RESET)"
-	aws s3 rm s3://transcendance-secrets-437836833311 --recursive || true
+	@echo "$(YELLOW)Destruction COMPLÈTE...$(RESET)"
+	cd terraform && terraform state pull > /tmp/tf-backup.tfstate
 	cd terraform && terraform destroy -auto-approve
+	aws s3 rm s3://transcendance-secrets-437836833311 --recursive || true
 	rm -f ansible/secrets.yml
+	@echo "$(GREEN)Destruction complète terminée !$(RESET)"

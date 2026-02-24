@@ -49,8 +49,8 @@
     - name: "Load Vault secrets"
       include_vars:
         file: "{{ playbook_dir }}/secrets.yml"
-      ignore_errors: true
-      # when: lookup('fileglob', playbook_dir + '/secrets.yml') != []
+      # ignore_errors: true
+      when: lookup('fileglob', playbook_dir + '/secrets.yml') != []
 
     - name: "Vault"
       include_role:

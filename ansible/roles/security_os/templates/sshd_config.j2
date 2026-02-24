@@ -1,0 +1,19 @@
+# {{ ansible_managed }}
+
+Port {{ ssh_port }}
+AddressFamily inet
+
+PermitRootLogin {{ permit_root_login }}
+PubkeyAuthentication yes
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+ChallengeResponseAuthentication no
+MaxAuthTries 3
+
+AllowUsers ec2-user kazibuya CI malignantsystem
+X11Forwarding no
+AllowTcpForwarding no
+PermitTTY yes
+
+PrintMotd no
+UsePAM yes

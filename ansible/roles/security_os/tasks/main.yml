@@ -1,0 +1,45 @@
+---
+
+- name: "Create user for each team member"
+  user:
+    name: "{{ item.name }}"
+    groups: wheel
+    append: yes
+  loop: "{{ team_ssh_keys }}"
+
+- name: "Add SSH keys for each team member"
+  authorized_key:
+    user: "{{ item.name }}"
+    key: "{{ item.key }}"
+    state: present
+  loop: "{{ team_ssh_keys }}"
+
+- name: "Firewalld"
+  dnf:
+    name: firewalld
+    state: present
+
+- name: "Starting firewalld"
+  service:
+    name: firewalld
+    state: started
+    enabled: yes
+
+- name: "Opening Ports..."
+  firewalld:
+    port: "{{ item }}"
+    permanent: yes
+    immediate: yes
+    state: enabled
+  loop: "{{ allowed_ports }}"
+  notify: "Reload Firewall"
+
+- name: "Conf sshd_config"
+  template:
+    src: sshd_config.j2
+    dest: /etc/ssh/sshd_config
+    owner: root
+    group: root
+    mode: '0600'
+    validate: '/usr/sbin/sshd -t -f %s'
+  notify: "Restart SSH"

@@ -1,0 +1,7 @@
+---
+- name: "Restart Vault"
+  docker_container:
+    name: "{{ vault_container_name }}"
+    image: "hashicorp/vault:{{ vault_version }}"
+    state: started
+    restart: yes

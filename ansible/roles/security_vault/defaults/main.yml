@@ -1,0 +1,15 @@
+---
+vault_version: "1.21.2"
+vault_port: 8200
+vault_base_dir: "/opt/vault"
+vault_container_name: "vault"
+vault_user_id: "100"
+vault_root_token: ""
+kms_key_id: ""
+aws_region: "eu-north-1"
+vault_recovery_shares: 5
+vault_recovery_threshold: 3
+vault_password_file: "~/.vault_pass"
+vault_secrets_file: "{{ playbook_dir }}/secrets.yml"
+aws_account_id: ""
+vault_instance_profile_arn: "arn:aws:iam::{{ aws_account_id }}:instance-profile/vault-kms-profile"

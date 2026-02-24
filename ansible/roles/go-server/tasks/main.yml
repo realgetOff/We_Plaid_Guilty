@@ -1,0 +1,10 @@
+---
+- name: "Grab server(GO)"
+  copy:
+    src: "{{playbook_dir}}/../go-server/"
+    dest: "/server-test/"
+    mode: '0755'
+
+- name: "build go server img"
+  docker_image:
+    name: 

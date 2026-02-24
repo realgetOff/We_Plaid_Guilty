@@ -1,0 +1,14 @@
+# Secrets générés
+ansible/secrets.yml
+
+# Fichiers de mot de passe (temporaires ou non)
+.vault_pass
+ansible/.vault_pass
+~/.vault_pass
+
+# Terraform (si tu ne l'as pas déjà fait)
+.terraform/
+*.tfstate
+*.tfstate.backup
+
+compile_commands.json

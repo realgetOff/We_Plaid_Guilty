@@ -1,0 +1,47 @@
+---
+- name: "Installing Docker dependencies..."
+  dnf:
+    name: dnf-utils
+    state: present
+
+- name: "Add repo docker"
+  get_url:
+    url: https://download.docker.com/linux/centos/docker-ce.repo
+    dest: /etc/yum.repos.d/docker-ce.repo
+    mode: '0644'
+
+- name: "Install DockerCE + containerd"
+  dnf:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+    state: present
+
+- name: "pip docker"
+  pip:
+    name: docker
+    state: present
+
+- name: "Start docker service"
+  systemd:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: "adduser to docker"
+  user:
+    name: "{{ ansible_user_id }}"
+    groups: docker
+    append: yes
+
+- name: "Add team to docker"
+  user:
+    name: "{{item.name}}"
+    groups: docker
+    append: yes
+  loop: "{{ team_ssh_keys }}"
+
+- name: "Reset connection"
+  meta: reset_connection
+

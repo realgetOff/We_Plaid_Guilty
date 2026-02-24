@@ -63,14 +63,14 @@ deploy-ci:
 	@echo "$(YELLOW)Déployé par : $(DEPLOY_USER)$(RESET)"
 	cd terraform && terraform init
 	cd terraform && terraform apply -auto-approve
-	@echo "$(YELLOW)Récupération des secrets...$(RESET)"
-	aws s3 cp s3://$(BUCKET)/secrets.yml ansible/secrets.yml || true
+	echo "$$ANSIBLE_VAULT_PASSWORD" > ~/.vault_pass
+	chmod 600 ~/.vault_pass
+	aws s3 cp s3://transcendance-secrets-437836833311/secrets.yml ansible/secrets.yml || true
 	cd ansible && ansible-playbook setup_alma.yml \
 	  -e "kms_key_id=$$(cd ../terraform && terraform output -raw kms_key_id)" \
 	  -e "ansible_vault_password=$$ANSIBLE_VAULT_PASSWORD" \
 	  -e "aws_account_id=$$(cd ../terraform && terraform output -raw aws_account_id)" \
 	  -e "deploy_user=$$DEPLOY_USER" \
 	  --vault-password-file ~/.vault_pass
-	@echo "$(YELLOW)Upload secrets...$(RESET)"
-	aws s3 cp ansible/secrets.yml s3://$(BUCKET)/secrets.yml
+	aws s3 cp ansible/secrets.yml s3://transcendance-secrets-437836833311/secrets.yml
 	@echo "$(GREEN)Déployé par $$DEPLOY_USER — terminé !$(RESET)"

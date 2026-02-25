@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
+	//"github.com/jackc/pgx/v5"
 	vault "github.com/hashicorp/vault/api"
 	awsauth "github.com/hashicorp/vault/api/auth/aws"
 )
@@ -26,9 +27,9 @@ func main() {
 	fmt.Println("~o~ This project was brought to you with hate by pmilner- mforest- namichel & lviravon! ~o~")
 	fmt.Println(" ~~ Starting transcendence backend... ~~")
 
-	if err := loadSecretsFromVault(); err != nil {
-		log.Fatalf("Failed to load secrets from Vault: %v", err)
-	}
+	//if err := loadSecretsFromVault(); err != nil {
+	//	log.Fatalf("Failed to load secrets from Vault: %v", err)
+	//} // i cant actually do anything if the vault isnt up...
 
 	// Gin router with default "middleware"
 	router := gin.Default();

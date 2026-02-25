@@ -2,12 +2,13 @@ package main
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
+	//"encoding/json"
 	"log"
+	"fmt"
 	"net/http"
 	"os"
 
+	"github.com/gin-gonic/gin"
 	vault "github.com/hashicorp/vault/api"
 	awsauth "github.com/hashicorp/vault/api/auth/aws"
 )
@@ -20,21 +21,58 @@ type Config struct {
 
 var config Config
 
+
 func main() {
+	fmt.Println("~o~ This project was brought to you with hate by pmilner- mforest- namichel & lviravon! ~o~")
+	fmt.Println(" ~~ Starting transcendence backend... ~~")
+
 	if err := loadSecretsFromVault(); err != nil {
 		log.Fatalf("Failed to load secrets from Vault: %v", err)
 	}
 
-	http.HandleFunc("/health", healthHandler)
-	http.HandleFunc("/api/config", configHandler)
+	// Gin router with default "middleware"
+	router := gin.Default();
+	// gin.SetMode(gin.ReleaseMode)
+	// https://github.com/gin-gonic/gin/blob/master/docs/doc.md#dont-trust-all-proxies 
+	// define a port, ie 443 / 80 so we can connect over https / http
+
+
+	router.StaticFile("/", "../frontend/dist/index.html") // for a single file
+	router.Static("/assets", "../frontend/dist/assets")
+
+
+	// GET endpoint in the router
+	router.GET("/ping", func(c *gin.Context) {
+		// JSON response
+		c.JSON(http.StatusOK, gin.H{
+			"message": "pong",
+		})
+	})
+	
+	router.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"status": "ok",
+		})
+	})
+
+	router.GET("/api/config", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"api_key_loaded" : config.APIkey != "",
+			"db_password_loaded" : config.DBPassword != "",
+			"jwt_secret_loaded" : config.JWTSecret != "",
+		})
+	})
+
+	// get the port defined in the environment variables, if theres fuckall, 8080
 
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
-
-	log.Printf("Server starting on :%s", port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
+		
+	if err := router.Run(":" + port); err != nil {
+		log.Fatalf("failed to run server: %v", err)	
+	}
 }
 
 func loadSecretsFromVault() error {
@@ -79,20 +117,4 @@ func loadSecretsFromVault() error {
 
 	log.Println("Secrets loaded from Vault successfully")
 	return nil
-}
-
-func healthHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
-		"status": "ok",
-	})
-}
-
-func configHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]bool{
-		"api_key_loaded":     config.APIKey != "",
-		"db_password_loaded": config.DBPassword != "",
-		"jwt_secret_loaded":  config.JWTSecret != "",
-	})
 }

@@ -37,8 +37,8 @@ func main() {
 	// define a port, ie 443 / 80 so we can connect over https / http
 
 
-	router.StaticFile("/", "../frontend/dist/index.html") // for a single file
-	router.Static("/assets", "../frontend/dist/assets")
+	router.StaticFile("/", "../ft_transcendance/dist/index.html") // for a single file
+	router.Static("/assets", "../ft_transcendance/dist/assets")
 
 
 	// GET endpoint in the router
@@ -57,7 +57,7 @@ func main() {
 
 	router.GET("/api/config", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
-			"api_key_loaded" : config.APIkey != "",
+			"api_key_loaded" : config.APIKey != "",
 			"db_password_loaded" : config.DBPassword != "",
 			"jwt_secret_loaded" : config.JWTSecret != "",
 		})

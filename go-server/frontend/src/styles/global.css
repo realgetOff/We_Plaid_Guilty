@@ -1,0 +1,54 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   global.css                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mforest- <marvin@d42.fr>                   +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/02/20 03:59:47 by mforest-          #+#    #+#             */
+/*   Updated: 2026/02/20 03:59:47 by mforest-         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+/* ************************************************************************** */
+
+*, *::before, *::after
+{
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root
+{
+  height: 100%;
+}
+
+body
+{
+  font-family: 'Courier New', Courier, monospace;
+  background-color: #555555;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='2' height='2'%3E%3Crect width='2' height='2' fill='%23555'/%3E%3Crect x='0' y='0' width='1' height='1' fill='%23333'/%3E%3Crect x='1' y='1' width='1' height='1' fill='%23333'/%3E%3C/svg%3E");
+  background-size: 2px 2px;
+  min-height: 100vh;
+  padding-top: 20px;
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='19'%3E%3Cpath d='M0 0L0 16 4 12 7 19 9 18 6 11 11 11Z' fill='black'/%3E%3Cpath d='M1 2L1 14 4 11 7 17 8 17 5.5 10.5 10 10.5 10 10Z' fill='white'/%3E%3C/svg%3E") 0 0, default;
+}
+
+::-webkit-scrollbar { width: 12px; }
+::-webkit-scrollbar-track {
+  background-color: #fff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='2' height='2'%3E%3Crect width='2' height='2' fill='white'/%3E%3Crect x='0' y='0' width='1' height='1' fill='black'/%3E%3C/svg%3E");
+  background-size: 2px 2px;
+  border-left: 1px solid #000;
+}
+::-webkit-scrollbar-thumb
+{
+  background: #888;
+  border: 1px solid #000;
+}
+
+@media (max-width: 640px)
+{
+  body { padding-top: 22px; }
+}

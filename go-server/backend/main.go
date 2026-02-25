@@ -26,9 +26,13 @@ func main() {
 	fmt.Println("~o~ This project was brought to you with hate by pmilner- mforest- namichel & lviravon! ~o~")
 	fmt.Println(" ~~ Starting transcendence backend... ~~")
 
+	/*
 	if err := loadSecretsFromVault(); err != nil {
 		log.Fatalf("Failed to load secrets from Vault: %v", err)
-	}
+	}*/
+	config.APIKey = "dummy_key"
+    config.DBPassword = "dummy_password"
+    config.JWTSecret = "dummy_secret"
 
 	// Gin router with default "middleware"
 	router := gin.Default();
@@ -36,11 +40,15 @@ func main() {
 	// https://github.com/gin-gonic/gin/blob/master/docs/doc.md#dont-trust-all-proxies 
 	// define a port, ie 443 / 80 so we can connect over https / http
 
+	router.StaticFile("/", "./static/index.html")
+	router.Static("/assets", "./static/assets")
+
+//CHANGEMENT POUR FAIRE TOURNER
+/*
 
 	router.StaticFile("/", "../ft_transcendance/dist/index.html") // for a single file
 	router.Static("/assets", "../ft_transcendance/dist/assets")
-
-
+*/
 	// GET endpoint in the router
 	router.GET("/ping", func(c *gin.Context) {
 		// JSON response

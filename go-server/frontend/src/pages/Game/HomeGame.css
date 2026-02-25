@@ -1,0 +1,155 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   HomeGame.css                                       :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mforest- <marvin@d42.fr>                   +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/02/23 20:11:15 by mforest-          #+#    #+#             */
+/*   Updated: 2026/02/23 20:11:15 by mforest-         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+.homegame
+{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+  gap: 16px;
+  font-family: 'Courier New', Courier, monospace;
+  color: #000000;
+}
+
+.homegame__card
+{
+  width: 100%;
+  max-width: 380px;
+  border: 1px solid #000000;
+  background: #ffffff;
+  box-shadow: 2px 2px 0 #000000;
+}
+
+.homegame__card-header
+{
+  background: #000000;
+  color: #ffffff;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: 0.3px;
+}
+
+.homegame__card-body
+{
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.homegame__card-desc
+{
+  font-size: 11px;
+  font-weight: bold;
+  color: #444444;
+  line-height: 1.6;
+}
+
+.homegame__separator
+{
+  font-size: 11px;
+  font-weight: bold;
+  color: #888888;
+}
+
+.homegame__join-row
+{
+  display: flex;
+  gap: 8px;
+}
+
+.homegame__input
+{
+  flex: 1;
+  border: 1px solid #000000;
+  padding: 5px 8px;
+  font-size: 20px;
+  font-weight: bold;
+  font-family: 'Courier New', Courier, monospace;
+  text-align: center;
+  letter-spacing: 8px;
+  background: #ffffff;
+  color: #000000;
+  box-shadow: inset 1px 1px 0 #777777;
+  outline: none;
+  text-transform: uppercase;
+}
+
+.homegame__input:focus
+{
+  box-shadow: inset 1px 1px 0 #000000;
+}
+
+.homegame__input--error
+{
+  border-color: #aa0000;
+  box-shadow: inset 1px 1px 0 #aa0000;
+}
+
+.homegame__input::placeholder
+{
+  color: #cccccc;
+  letter-spacing: 8px;
+}
+
+.homegame__error
+{
+  font-size: 10px;
+  font-weight: bold;
+  color: #aa0000;
+}
+
+.homegame__btn
+{
+  border: 1px solid #000000;
+  font-size: 12px;
+  font-weight: bold;
+  font-family: 'Courier New', Courier, monospace;
+  padding: 6px 16px;
+  cursor: pointer;
+  box-shadow: 1px 1px 0 #000000;
+  white-space: nowrap;
+}
+
+.homegame__btn:active
+{
+  box-shadow: none;
+  transform: translate(1px, 1px);
+}
+
+.homegame__btn--primary
+{
+  background: #000000;
+  color: #ffffff;
+  width: 100%;
+  outline: 3px solid #000000;
+  outline-offset: 2px;
+}
+.homegame__btn--primary:hover
+{
+  background: #333333;
+}
+
+.homegame__btn--secondary
+{
+  background: #ffffff;
+  color: #000000;
+}
+.homegame__btn--secondary:hover
+{
+  background: #dddddd;
+}
+
+@media (max-width: 480px) {

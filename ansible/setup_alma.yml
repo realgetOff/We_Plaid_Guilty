@@ -56,6 +56,10 @@
       include_role:
         name: security_vault
 
+    - name: "GO Server"
+      include_role:
+        name: go-server
+
     - name: "Gathering Facts"
       debug:
         msg:

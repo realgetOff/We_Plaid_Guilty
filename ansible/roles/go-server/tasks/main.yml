@@ -1,10 +1,53 @@
 ---
-- name: "Grab server(GO)"
-  copy:
-    src: "{{playbook_dir}}/../go-server/"
-    dest: "/server-test/"
+- name: "Build image BACKEND (AS)"
+  delegate_to: localhost
+  become: false
+  docker_image:
+    name: backend_img
+    build:
+      path: "{{ playbook_dir }}/../server-go/backend"
+      dockerfile: "{{ playbook_dir }}/../server-go/backend/Dockerfile"
+    source: build
+    force_source: yes
+
+- name: "Build image frontend (AS)"
+  delegate_to: localhost
+  become: false
+  docker_image:
+    name: frontend_img
+    build:
+      path: "{{ playbook_dir }}/../server-go/frontend"
+      dockerfile: "{{ playbook_dir }}/../server-go/frontend/Dockerfile"
+    source: build
+    force_source: yes
+
+- name: "Compress on localhost PC"
+  delegate_to: localhost
+  become: false
+  archive:
+    path: 
+      - "{{ playbook_dir }}/../go-server/to_send"
+    dest: "/tmp/deploy.tar.gz"
+    format: gz
+
+- name: "📁 Préparation du dossier sur l'EC2"
+  file:
+    path: "/server-test"
+    state: directory
     mode: '0755'
 
-- name: "build go server img"
-  docker_image:
-    name: 
+- name: "🚀 Envoi et extraction de l'archive"
+  unarchive:
+    src: "/tmp/deploy.tar.gz"
+    dest: "/server-test/"
+    remote_src: no
+
+- name: "🎮 Start Container"
+  become: yes
+  docker_container:
+    name: go-server
+    image: trans-server
+    state: started
+    restart_policy: always
+    published_ports:
+      - "8080:8080"

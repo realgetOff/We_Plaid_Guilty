@@ -6,7 +6,7 @@ variable "aws_region" {
 
 variable "instance_type" {
   type = string
-  default = "t3.medium"
+  default = "t4g.medium"
 }
 
 variable "project_name" {

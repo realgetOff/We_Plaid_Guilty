@@ -3,7 +3,11 @@ data "aws_ami" "alma_9" {
   owners      = ["679593333241"]
   filter {
     name   = "name"
-    values = ["AlmaLinux OS 9*x86_64*"]
+    values = ["AlmaLinux OS 9*aarch64*"]
+  }
+  filter {
+    name = "architecture"
+    values = ["arm64"]
   }
 }
 

@@ -1,0 +1,19 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_HOST=db
+      - DB_USER=user_test
+      - DB_PASSWORD=pass_test
+      - DB_NAME=db_test
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=user_test
+      - POSTGRES_PASSWORD=pass_test
+      - POSTGRES_DB=db_test

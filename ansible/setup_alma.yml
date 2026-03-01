@@ -1,6 +1,8 @@
 ---
 - name: "Setup AlmaLinux"
   hosts: alma
+  collections:
+    - community.docker
   become: true
   vars:
     team_ssh_keys:
@@ -32,6 +34,7 @@
           - "wget"
           - "tar"
           - "pip"
+          - "awscli"
         state: present
 
     - name: "Rename"
@@ -41,10 +44,12 @@
     - name: "Proccess Security_OS"
       include_role:
         name: security_os
+      tags: security_os
 
     - name: "Proccess Docker Install"
       include_role:
         name: docker_install
+      tags: docker_install
 
     - name: "Load Vault secrets"
       include_vars:
@@ -55,10 +60,12 @@
     - name: "Vault"
       include_role:
         name: security_vault
-# 
-    # - name: "GO Server"
-      # include_role:
-        # name: go-server
+      tags: security_vault
+
+    - name: "GO Server"
+      include_role:
+        name: go-server
+      tags: go-server
 
     - name: "Gathering Facts"
       debug:

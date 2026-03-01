@@ -4,7 +4,7 @@ output "server_ip" {
 }
 
 output "connect_command" {
-  value = "ssh ec2-user@${aws_instance.my_alma_server.public_ip}"
+  value = "ssh almalinux@${aws_instance.my_alma_server.public_ip}"
 }
 
 output "kms_key_id" {

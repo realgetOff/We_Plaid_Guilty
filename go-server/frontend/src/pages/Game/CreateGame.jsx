@@ -44,9 +44,38 @@ const CreateGame = () =>
     {
       // TODO: verifier que l'user est connecte
       // TODO: remplacer par fetch('/api/rooms', { method: 'POST' }) et recevoir le vrai code
-      await new Promise((r) => setTimeout(r, 400));
-      setRoomCode(generateCode());
-      setStatus('ready');
+      
+	  // did the todo myself
+		const lobbyData =
+		{
+			hostId: "mforest-",
+			settings: {
+				rounds: 3,
+				timer: 60
+			}
+		};
+
+		try {
+			const response = await fetch('/api/rooms', {
+				method: 'POST',
+				headers: {'Content-Type': 'application/json'},
+				body: JSON.stringify(lobbyData)
+			});
+			if (!response.ok) {
+				throw new Error(`Couldn't get the room code :: ${response.status}`);
+			}
+
+			const data = await response.json();
+			console.log("room code =", data.lobbyCode);
+			setRoomCode(data.lobbyCode);
+			setStatus('ready');
+			return ;
+		} catch (error) {
+			console.error("A back-end error occurred: ", error);
+		}
+	  //await new Promise((r) => setTimeout(r, 400));
+      //setRoomCode(generateCode());
+      //setStatus('ready');
     };
 
     init();

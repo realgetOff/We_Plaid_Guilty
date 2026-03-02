@@ -7,6 +7,9 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	// following two are for lobby generation
+	"math/rand"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	//"github.com/jackc/pgx/v5"
@@ -20,8 +23,70 @@ type Config struct {
 	JWTSecret  string `json:"jwt_secret"`
 }
 
+type LobbySettings struct {
+	Rounds int `json:"rounds"`
+	Timer int `json:"timer"`
+}
+
+type CreateLobbyRequest struct {
+	HostID string `json:"hostId"`
+	Settings LobbySettings `json:"settings"`
+}
+
+type CreateLobbyResponse struct {
+	LobbyCode string `json:"lobbyCode"`
+}
+
 var config Config
 
+func generateLobbyCode(length int) string {
+	const charset = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	seededRand := rand.New(rand.NewSource(time.Now().UnixNano()))
+	
+	ret := make([]byte, length)
+	for i := range ret {
+		ret[i] = charset[seededRand.Intn(len(charset))]
+	}
+
+	return string(ret)
+}
+
+func createLobby(c *gin.Context) {
+	// var req CreateLobbyRequest
+// 
+	// if err := c.ShouldBindJSON(&req); err != nil {
+		// c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload: " + err.Error()})
+		// return
+	// }
+
+	lobbyCode := generateLobbyCode(6)
+	
+	//fmt.Println("The generated lobby code is: " + lobbyCode) //debug command
+
+	c.JSON(http.StatusOK, CreateLobbyResponse{
+		LobbyCode: lobbyCode,
+	})
+}
+
+func pong(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+		"message": "pong",
+	})
+}
+
+func health(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+			"status": "ok",
+	})
+}
+
+func vaultstatus(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+		"api_key_loaded" : config.APIKey != "",
+		"db_password_loaded" : config.DBPassword != "",
+		"jwt_secret_loaded" : config.JWTSecret != "",
+	})
+}
 
 func main() {
 	fmt.Println("~o~ This project was brought to you with hate by pmilner- mforest- namichel & lviravon! ~o~")
@@ -51,26 +116,10 @@ func main() {
 	router.Static("/assets", "../ft_transcendance/dist/assets")
 */
 	// GET endpoint in the router
-	router.GET("/ping", func(c *gin.Context) {
-		// JSON response
-		c.JSON(http.StatusOK, gin.H{
-			"message": "pong",
-		})
-	})
-	
-	router.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"status": "ok",
-		})
-	})
-
-	router.GET("/api/config", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"api_key_loaded" : config.APIKey != "",
-			"db_password_loaded" : config.DBPassword != "",
-			"jwt_secret_loaded" : config.JWTSecret != "",
-		})
-	})
+	router.GET("/ping", pong)
+	router.GET("/health", health)
+	router.GET("/api/config", vaultstatus)
+	router.POST("/api/rooms", createLobby)
 
 	// get the port defined in the environment variables, if theres fuckall, 8080
 

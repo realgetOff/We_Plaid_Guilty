@@ -1,0 +1,128 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   JoinGame.css                                       :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mforest- <marvin@d42.fr>                   +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/02/23 23:30:28 by mforest-          #+#    #+#             */
+/*   Updated: 2026/02/23 23:30:28 by mforest-         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+.joingame
+{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+  font-family: 'Courier New', Courier, monospace;
+  color: #000000;
+}
+
+.joingame__checking
+{
+  font-size: 13px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.joingame__spinner
+{
+  font-size: 20px;
+  animation: spin-blink .7s steps(1) infinite;
+}
+
+@keyframes spin-blink
+{
+  0%, 100%
+  {
+    opacity: 1;
+  }
+  50%
+  {
+    opacity: 0;
+  }
+}
+
+.joingame__error-card
+{
+  border: 1px solid #000000;
+  background: #ffffff;
+  box-shadow: 2px 2px 0 #000000;
+  padding: 24px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  max-width: 340px;
+}
+
+.joingame__error-icon
+{
+  width: 48px;
+  height: 48px;
+  border: 2px solid #000000;
+  background: #000000;
+  color: #ffffff;
+  font-size: 24px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.joingame__error-msg
+{
+  font-size: 12px;
+  font-weight: bold;
+  color: #aa0000;
+  line-height: 1.6;
+}
+
+.joingame__error-actions
+{
+  display: flex;
+  gap: 8px;
+}
+
+.joingame__btn
+{
+  border: 1px solid #000000;
+  background: #ffffff;
+  color: #000000;
+  font-size: 11px;
+  font-weight: bold;
+  font-family: 'Courier New', Courier, monospace;
+  padding: 5px 12px;
+  cursor: pointer;
+  box-shadow: 1px 1px 0 #000000;
+}
+
+.joingame__btn:hover
+{
+  background: #dddddd;
+}
+
+.joingame__btn:active
+{
+  box-shadow: none;
+  transform: translate(1px, 1px);
+}
+
+.joingame__btn--primary
+{
+  background: #000000;
+  color: #ffffff;
+  outline: 3px solid #000000;
+  outline-offset: 2px;
+}
+
+.joingame__btn--primary:hover
+{
+  background: #333333;
+}
+

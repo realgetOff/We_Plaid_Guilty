@@ -1,0 +1,324 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   CreateGame.css                                     :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mforest- <marvin@d42.fr>                   +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/02/23 21:12:41 by mforest-          #+#    #+#             */
+/*   Updated: 2026/02/23 21:12:41 by mforest-         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+.creategame
+{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  font-family: 'Courier New', Courier, monospace;
+  color: #000000;
+}
+
+.creategame__card
+{
+  width: 100%;
+  max-width: 560px;
+  border: 1px solid #000000;
+  background: #ffffff;
+  box-shadow: 2px 2px 0 #000000;
+}
+
+.creategame__card--grow
+{
+  max-width: 100%;
+  flex: 1;
+}
+
+.creategame__card-header
+{
+  background: #000000;
+  color: #ffffff;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  letter-spacing: 0.3px;
+}
+
+.creategame__card-header-count
+{
+  margin-left: auto;
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+.creategame__card-body
+{
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.creategame__card-body--center
+{
+  align-items: center;
+  text-align: center;
+}
+
+.creategame__card-body--list
+{
+  padding: 0;
+  gap: 0;
+}
+
+.creategame__hint
+{
+  font-size: 11px;
+  font-weight: bold;
+  color: #555555;
+}
+
+.creategame__code-row
+{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.creategame__code
+{
+  font-size: 42px;
+  font-weight: bold;
+  letter-spacing: 10px;
+  background: #000000;
+  color: #ffffff;
+  padding: 8px 20px 8px 28px;
+  box-shadow: 3px 3px 0 #444444;
+  user-select: all;
+}
+
+.creategame__columns
+{
+  display: flex;
+  gap: 14px;
+  width: 100%;
+  max-width: 560px;
+}
+
+.creategame__player-row
+{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  border-bottom: 1px solid #eeeeee;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.creategame__player-row:last-child
+{
+  border-bottom: none;
+}
+
+.creategame__player-dot
+{
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #00aa00;
+  flex-shrink: 0;
+}
+
+.creategame__player-name
+{
+  flex: 1;
+}
+
+.creategame__badge
+{
+  font-size: 9px;
+  font-weight: bold;
+  background: #000000;
+  color: #ffffff;
+  padding: 1px 5px;
+}
+
+.creategame__waiting
+{
+  padding: 10px 14px;
+  font-size: 11px;
+  font-weight: bold;
+  color: #888888;
+}
+
+.creategame__label
+{
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: bold;
+  color: #000000;
+}
+
+.creategame__select
+{
+  border: 1px solid #000000;
+  padding: 4px 22px 4px 6px;
+  font-size: 12px;
+  font-weight: bold;
+  font-family: 'Courier New', Courier, monospace;
+  background: #ffffff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7'%3E%3Cpolygon points='0,0 10,0 5,7' fill='black'/%3E%3C/svg%3E") no-repeat right 6px center / 7px 5px;
+  box-shadow: 1px 1px 0 #000000;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  color: #000000;
+  outline: none;
+}
+
+.creategame__actions
+{
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  max-width: 560px;
+}
+
+.creategame__start-hint
+{
+  font-size: 10px;
+  font-weight: bold;
+  color: #aa0000;
+}
+
+.creategame__btn
+{
+  border: 1px solid #000000;
+  font-size: 12px;
+  font-weight: bold;
+  font-family: 'Courier New', Courier, monospace;
+  padding: 6px 16px;
+  cursor: pointer;
+  box-shadow: 1px 1px 0 #000000;
+}
+
+.creategame__btn:active:not(:disabled)
+{
+  box-shadow: none;
+  transform: translate(1px, 1px);
+}
+
+.creategame__btn--copy
+{
+  background: #ffffff;
+  color: #000000;
+}
+.creategame__btn--copy:hover
+{
+  background: #dddddd;
+}
+
+.creategame__btn--leave
+{
+  background: #ffffff;
+  color: #000000;
+}
+.creategame__btn--leave:hover
+{
+  background: #dddddd;
+}
+
+.creategame__btn--start
+{
+  flex: 1;
+  background: #000000;
+  color: #ffffff;
+  outline: 3px solid #000000;
+  outline-offset: 2px;
+}
+.creategame__btn--start:hover:not(:disabled)
+{
+  background: #333333;
+}
+
+.creategame__btn--start:disabled
+{
+  opacity: 0.35;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.creategame__guard
+{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+  font-family: 'Courier New', Courier, monospace;
+  color: #000000;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.creategame__guard-spinner
+{
+  font-size: 20px;
+  animation: creategame-blink .7s steps(1) infinite;
+}
+
+.creategame__guard-card
+{
+  border: 1px solid #000000;
+  background: #ffffff;
+  box-shadow: 2px 2px 0 #000000;
+  padding: 24px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.creategame__guard-msg
+{
+  font-size: 12px;
+  font-weight: bold;
+  color: #aa0000;
+}
+
+.creategame__guard-btn
+{
+  border: 1px solid #000000;
+  background: #ffffff;
+  color: #000000;
+  font-size: 11px;
+  font-weight: bold;
+  font-family: 'Courier New', Courier, monospace;
+  padding: 5px 12px;
+  cursor: pointer;
+  box-shadow: 1px 1px 0 #000000;
+}
+
+.creategame__guard-btn:hover
+{
+  background: #dddddd;
+}
+
+@keyframes creategame-blink
+{
+  0%, 100%
+  {
+    opacity: 1;
+  }
+  50%
+  {
+    opacity: 0;
+  }
+}

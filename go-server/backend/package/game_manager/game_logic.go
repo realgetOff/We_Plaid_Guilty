@@ -62,6 +62,9 @@ func (r *Room) RunGameLoop() {
 	fmt.Printf("GG everyone game end !")
 }
 
+/*
+* Force the validation if the player timeout
+*/
 func (r * Room) forceValidation() {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -171,6 +174,27 @@ func (r *Room) rotateBook() {
 	}
 
 	r.Books = nextBook
+}
+
+func (r *Room) GetPlayerTask(playerID int) (taskString string, content string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	val, ok := r.Books[playerID]
+	if !ok { return "", "" }
+
+	lenEntries := len(val.Entries)
+	if lenEntries == 0 {
+		return "TEXT", ""
+	} else if lenEntries > 0 {
+		last := val.Entries[lenEntries - 1]
+		if last.Type == "TEXT" {
+			return "IMAGE", last.Content
+		} else {
+			return "TEXT", last.Content
+		}
+	}
+	return "", ""
 }
 
 /*

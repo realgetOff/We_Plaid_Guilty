@@ -5,8 +5,39 @@ import (
 )
 
 /*
-* Create a new Room.
+* Verify if player is currently connected
 */
+func (r *Room) SetPlayerStatus(playerID int, connected bool) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	p, ok := r.Players[playerID] 
+	if !ok { return }
+
+	p.isConnected = connected
+
+	if !p.isConnected && r.Status != StateWaiting {
+		p.IsReady = true
+
+		readyCount := 0
+		for _, tmp := range r.Players {
+			if tmp.IsReady {
+				readyCount++
+			}
+		}
+
+		if readyCount == len(r.Players) {
+			select {
+				case r.FinishedChan <- true:
+				default:
+			}
+		}
+	}
+}
+
+/*
+* Create a new Room.
+ */
 func NewRoom(id string) (*Room) {
 	return &Room {
 		ID: id,
@@ -40,12 +71,23 @@ func (r *Room) resetPlayer() {
 	defer r.mu.Unlock()
 
 	for _, tmp := range r.Players {
-		if tmp.isConnected == false {
 
+		if tmp.isConnected == false {
 			newEntry := Entry{
 				AuthorID: tmp.ID,
 			}
-			// TODO si deco mettre ready a true et ajouter page vide {EMPTY_IMAGE or "..."} selon le r.Status
+
+			if r.Status == StateWriting {
+				newEntry.Type = "TEXT"
+				newEntry.Content = "..."
+			} else {
+				newEntry.Type = "IMAGE"
+				newEntry.Content = "EMPTY_IMAGE"
+			}
+
+			if !tmp.IsReady {
+				tmp.IsReady = true
+			}
 		}
 		tmp.IsReady = false
 	}
@@ -59,5 +101,3 @@ func (r *Room) updateStatus(newStatus GameStates) {
 	r.Status = newStatus
 	r.mu.Unlock()
 }
-
-

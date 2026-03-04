@@ -34,4 +34,7 @@ cd We_Plaid_Guilty
 cd ft_transcendance
 npm install
 npm run dev
+
+[skip ci] to skip the deploy proces and save us money please please please
+
 ```

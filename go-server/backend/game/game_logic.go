@@ -1,5 +1,7 @@
 package gamemanager
 
+// THIS IS IT'S OWN PACKAGE, SEPERATE FROM THE MAIN.GO / SERVER PACKAGE. DO NOT BUNDLE THEM IN THE SAME DIRECTORY.
+
 import (
 	"fmt"
 	"math/rand/v2"

@@ -10,20 +10,14 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import WritePrompt from './WritePrompt';
 import DrawBoard from './DrawBoard';
 import GuessPrompt from './GuessPrompt';
+import Gallery from './Gallery';
+import { connect, send, addListener, removeListener } from '../../socket';
 import './Game.css';
-
-// TODO: remplacer par les donnees de l'api
-const MOCK_ROOMS =
-{
-  'ABCDEF': { status: 'started'  },
-  'ZZZZZZ': { status: 'waiting'  },
-  'FINISH': { status: 'finished' },
-};
 
 const DENY_REASONS =
 {
@@ -44,78 +38,112 @@ const Game = () =>
   const [phase,   setPhase]   = useState('write');
   const [prompt,  setPrompt]  = useState('');
   const [drawing, setDrawing] = useState(null);
+  const [chains,  setChains]  = useState([]);
 
   useEffect(() =>
   {
-    const check = async () =>
+    const normalized = code?.toUpperCase();
+    if (!normalized || !/^[A-Z]{6}$/.test(normalized))
     {
-      const normalized = code?.toUpperCase();
+      setDeny(DENY_REASONS.invalid);
+      setStatus('denied');
+      return;
+    }
 
-      if (!normalized || !/^[A-Z]{6}$/.test(normalized))
+    connect();
+
+    const handler = (msg) =>
+    {
+      if (!msg || msg.room !== normalized)
+        return;
+
+      if (msg.type === 'game_state')
       {
-        setDeny(DENY_REASONS.invalid);
-        setStatus('denied');
+        if (msg.phase)
+          setPhase(msg.phase);
+        setPrompt(typeof msg.prompt === 'string' ? msg.prompt : '');
+        setDrawing(typeof msg.drawing === 'string' ? msg.drawing : null);
+        if (Array.isArray(msg.chains))
+          setChains(msg.chains);
+        setStatus('playing');
         return;
       }
 
-      // TODO: remplacer par fetch(`/api/rooms/${normalized}`)
-      await new Promise((r) => setTimeout(r, 400));
-      const room = MOCK_ROOMS[normalized];
-
-      if (!room)
+      if (msg.type === 'game_denied')
       {
-        setDeny(DENY_REASONS.not_found);
-        setStatus('denied');
-        return;
-      }
-      if (room.status === 'waiting')
-      {
-        setDeny(DENY_REASONS.waiting);
-        setStatus('denied');
-        return;
-      }
-      if (room.status === 'finished')
-      {
-        setDeny(DENY_REASONS.finished);
-        setStatus('denied');
-        return;
-      }
-      if (room.status !== 'started')
-      {
-        setDeny(DENY_REASONS.unknown);
+        setDeny(msg.reason || DENY_REASONS.unknown);
         setStatus('denied');
         return;
       }
 
-      // TODO: verifier que l'user connecte est bien dans cette room
-      setStatus('playing');
+      if (msg.type === 'game_phase')
+      {
+        if (msg.phase)
+          setPhase(msg.phase);
+        setPrompt(typeof msg.prompt === 'string' ? msg.prompt : '');
+        setDrawing(typeof msg.drawing === 'string' ? msg.drawing : null);
+      }
     };
 
-    check();
+    addListener(handler);
+
+    send({
+      type: 'join_game',
+      room: normalized,
+    });
+
+    return () =>
+    {
+      removeListener(handler);
+      send({
+        type: 'leave_game',
+        room: normalized,
+      });
+    };
   }, [code]);
 
   const handlePromptDone = (text) =>
   {
-    setPrompt(text);
-    setPhase('draw');
+    send({
+      type: 'prompt_submitted',
+      room: code?.toUpperCase(),
+      prompt: text,
+    });
+    setPrompt('');
+    setDrawing(null);
+    setPhase('waiting');
   };
 
   const handleDrawDone = (dataURL) =>
   {
-    setDrawing(dataURL);
-    setPhase('guess');
+    send({
+      type: 'drawing_submitted',
+      room: code?.toUpperCase(),
+      drawing: dataURL,
+    });
+    setPrompt('');
+    setDrawing(null);
+    setPhase('waiting');
   };
 
   const handleGuessDone = (_guess) =>
   {
-    // TODO: envoyer les resultats au backend, passer au round suivant
-    setPhase('write');
+    send({
+      type: 'guess_submitted',
+      room: code?.toUpperCase(),
+      guess: _guess,
+    });
+    setPrompt('');
+    setDrawing(null);
+    setPhase('waiting');
   };
 
   let phaseLabel = '';
-  if (phase === 'write') phaseLabel = '✏ write a prompt';
-  if (phase === 'draw')  phaseLabel = '🎨 draw it!';
-  if (phase === 'guess') phaseLabel = '🔍 what is it?';
+  if (phase === 'write')   phaseLabel = '✏ write a prompt';
+  if (phase === 'draw')    phaseLabel = '🎨 draw it!';
+  if (phase === 'guess')   phaseLabel = '🔍 what is it?';
+  if (phase === 'waiting') phaseLabel = '⧗ waiting for others…';
+  if (phase === 'gallery') phaseLabel = '📜 gallery';
 
   if (status === 'checking')
   {
@@ -158,18 +186,32 @@ const Game = () =>
   return (
     <div className="game">
       <div className="game__phase-bar">
-        <span className={`game__phase-dot${phase === 'write' ? ' game__phase-dot--on' : ''}`} />
-        <span className={`game__phase-dot${phase === 'draw'  ? ' game__phase-dot--on' : ''}`} />
-        <span className={`game__phase-dot${phase === 'guess' ? ' game__phase-dot--on' : ''}`} />
+        <span className={`game__phase-dot${phase === 'write'   ? ' game__phase-dot--on' : ''}`} />
+        <span className={`game__phase-dot${phase === 'draw'    ? ' game__phase-dot--on' : ''}`} />
+        <span className={`game__phase-dot${phase === 'guess'   ? ' game__phase-dot--on' : ''}`} />
+        <span className={`game__phase-dot${phase === 'gallery' ? ' game__phase-dot--on' : ''}`} />
         <span className="game__phase-label">{phaseLabel}</span>
         <span className="game__room-code">#{code?.toUpperCase()}</span>
       </div>
 
-      {phase === 'write' && <WritePrompt onDone={handlePromptDone} />}
-      {phase === 'draw'  && <DrawBoard   prompt={prompt} onDone={handleDrawDone} />}
-      {phase === 'guess' && <GuessPrompt drawing={drawing} onDone={handleGuessDone} />}
+      {phase === 'write'   && <WritePrompt onDone={handlePromptDone} />}
+      {phase === 'draw'    && <DrawBoard   prompt={prompt} onDone={handleDrawDone} />}
+      {phase === 'guess'   && <GuessPrompt drawing={drawing} onDone={handleGuessDone} />}
+      {phase === 'waiting' && (
+        <div className="game__waiting">
+          <span className="game__waiting-spinner">⧗</span>
+          <p>Waiting for other players to finish…</p>
+        </div>
+      )}
+      {phase === 'gallery' && (
+        <Gallery
+          chains={chains}
+          onBack={() => navigate('/game')}
+        />
+      )}
     </div>
   );
 };
 
 export default Game;
+

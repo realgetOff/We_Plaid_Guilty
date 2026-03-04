@@ -66,6 +66,12 @@
 .lobby__card--chat
 {
   flex: 1;
+  min-width: 0;
+  min-height: 0;
+  max-height: 280px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .lobby__card-header
@@ -142,8 +148,10 @@
 .lobby__chat-messages
 {
   flex: 1;
-  height: 160px;
+  min-height: 0;
+  max-height: 200px;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 8px 10px;
   display: flex;
   flex-direction: column;
@@ -210,6 +218,11 @@
   color: #000000;
   background: #ffffff;
   outline: none;
+  resize: none;
+  min-height: 36px;
+  line-height: 1.5;
+  word-wrap: break-word;
+  white-space: pre-wrap;
 }
 
 .lobby__chat-input::placeholder

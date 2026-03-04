@@ -179,3 +179,22 @@
 {
   background: #333333;
 }
+
+.game__waiting
+{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 200px;
+  font-size: 13px;
+  font-weight: bold;
+  color: #555555;
+}
+
+.game__waiting-spinner
+{
+  font-size: 28px;
+  animation: guard-blink 0.7s steps(1) infinite;
+}

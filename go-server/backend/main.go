@@ -106,8 +106,12 @@ func main() {
 	// https://github.com/gin-gonic/gin/blob/master/docs/doc.md#dont-trust-all-proxies 
 	// define a port, ie 443 / 80 so we can connect over https / http
 
-	router.StaticFile("/", "./static/index.html")
+	// router.StaticFile("/", "./static/index.html")
 	router.Static("/assets", "./static/assets")
+	router.StaticFile("/favicon.ico", "./static/favicon.ico")
+	router.NoRoute(func(c *gin.Context) {
+		c.File("./static/index.html")
+	})
 
 //CHANGEMENT POUR FAIRE TOURNER
 /*

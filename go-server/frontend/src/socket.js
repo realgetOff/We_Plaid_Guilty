@@ -10,7 +10,18 @@
 //                                                                            //
 // ************************************************************************** //
 
-const WS_URL = 'wss://<host>/ws'; //TODO: changer l'host par le bon
+const getWsUrl = () =>
+{
+  const env = import.meta.env.VITE_WS_URL;
+  if (env && typeof env === 'string' && env.trim() !== '')
+    return env;
+  if (typeof window !== 'undefined' && window.location)
+  {
+    const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${proto}//${window.location.host}/ws`;
+  }
+  return 'ws://localhost:8080/ws';
+};
 
 let socket = null;
 let listeners = [];
@@ -20,7 +31,7 @@ const connect = () =>
   if (socket && socket.readyState === WebSocket.OPEN)
     return;
 
-  socket = new WebSocket(WS_URL);
+  socket = new WebSocket(getWsUrl());
 
   socket.onopen = () =>
   {

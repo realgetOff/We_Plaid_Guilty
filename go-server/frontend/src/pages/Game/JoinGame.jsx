@@ -12,15 +12,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { roomsApi } from '../../api/rooms';
 import './JoinGame.css';
-
-// TODO: remplacer par les donnees de l'api
-const MOCK_ROOMS =
-{
-  'ABCDEF': { status: 'waiting'  },
-  'ZZZZZZ': { status: 'started'  },
-  'FINISH': { status: 'finished' },
-};
 
 const DENY_REASONS =
 {
@@ -43,7 +36,6 @@ const JoinGame = () =>
   {
     const check = async () =>
     {
-      // TODO: verifier que l'user est connecte avant de checker la room
       const normalized = code?.toUpperCase();
 
       if (!normalized || !/^[A-Z]{6}$/.test(normalized))
@@ -53,11 +45,19 @@ const JoinGame = () =>
         return;
       }
 
-      // TODO: remplacer par fetch(`/api/rooms/${normalized}`)
-      await new Promise((r) => setTimeout(r, 500));
-      const room = MOCK_ROOMS[normalized];
+      let room;
+      try
+      {
+        room = await roomsApi.getRoom(normalized);
+      }
+      catch
+      {
+        setError(DENY_REASONS.not_found);
+        setLoading(false);
+        return;
+      }
 
-      if (!room)
+      if (!room || !room.status)
       {
         setError(DENY_REASONS.not_found);
         setLoading(false);

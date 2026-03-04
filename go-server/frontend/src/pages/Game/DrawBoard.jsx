@@ -201,7 +201,7 @@ const DrawBoard = ({ prompt, onDone }) =>
       </div>
 
       <div className="drawboard__prompt-band">
-        Draw : <strong>{prompt}</strong>
+        Draw : <strong>{prompt || '…'}</strong>
       </div>
 
       <div className="drawboard__toolbar">

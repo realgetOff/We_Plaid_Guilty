@@ -1,0 +1,120 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Gallery.css                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mforest- <marvin@d42.fr>                   +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/03/01 21:58:12 by mforest-          #+#    #+#             */
+/*   Updated: 2026/03/01 21:58:12 by mforest-         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+.gallery
+{
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-family: 'Courier New', Courier, monospace;
+  color: #000000;
+  width: 100%;
+}
+
+.gallery__scroll
+{
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.gallery__chain
+{
+  border: 1px solid #000000;
+  background: #ffffff;
+  box-shadow: 2px 2px 0 #000000;
+  flex-shrink: 0;
+}
+
+.gallery__chain-header
+{
+  background: #000000;
+  color: #ffffff;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.gallery__chain-body
+{
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gallery__step
+{
+  border: 1px solid #cccccc;
+  padding: 10px 12px;
+  background: #fafafa;
+}
+
+.gallery__step-label
+{
+  font-size: 10px;
+  font-weight: bold;
+  color: #666666;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.gallery__step-content
+{
+  font-size: 13px;
+  font-weight: bold;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.gallery__step-img
+{
+  max-width: 100%;
+  height: auto;
+  border: 1px solid #000000;
+  display: block;
+}
+
+.gallery__empty
+{
+  font-size: 13px;
+  font-weight: bold;
+  color: #666666;
+}
+
+.gallery__btn
+{
+  border: 1px solid #000000;
+  background: #000000;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: bold;
+  font-family: 'Courier New', Courier, monospace;
+  padding: 8px 20px;
+  cursor: pointer;
+  box-shadow: 1px 1px 0 #000000;
+  align-self: flex-start;
+}
+
+.gallery__btn:hover
+{
+  background: #333333;
+}
+
+.gallery__btn:active
+{
+  box-shadow: none;
+  transform: translate(1px, 1px);
+}

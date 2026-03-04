@@ -10,22 +10,10 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { connect, send, addListener, removeListener } from '../../socket';
 import './CreateGame.css';
-
-const generateCode = () =>
-{
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
-  return (
-    Array.from(
-      { length: 6 },
-      () => chars[Math.floor(Math.random() * chars.length)]
-    ).join('')
-  );
-};
-
-const MOCK_PLAYERS = [{ id: 1, name: 'mforest-', host: true }];
 
 const CreateGame = () =>
 {
@@ -34,22 +22,74 @@ const CreateGame = () =>
   const [status,   setStatus]   = useState('checking');
   const [roomCode, setRoomCode] = useState('');
   const [copied,   setCopied]   = useState(false);
-  const [players,  setPlayers]  = useState(MOCK_PLAYERS);
+  const [players,  setPlayers]  = useState([]);
   const [rounds,   setRounds]   = useState(3);
   const [timer,    setTimer]    = useState(60);
+  const [createErr, setCreateErr] = useState('');
+  const roomCodeRef = useRef('');
 
   useEffect(() =>
   {
-    const init = async () =>
+    roomCodeRef.current = roomCode;
+  }, [roomCode]);
+
+  useEffect(() =>
+  {
+    connect();
+
+    const handler = (msg) =>
     {
-      // TODO: verifier que l'user est connecte
-      // TODO: remplacer par fetch('/api/rooms', { method: 'POST' }) et recevoir le vrai code
-      await new Promise((r) => setTimeout(r, 400));
-      setRoomCode(generateCode());
-      setStatus('ready');
+      if (msg.type === 'room_created')
+      {
+        if (msg.code)
+        {
+          setRoomCode(msg.code);
+          roomCodeRef.current = msg.code;
+        }
+        if (Array.isArray(msg.players))
+          setPlayers(msg.players);
+        setCreateErr('');
+        setStatus('ready');
+      }
+
+      if (msg.type === 'create_denied')
+      {
+        setCreateErr(msg.reason || 'Could not create room.');
+        setStatus('ready');
+      }
+
+      if (msg.type === 'player_joined' && msg.player)
+      {
+        setPlayers((prev) =>
+        {
+          const exists = prev.some((p) => p.id === msg.player.id);
+          if (exists)
+            return prev;
+          return [...prev, msg.player];
+        });
+      }
+
+      if (msg.type === 'player_left' && msg.playerId !== undefined)
+      {
+        setPlayers((prev) => prev.filter((p) => p.id !== msg.playerId));
+      }
     };
 
-    init();
+    addListener(handler);
+
+    send({
+      type: 'create_room',
+      rounds,
+      timer,
+    });
+
+    return () =>
+    {
+      removeListener(handler);
+      const code = roomCodeRef.current;
+      if (code)
+        send({ type: 'leave_lobby', room: code });
+    };
   }, []);
 
   const handleCopy = () =>
@@ -61,16 +101,16 @@ const CreateGame = () =>
 
   const handleStart = () =>
   {
-    if (players.length < 2)
+    if (players.length < 2 || !roomCode)
       return;
-    // TODO: websocket send 'start_game'
+    send({ type: 'start_game', room: roomCode });
     navigate(`/game/play/${roomCode}`);
   };
 
   const handleLeave = () =>
   {
-    // TODO: websocket send 'leave_room'
-    // TODO: supprimer la room cote api si le host quitte
+    if (roomCode)
+      send({ type: 'leave_lobby', room: roomCode });
     navigate('/game');
   };
 
@@ -88,6 +128,23 @@ const CreateGame = () =>
       <div className="creategame__guard">
         <span className="creategame__guard-spinner">⧗</span>
         creating your room…
+      </div>
+    );
+  }
+
+  if (createErr && !roomCode)
+  {
+    return (
+      <div className="creategame__guard">
+        <div className="creategame__guard-card">
+          <p className="creategame__guard-msg">⚠ {createErr}</p>
+          <button
+            className="creategame__guard-btn"
+            onClick={() => navigate('/game')}
+          >
+            ← back to game
+          </button>
+        </div>
       </div>
     );
   }

@@ -12,15 +12,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { connect, send, addListener, removeListener } from '../../socket';
+import { roomsApi } from '../../api/rooms';
 import './Lobby.css';
-
-// TODO: remplacer par les donnees de l'api
-const MOCK_ROOMS =
-{
-  'ABCDEF': { status: 'waiting',  players: [{ id: 1, name: 'mforest-', host: true }, { id: 2, name: 'lviravon', host: false }] },
-  'ZZZZZZ': { status: 'started',  players: [] },
-  'FINISH': { status: 'finished', players: [] },
-};
 
 const DENY_REASONS =
 {
@@ -31,10 +25,6 @@ const DENY_REASONS =
   unknown:   'cannot access this room.',
 };
 
-const MOCK_MESSAGES = [
-  { id: 1, user: 'lviravon', text: 'ready when you are' },
-];
-
 const Lobby = () =>
 {
   const { code } = useParams();
@@ -44,10 +34,11 @@ const Lobby = () =>
   const [status,    setStatus]    = useState('checking');
   const [deny,      setDeny]      = useState('');
   const [players,   setPlayers]   = useState([]);
-  const [messages,  setMessages]  = useState(MOCK_MESSAGES);
+  const [messages,  setMessages]  = useState([]);
   const [input,     setInput]     = useState('');
   const [countdown, setCountdown] = useState(null);
-  const isHost = true; // TODO: comparer avec l'user connecte
+  const [isHost,    setIsHost]    = useState(false);
+  const [myName,    setMyName]    = useState('');
 
   useEffect(() =>
   {
@@ -62,11 +53,19 @@ const Lobby = () =>
         return;
       }
 
-      // TODO: remplacer par fetch(`/api/rooms/${normalized}`)
-      await new Promise((r) => setTimeout(r, 400));
-      const room = MOCK_ROOMS[normalized];
+      let room;
+      try
+      {
+        room = await roomsApi.getRoom(normalized);
+      }
+      catch
+      {
+        setDeny(DENY_REASONS.not_found);
+        setStatus('denied');
+        return;
+      }
 
-      if (!room)
+      if (!room || !room.status)
       {
         setDeny(DENY_REASONS.not_found);
         setStatus('denied');
@@ -91,13 +90,108 @@ const Lobby = () =>
         return;
       }
 
-      // TODO: verifier que l'user connecte est bien dans cette room
-      setPlayers(room.players);
+      if (Array.isArray(room.players))
+        setPlayers(room.players);
       setStatus('ready');
     };
 
     check();
   }, [code]);
+
+  // websocket: rejoindre le lobby et ecouter les mises a jour
+  useEffect(() =>
+  {
+    const normalized = code?.toUpperCase();
+    if (!normalized || !/^[A-Z]{6}$/.test(normalized))
+      return;
+
+    connect();
+
+    const playerName = 'guest-' + Math.floor(Math.random() * 10000);
+
+    const handler = (msg) =>
+    {
+      if (!msg || msg.room !== normalized)
+        return;
+
+      if (msg.type === 'lobby_state')
+      {
+        if (Array.isArray(msg.players))
+          setPlayers(msg.players);
+        if (Array.isArray(msg.messages))
+          setMessages(msg.messages);
+        if (msg.me)
+        {
+          if (typeof msg.me.host === 'boolean')
+            setIsHost(msg.me.host);
+          if (msg.me.name)
+            setMyName(msg.me.name);
+        }
+      }
+
+      if (msg.type === 'player_joined')
+      {
+        if (msg.player)
+        {
+          setPlayers((prev) =>
+          {
+            const exists = prev.some((p) => p.id === msg.player.id);
+            if (exists)
+              return prev;
+            return [...prev, msg.player];
+          });
+        }
+      }
+
+      if (msg.type === 'player_left' && msg.playerId !== undefined)
+      {
+        setPlayers((prev) => prev.filter((p) => p.id !== msg.playerId));
+      }
+
+      if (msg.type === 'chat_message')
+      {
+        if (msg.text && msg.user)
+        {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: msg.id ?? Date.now(),
+              user: msg.user,
+              text: msg.text,
+            },
+          ]);
+        }
+      }
+
+      if (msg.type === 'start_game')
+      {
+        navigate(`/game/play/${normalized}`);
+      }
+
+      if (msg.type === 'lobby_denied')
+      {
+        setDeny(msg.reason || DENY_REASONS.unknown);
+        setStatus('denied');
+      }
+    };
+
+    addListener(handler);
+
+    send({
+      type: 'join_lobby',
+      room: normalized,
+      name: playerName,
+    });
+
+    return () =>
+    {
+      removeListener(handler);
+      send({
+        type: 'leave_lobby',
+        room: normalized,
+      });
+    };
+  }, [code, navigate]);
 
   useEffect(() =>
   {
@@ -117,28 +211,36 @@ const Lobby = () =>
     return () => clearTimeout(id);
   }, [countdown, code, navigate]);
 
-  // FIXME: mettre une barre scroll pour eviter que la fenetre augmente en taille lors d'envoie de msg
   const handleSend = () =>
   {
     const text = input.trim();
     if (!text)
       return;
-    setMessages((m) => [...m, { id: Date.now(), user: 'mforest-', text }]);
     setInput('');
-    // TODO: websocket send 'chat_message'
+    send({
+      type: 'chat_message',
+      room: code?.toUpperCase(),
+      text,
+    });
   };
 
   const handleStart = () =>
   {
     if (players.length < 2)
       return;
-    // TODO: websocket send 'start_game'
+    send({
+      type: 'start_game',
+      room: code?.toUpperCase(),
+    });
     setCountdown(5);
   };
 
   const handleLeave = () =>
   {
-    // TODO: websocket send 'leave_room'
+    send({
+      type: 'leave_lobby',
+      room: code?.toUpperCase(),
+    });
     navigate('/game');
   };
 
@@ -225,7 +327,7 @@ const Lobby = () =>
             {messages.map((m) =>
             {
               let cls = 'lobby__msg';
-              if (m.user === 'mforest-')
+              if (myName && m.user === myName)
                 cls += ' lobby__msg--me';
               return (
                 <div key={m.id} className={cls}>
@@ -236,14 +338,22 @@ const Lobby = () =>
             <div ref={msgEndRef} />
           </div>
           <div className="lobby__chat-input-row">
-            <input
+            <textarea
               className="lobby__chat-input"
-              type="text"
               value={input}
-              onChange={(e) => setInput(e.target.value.slice(0, 120))}
-              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+              onChange={(e) => setInput(e.target.value.slice(0, 80))}
+              onKeyDown={(e) =>
+              {
+                if (e.key === 'Enter' && !e.shiftKey)
+                {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
               placeholder="say something…"
-              maxLength={120}
+              maxLength={80}
+              rows={2}
+              wrap="soft"
             />
             <button className="lobby__chat-send" onClick={handleSend}>→</button>
           </div>

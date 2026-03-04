@@ -12,14 +12,8 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { roomsApi } from '../../api/rooms';
 import './HomeGame.css';
-
-// TODO: changer par appel backend
-const MOCK_ROOMS =
-{
-  'ABCDEF': { status: 'waiting' },   // room valide, pas encore demarrer
-  'ZZZZZZ': { status: 'started' },   // room deja en cours
-};
 
 const VALID_CODE_RE = /^[A-Z]{6}$/;
 
@@ -49,20 +43,26 @@ const HomeGame = () =>
     setIsChecking(true);
     setJoinError('');
 
-    // TODO: faire l'appel reel a l'api
-    // const res  = await fetch(`/api/rooms/${code}`);
-    // const data = await res.json();
-    const room = MOCK_ROOMS[code];
+    let room;
+    try
+    {
+      room = await roomsApi.getRoom(code);
+    }
+    catch
+    {
+      setIsChecking(false);
+      setJoinError('Room not found. Check the code and try again.');
+      return;
+    }
 
     setIsChecking(false);
 
-    if (!room)
+    if (!room || !room.status)
     {
       setJoinError('Room not found. Check the code and try again.');
       return;
     }
 
-	// NOTE: a voir si mode spectator ou pas??
     if (room.status === 'started')
     {
       setJoinError('This game has already started. You cannot join.');

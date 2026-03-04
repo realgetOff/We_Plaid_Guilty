@@ -56,9 +56,52 @@
   color: #fff;
 }
 
+.hc-menubar__auth
+{
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  margin-right: 8px;
+}
+
+.hc-menubar__user
+{
+  font-size: 11px;
+  font-weight: bold;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 6px;
+}
+
+.hc-menubar__auth-link,
+.hc-menubar__auth-btn
+{
+  font-size: 11px;
+  font-weight: bold;
+  font-family: 'Courier New', Courier, monospace;
+  padding: 0 8px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  text-decoration: none;
+}
+
+.hc-menubar__auth-link:hover,
+.hc-menubar__auth-btn:hover
+{
+  background: #000;
+  color: #fff;
+}
+
 .hc-menubar__clock
 {
-  margin-left: auto;
   padding: 0 10px;
   font-size: 11px;
   font-weight: bold;

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Tos.jsx                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mforest- <marvin@d42.fr>                   +#+  +:+       +#+        */
+/*   By: pmilner- <pmilner-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/04 03:00:23 by mforest-          #+#    #+#             */
-/*   Updated: 2026/03/04 03:00:23 by mforest-         ###   ########.fr       */
+/*   Updated: 2026/03/04 22:12:23 by pmilner-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import './Legal.css';
 
-const Tos = () =>
+const Home = () =>
 {
 	return (
 		<div className="legal">
@@ -50,4 +50,4 @@ const Tos = () =>
 	);
 };
 
-export default Tos;
+export default Home;

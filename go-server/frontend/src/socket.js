@@ -23,12 +23,13 @@ const getWsUrl = () =>
   return 'ws://localhost:8080/ws';
 };
 
-let socket = null;
+let socket    = null;
 let listeners = [];
+let pending   = [];
 
 const connect = () =>
 {
-  if (socket && socket.readyState === WebSocket.OPEN)
+  if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING))
     return;
 
   socket = new WebSocket(getWsUrl());
@@ -36,6 +37,21 @@ const connect = () =>
   socket.onopen = () =>
   {
     console.log('ws connecte');
+    if (pending.length > 0)
+    {
+      pending.forEach((data) =>
+      {
+        try
+        {
+          socket.send(data);
+        }
+        catch
+        {
+          // ignore send errors here
+        }
+      });
+      pending = [];
+    }
   };
 
   socket.onmessage = (event) =>
@@ -66,9 +82,14 @@ const disconnect = () =>
 
 const send = (payload) =>
 {
-  if (!socket || socket.readyState !== WebSocket.OPEN)
+  const data = JSON.stringify(payload);
+
+  if (socket && socket.readyState === WebSocket.OPEN)
+  {
+    socket.send(data);
     return;
-  socket.send(JSON.stringify(payload));
+  }
+  pending.push(data);
 };
 
 const addListener = (fn) =>

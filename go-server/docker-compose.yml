@@ -1,7 +1,35 @@
+version: '3.8'
+
 services:
-  go-server:
+  # L'application (Front compilé + Back Go)
+  app:
     build:
       context: .
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=admin
+      - DB_PASSWORD=123
+      - DB_NAME=transcendence
+    depends_on:
+      - db
+    restart: always
+
+  # La base de données
+  db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=123
+      - POSTGRES_DB=transcendence
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+
+volumes:
+  postgres_data:

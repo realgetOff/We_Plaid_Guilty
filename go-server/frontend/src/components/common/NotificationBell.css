@@ -1,0 +1,184 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   NotificationBell.css                               :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mforest- <marvin@d42.fr>                   +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/03/04 04:35:41 by mforest-          #+#    #+#             */
+/*   Updated: 2026/03/04 04:35:41 by mforest-         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+.bell
+{
+  position: relative;
+}
+
+.bell__btn
+{
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 0 6px;
+  position: relative;
+  height: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.bell__btn--active
+{
+  animation: bell-shake .4s ease infinite alternate;
+}
+
+@keyframes bell-shake
+{
+  0%   { transform: rotate(-8deg); }
+  100% { transform: rotate(8deg);  }
+}
+
+.bell__count
+{
+  position: absolute;
+  top: -2px;
+  right: 0;
+  background: #aa0000;
+  color: #ffffff;
+  font-size: 8px;
+  font-weight: bold;
+  font-family: 'Courier New', Courier, monospace;
+  width: 13px;
+  height: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ffffff;
+}
+
+.bell__backdrop
+{
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+}
+
+.bell__dropdown
+{
+  position: absolute;
+  top: 24px;
+  right: 0;
+  width: 260px;
+  border: 1px solid #000000;
+  background: #ffffff;
+  box-shadow: 2px 2px 0 #000000;
+  z-index: 100;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.bell__dropdown-header
+{
+  background: #000000;
+  color: #ffffff;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+}
+
+.bell__clear
+{
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  color: #aaaaaa;
+  font-size: 10px;
+  font-family: 'Courier New', Courier, monospace;
+  cursor: pointer;
+}
+
+.bell__clear:hover
+{
+  color: #ffffff;
+}
+
+.bell__empty
+{
+  padding: 12px 10px;
+  font-size: 11px;
+  font-weight: bold;
+  color: #888888;
+  text-align: center;
+}
+
+.bell__notif
+{
+  padding: 10px 10px;
+  border-bottom: 1px solid #eeeeee;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bell__notif:last-child
+{
+  border-bottom: none;
+}
+
+.bell__notif-msg
+{
+  font-size: 11px;
+  font-weight: bold;
+  color: #000000;
+  line-height: 1.5;
+}
+
+.bell__notif-actions
+{
+  display: flex;
+  gap: 6px;
+}
+
+.bell__notif-btn
+{
+  border: 1px solid #000000;
+  font-size: 10px;
+  font-weight: bold;
+  font-family: 'Courier New', Courier, monospace;
+  padding: 3px 10px;
+  cursor: pointer;
+  box-shadow: 1px 1px 0 #000000;
+}
+
+.bell__notif-btn:active
+{
+  box-shadow: none;
+  transform: translate(1px, 1px);
+}
+
+.bell__notif-btn--accept
+{
+  background: #000000;
+  color: #ffffff;
+  flex: 1;
+}
+
+.bell__notif-btn--accept:hover
+{
+  background: #333333;
+}
+
+.bell__notif-btn--refuse
+{
+  background: #ffffff;
+  color: #aa0000;
+  border-color: #aa0000;
+  box-shadow: 1px 1px 0 #aa0000;
+}
+
+.bell__notif-btn--refuse:hover
+{
+  background: #fff0f0;
+}

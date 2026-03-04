@@ -1,0 +1,404 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Profile.css                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mforest- <marvin@d42.fr>                   +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/03/04 04:27:03 by mforest-          #+#    #+#             */
+/*   Updated: 2026/03/04 04:27:03 by mforest-         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+.profile
+{
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font-family: 'Courier New', Courier, monospace;
+  color: #000000;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.profile__guard
+{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+  font-family: 'Courier New', Courier, monospace;
+  color: #000000;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.profile__spinner
+{
+  font-size: 20px;
+  animation: profile-blink .7s steps(1) infinite;
+}
+
+@keyframes profile-blink
+{
+  0%, 100%
+  {
+    opacity: 1;
+  }
+  50%
+  {
+    opacity: 0;
+  }
+}
+
+.profile__guard-card
+{
+  border: 1px solid #000000;
+  background: #ffffff;
+  box-shadow: 2px 2px 0 #000000;
+  padding: 24px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  max-width: 340px;
+}
+
+.profile__guard-icon
+{
+  width: 48px;
+  height: 48px;
+  border: 2px solid #000000;
+  background: #000000;
+  color: #ffffff;
+  font-size: 24px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile__guard-msg
+{
+  font-size: 12px;
+  font-weight: bold;
+  color: #aa0000;
+  line-height: 1.6;
+}
+
+.profile__header
+{
+  border: 1px solid #000000;
+  background: #ffffff;
+  box-shadow: 2px 2px 0 #000000;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.profile__avatar
+{
+  width: 60px;
+  height: 60px;
+  border: 2px solid #000000;
+  background: #000000;
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 2px 2px 0 #444444;
+  position: relative;
+  overflow: hidden;
+}
+
+.profile__avatar--editable
+{
+  cursor: pointer;
+}
+
+.profile__avatar--editable:hover .profile__avatar-overlay
+{
+  opacity: 1;
+}
+
+.profile__avatar-img
+{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile__avatar-overlay
+{
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  opacity: 0;
+  transition: opacity .2s;
+}
+
+.profile__file-input
+{
+  display: none;
+}
+
+.profile__info
+{
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.profile__username
+{
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.profile__email
+{
+  font-size: 10px;
+  font-weight: bold;
+  color: #777777;
+}
+
+.profile__status
+{
+  font-size: 10px;
+  font-weight: bold;
+  color: #888888;
+}
+
+.profile__status--online
+{
+  color: #008800;
+}
+
+.profile__friends-btn
+{
+  border: 1px solid #000000;
+  background: #ffffff;
+  color: #000000;
+  font-size: 11px;
+  font-weight: bold;
+  font-family: 'Courier New', Courier, monospace;
+  padding: 5px 12px;
+  cursor: pointer;
+  box-shadow: 1px 1px 0 #000000;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.profile__friends-btn:hover
+{
+  background: #dddddd;
+}
+
+.profile__card
+{
+  border: 1px solid #000000;
+  background: #ffffff;
+  box-shadow: 2px 2px 0 #000000;
+}
+
+.profile__card-header
+{
+  background: #000000;
+  color: #ffffff;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.profile__edit-body
+{
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.profile__label
+{
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: bold;
+  color: #000000;
+}
+
+.profile__edit-input
+{
+  border: 1px solid #000000;
+  padding: 5px 8px;
+  font-size: 13px;
+  font-weight: bold;
+  font-family: 'Courier New', Courier, monospace;
+  color: #000000;
+  background: #ffffff;
+  box-shadow: inset 1px 1px 0 #777777;
+  outline: none;
+}
+
+.profile__edit-input:focus
+{
+  box-shadow: inset 1px 1px 0 #000000;
+}
+
+.profile__edit-input--error
+{
+  border-color: #aa0000;
+}
+
+.profile__field-error
+{
+  font-size: 10px;
+  color: #aa0000;
+}
+
+.profile__colors
+{
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.profile__color-swatch
+{
+  width: 22px;
+  height: 22px;
+  border: 1px solid #000000;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.profile__color-swatch--active
+{
+  outline: 3px solid #000000;
+  outline-offset: 2px;
+}
+
+.profile__fonts
+{
+  display: flex;
+  gap: 6px;
+}
+
+.profile__font-btn
+{
+  border: 1px solid #000000;
+  background: #ffffff;
+  color: #000000;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 12px;
+  padding: 4px 12px;
+  cursor: pointer;
+  box-shadow: 1px 1px 0 #000000;
+}
+
+.profile__font-btn:hover
+{
+  background: #dddddd;
+}
+
+.profile__font-btn--active
+{
+  background: #000000;
+  color: #ffffff;
+  box-shadow: none;
+}
+
+.profile__edit-footer
+{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-top: 1px solid #eeeeee;
+  padding-top: 12px;
+}
+
+.profile__preview-label
+{
+  font-size: 10px;
+  font-weight: bold;
+  color: #777777;
+}
+
+.profile__preview
+{
+  flex: 1;
+  font-size: 14px;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.profile__save-btn
+{
+  border: 1px solid #000000;
+  background: #000000;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: bold;
+  font-family: 'Courier New', Courier, monospace;
+  padding: 5px 14px;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 #444444;
+  outline: 3px solid #000000;
+  outline-offset: 2px;
+  white-space: nowrap;
+}
+
+.profile__save-btn:hover
+{
+  background: #333333;
+}
+
+.profile__save-btn:active
+{
+  box-shadow: none;
+  transform: translate(1px, 1px);
+}
+
+.profile__btn
+{
+  border: 1px solid #000000;
+  background: #ffffff;
+  color: #000000;
+  font-size: 11px;
+  font-weight: bold;
+  font-family: 'Courier New', Courier, monospace;
+  padding: 5px 12px;
+  cursor: pointer;
+  box-shadow: 1px 1px 0 #000000;
+  align-self: flex-start;
+}
+
+.profile__btn:hover
+{
+  background: #dddddd;
+}
+
+.profile__btn:active
+{
+  box-shadow: none;
+  transform: translate(1px, 1px);
+}
+
+.profile__btn--back
+{
+  outline: 3px solid #000000;
+  outline-offset: 2px;
+}

@@ -5,124 +5,41 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: mforest- <marvin@d42.fr>                   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-<<<<<<< HEAD:go-server/frontend/src/pages/Legal/Privacy.jsx
-<<<<<<<< HEAD:go-server/frontend/src/pages/Legal/Privacy.jsx
-=======
->>>>>>> dev:ft_transcendance/src/pages/Legal/Privacy.jsx
-/*   Created: 2026/02/20 04:01:08 by mforest-          #+#    #+#             */
-/*   Updated: 2026/02/20 04:01:08 by mforest-         ###   ########.fr       */
+/*   Created: 2026/03/04 02:59:53 by mforest-          #+#    #+#             */
+/*   Updated: 2026/03/04 02:59:53 by mforest-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 import React from 'react';
 import { Link } from 'react-router-dom';
 import './Legal.css';
-<<<<<<< HEAD:go-server/frontend/src/pages/Legal/Privacy.jsx
-========
-/*   Created: 2026/02/20 04:00:33 by mforest-          #+#    #+#             */
-/*   Updated: 2026/02/20 04:00:33 by mforest-         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import '../../styles/hypercard.css';
-
-const Clock = () =>
-{
-  const [time, setTime] = useState('');
-
-  useEffect(() =>
-	{
-    const tick = () =>
-		{
-      const d  = new Date();
-      const h  = d.getHours() % 12 || 12;
-      const m  = String(d.getMinutes()).padStart(2, '0');
-      const ap = d.getHours() >= 12 ? 'PM' : 'AM';
-      setTime(`${h}:${m} ${ap}`);
-    	};
-    tick();
-    const id = setInterval(tick, 10000);
-    return () => clearInterval(id);
-  }, []);
-
-  return <span className="hc-menubar__clock">{time}</span>;
-};
->>>>>>>> dev:ft_transcendance/src/components/common/Navbar.jsx
 
 const Privacy = () =>
 {
-<<<<<<<< HEAD:go-server/frontend/src/pages/Legal/Privacy.jsx
-=======
+	return (
+		<div className="legal">
+			<h2 className="legal__title">Privacy Policy</h2>
+			<p className="legal__date">Last updated: February 2026</p>
 
-const Privacy = () =>
-{
->>>>>>> dev:ft_transcendance/src/pages/Legal/Privacy.jsx
-  return (
-    <div className="legal">
-      <h2 className="legal__title">Privacy Policy</h2>
-      <p  className="legal__date">Last updated: February 2026</p>
+			<section className="legal__section">
+				<h3>1. Data Protection</h3>
+				<p>
+					We are committed to protecting your personal data and 
+					respecting your privacy according to school standards.
+				</p>
+			</section>
 
-      <section className="legal__section">
-        <h3>1. lazy asshole get back to work</h3>
-        <p>todo</p>
-      </section>
+			<section className="legal__section">
+				<h3>2. Usage</h3>
+				<p>
+					Your data is only used for the purpose of the 
+					ft_transcendence project and is not shared with third parties.
+				</p>
+			</section>
 
-      <Link to="/" className="legal__back">← Back to Home</Link>
-    </div>
-<<<<<<< HEAD:go-server/frontend/src/pages/Legal/Privacy.jsx
-========
-  const navigate = useNavigate();
-  const { user, loading, logout } = useAuth();
-
-  const handleLogout = async () =>
-  {
-    await logout();
-    navigate('/');
-  };
-
-  return (
-    <nav className="hc-menubar" role="menubar" aria-label="System menu">
-
-      <div className="hc-menubar__apple" role="menuitem" aria-label="Apple menu">
-        &#63743;
-      </div>
-
-      <div className="hc-menubar__item" role="menuitem">File</div>
-      <div className="hc-menubar__item" role="menuitem">Edit</div>
-      <div className="hc-menubar__item" role="menuitem">Go</div>
-      <div className="hc-menubar__item" role="menuitem">Objects</div>
-      <div className="hc-menubar__item" role="menuitem">Help</div>
-
-      {!loading && (
-        <div className="hc-menubar__auth">
-          {user ? (
-            <>
-              <span className="hc-menubar__user" title={user.login || user.username}>
-                {user.login || user.username}
-              </span>
-              <button
-                type="button"
-                className="hc-menubar__auth-btn"
-                onClick={handleLogout}
-              >
-                Log out
-              </button>
-            </>
-          ) : (
-            <Link to="/login" className="hc-menubar__auth-link">Login</Link>
-          )}
-        </div>
-      )}
-
-      <Clock />
-    </nav>
->>>>>>>> dev:ft_transcendance/src/components/common/Navbar.jsx
-=======
->>>>>>> dev:ft_transcendance/src/pages/Legal/Privacy.jsx
-  );
+			<Link to="/" className="legal__back">← Back to Home</Link>
+		</div>
+	);
 };
 
 export default Privacy;

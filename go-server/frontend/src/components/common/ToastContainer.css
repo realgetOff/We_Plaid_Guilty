@@ -1,0 +1,148 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ToastContainer.css                                 :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mforest- <marvin@d42.fr>                   +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/03/04 04:30:31 by mforest-          #+#    #+#             */
+/*   Updated: 2026/03/04 04:30:31 by mforest-         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+.toast-container
+{
+  position: fixed;
+  top: 32px;
+  right: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 200;
+  pointer-events: none;
+}
+
+.toast
+{
+  width: 260px;
+  border: 1px solid #000000;
+  background: #ffffff;
+  box-shadow: 3px 3px 0 #000000;
+  font-family: 'Courier New', Courier, monospace;
+  pointer-events: all;
+  animation: toast-in .15s ease;
+  overflow: hidden;
+}
+
+@keyframes toast-in
+{
+  from
+  {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to
+  {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.toast__header
+{
+  background: #000000;
+  color: #ffffff;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+}
+
+.toast__close
+{
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  color: #aaaaaa;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.toast__close:hover
+{
+  color: #ffffff;
+}
+
+.toast__msg
+{
+  padding: 10px 10px 6px;
+  font-size: 11px;
+  font-weight: bold;
+  color: #000000;
+  line-height: 1.5;
+}
+
+.toast__actions
+{
+  display: flex;
+  gap: 6px;
+  padding: 0 10px 10px;
+}
+
+.toast__btn
+{
+  border: 1px solid #000000;
+  font-size: 10px;
+  font-weight: bold;
+  font-family: 'Courier New', Courier, monospace;
+  padding: 3px 10px;
+  cursor: pointer;
+  box-shadow: 1px 1px 0 #000000;
+}
+
+.toast__btn:active
+{
+  box-shadow: none;
+  transform: translate(1px, 1px);
+}
+
+.toast__btn--accept
+{
+  background: #000000;
+  color: #ffffff;
+  flex: 1;
+}
+
+.toast__btn--accept:hover
+{
+  background: #333333;
+}
+
+.toast__btn--refuse
+{
+  background: #ffffff;
+  color: #aa0000;
+  border-color: #aa0000;
+  box-shadow: 1px 1px 0 #aa0000;
+}
+
+.toast__btn--refuse:hover
+{
+  background: #fff0f0;
+}
+
+.toast__bar
+{
+  height: 3px;
+  background: #000000;
+  animation: toast-bar 15s linear forwards;
+  transform-origin: left;
+}
+
+@keyframes toast-bar
+{
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}

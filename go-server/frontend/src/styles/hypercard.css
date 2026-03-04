@@ -266,3 +266,8 @@
   .hc-card-content { padding: 16px 12px; min-height: 240px; }
   .hc-titlebar::before { left: 50px; right: 50px; }
 }
+
+.hc-menubar__spacer
+{
+  flex: 1;
+}

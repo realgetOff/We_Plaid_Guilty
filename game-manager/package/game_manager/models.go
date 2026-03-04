@@ -36,9 +36,11 @@ type Book struct {
 */
 type Player struct {
 	ID int
-	Name string
 	Score int
+	Name string
+	LastDraft string
 	IsReady bool
+	isConnected bool
 }
 
 /*

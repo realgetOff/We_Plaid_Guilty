@@ -34,7 +34,10 @@ func (r *Room) RunGameLoop() {
 	}
 
 	for round := 1; round <= TotalRound; round++ {
-		r.resetPlayer()
+
+		if round != 1 {
+			r.resetPlayer()
+		}
 
 		r.mu.Lock()
 		r.FinishedChan = make(chan bool, len(r.Players))
@@ -53,20 +56,75 @@ func (r *Room) RunGameLoop() {
 			fmt.Printf("Round %d : Drawing starting...\n", round)
 			r.waitForPhase(90 * time.Second)
 		}
+		r.forceValidation()
 	}
 	r.updateStatus(StateFinished)
 	fmt.Printf("GG everyone game end !")
 }
 
-/*
-* Fill in the notebook with the player’s ID and the text that is either an IMAGE or a SENTENCE
-*/
-func (r *Room) SubmiteAction(playerID int, text string) {
-	
+func (r * Room) forceValidation() {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	ptrBook := r.Books[playerID]
+	content := ""
+	tType := ""
+	for _, tmp := range r.Players {
+		if tmp.IsReady == false {
+		
+			if r.Status == StateWriting {
+				tType = "TEXT"
+				content = "..."
+			} else {
+				tType = "IMAGE"
+				content = "EMPTY_IMAGE"
+			}
+
+			if tmp.LastDraft != "" {
+				content = tmp.LastDraft
+			}
+			
+			newEntry := Entry{
+				AuthorID: tmp.ID,
+				Content: content,
+				Type: tType,
+			}
+
+			
+			ptrBook, ok := r.Books[tmp.ID]
+			if !ok {
+				continue
+			}
+
+			ptrBook.Entries = append(ptrBook.Entries, newEntry)
+
+			tmp.IsReady = true
+		}
+	}
+}
+
+/*
+* Fill in the notebook with the player’s ID and the text that is either an IMAGE or a SENTENCE
+*/
+func (r *Room) SubmiteAction(playerID int, text string, isFinal bool) {
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	player, ok := r.Players[playerID]
+	if !ok {
+		return
+	}
+
+	player.LastDraft = text
+
+	if !isFinal {
+		return
+	}
+
+	ptrBook, ok := r.Books[playerID]
+	if !ok {
+		return
+	}
 
 	newEntry := Entry{
 		AuthorID: playerID,
@@ -89,7 +147,10 @@ func (r *Room) SubmiteAction(playerID int, text string) {
 		}
 	}
 	if readyCount == len(r.Players) {
-		r.FinishedChan <- true
+		select {
+		case r.FinishedChan <- true:
+		default:
+		}
 	}
 }
 

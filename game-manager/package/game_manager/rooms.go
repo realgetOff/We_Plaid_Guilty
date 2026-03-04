@@ -40,6 +40,13 @@ func (r *Room) resetPlayer() {
 	defer r.mu.Unlock()
 
 	for _, tmp := range r.Players {
+		if tmp.isConnected == false {
+
+			newEntry := Entry{
+				AuthorID: tmp.ID,
+			}
+			// TODO si deco mettre ready a true et ajouter page vide {EMPTY_IMAGE or "..."} selon le r.Status
+		}
 		tmp.IsReady = false
 	}
 }

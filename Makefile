@@ -8,7 +8,7 @@ CYAN   := \033[0;36m
 RESET  := \033[0m
 
 # ─── Variables ───────────────────────────────────────────────────────────────
-BUCKET      := transcendance-secrets-437836833311
+BUCKET      := transcendance-secrets-43783683331
 REGION      := eu-north-1
 TF_DIR      := terraform
 ANSIBLE_DIR := ansible

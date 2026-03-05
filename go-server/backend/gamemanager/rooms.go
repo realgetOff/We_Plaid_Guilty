@@ -38,32 +38,54 @@ func (r *Room) SetPlayerStatus(playerID int, connected bool) {
 /*
 * Create a new Room.
  */
-func NewRoom(id string) (*Room) {
+func NewRoom(id string, timer int, totalRound int) (*Room) {
 	return &Room {
 		ID: id,
 		Status: StateWaiting,
+		Phase: "waiting",
+		Timer: timer,
+		TotalRound: totalRound,
+		CurrentRound: 0,
+		MessageChan: make(chan Notification, 100),
 		Players: make(map[int]*Player),
+		Books: make(map[int]*Book),
+		PlayerOrder: []int{},
+		FinishedChan: make(chan bool),
 	}
 }
 
 /*
 * Add player in the room.
 */
-func (r *Room) AddPlayer(p *Player) (error){
+func (r *Room) AddPlayer(id int, name string) (error){
 	r.mu.Lock()
 	defer r.mu.Unlock()
+
 	if r.Status != StateWaiting {
 		return fmt.Errorf("Game started, too late!\n")
 	}
-	_, ok := r.Players[p.ID]
+	_, ok := r.Players[id]
 	if ok == true {
-		return fmt.Errorf("Player %s is already in the game!\n", p.Name)
+		return fmt.Errorf("Player %s is already in the game!\n", name)
 	}
-	r.Players[p.ID] = p
+
+	isFirst := len(r.Players) == 0
+
+	newPlayer := &Player{
+		ID: id,
+		Name: name,
+		IsHost: isFirst,
+		isConnected: true,
+		IsReady: false,
+	}
+
+	r.Players[id] = newPlayer
+	r.PlayerOrder = append(r.PlayerOrder, id)
+
 	return nil
 }
 
-/*
+	/*
 * Reset the status player (Ready (to)-> NotReady)
 */
 func (r *Room) resetPlayer() {
@@ -72,12 +94,13 @@ func (r *Room) resetPlayer() {
 
 	for _, tmp := range r.Players {
 
+		tmp.IsReady = false
 		if tmp.isConnected == false {
 			newEntry := Entry{
 				AuthorID: tmp.ID,
 			}
 
-			if r.Status == StateWriting {
+			if r.Phase == string(StateWriting) || r.Phase == string(StateGuess) {
 				newEntry.Type = "TEXT"
 				newEntry.Content = "..."
 			} else {
@@ -85,11 +108,14 @@ func (r *Room) resetPlayer() {
 				newEntry.Content = "EMPTY_IMAGE"
 			}
 
+			if ptrBook, ok := r.Books[tmp.ID]; ok {
+				ptrBook.Entries = append(ptrBook.Entries, newEntry)
+			}
+
 			if !tmp.IsReady {
 				tmp.IsReady = true
 			}
 		}
-		tmp.IsReady = false
 	}
 }
 

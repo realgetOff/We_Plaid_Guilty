@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"transcendance/gamemanager"
 
 	"github.com/gin-gonic/gin"
 	vault "github.com/hashicorp/vault/api"
@@ -23,6 +24,7 @@ var config Config
 
 
 func main() {
+
 	fmt.Println("~o~ This project was brought to you with hate by pmilner- mforest- namichel & lviravon! ~o~")
 	fmt.Println(" ~~ Starting transcendence backend... ~~")
 

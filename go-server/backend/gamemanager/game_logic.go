@@ -40,25 +40,50 @@ func (r *Room) RunGameLoop() {
 		}
 
 		r.mu.Lock()
-		r.FinishedChan = make(chan bool, len(r.Players))
+		r.CurrentRound = round
+		r.FinishedChan = make(chan bool, 1)
 		r.mu.Unlock()
+
+
+		if round == 1 {
+			r.Phase = string(StateWriting)
+		} else if (round % 2) != 0{
+			r.Phase = string(StateGuess)
+		} else {
+			r.Phase = string(StateDrawing)
+		}
 
 		if round > 1 {
 			r.rotateBook()
 		}
 
-		if (round % 2) != 0 {
-			r.updateStatus(StateWriting)
-			fmt.Printf("Round %d : Writing starting...\n", round)
-			r.waitForPhase(45 * time.Second)
-		} else {
-			r.updateStatus(StateDrawing)
-			fmt.Printf("Round %d : Drawing starting...\n", round)
-			r.waitForPhase(90 * time.Second)
+		for _, p := range r.Players {
+			task := r.GetPlayerTask(p.ID)
+			r.MessageChan <- Notification{
+				PlayerID: p.ID,
+				Data: task,
+			}
 		}
+
+		if r.Phase == string(StateDrawing) {
+			r.waitForPhase(90 * time.Second)
+			fmt.Printf("Round %d : Drawing starting...\n", round)
+		} else {
+			fmt.Printf("Round %d : Writting starting...\n", round)
+			r.waitForPhase(60 * time.Second)
+		}
+
 		r.forceValidation()
 	}
+
+	r.mu.Lock()
+	r.Phase = "gallery"
+	r.mu.Unlock()
+
 	r.updateStatus(StateFinished)
+
+	r.broadcastGallery()
+
 	fmt.Printf("GG everyone game end !")
 }
 
@@ -69,17 +94,15 @@ func (r * Room) forceValidation() {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	content := ""
-	tType := ""
 	for _, tmp := range r.Players {
+
 		if tmp.IsReady == false {
 		
-			if r.Status == StateWriting {
+			content := "DEFAULT_IMAGE"
+			tType := "IMAGE"
+			if r.Phase == string(StateWriting) || r.Phase == string(StateGuess) {
 				tType = "TEXT"
 				content = "..."
-			} else {
-				tType = "IMAGE"
-				content = "EMPTY_IMAGE"
 			}
 
 			if tmp.LastDraft != "" {
@@ -101,6 +124,7 @@ func (r * Room) forceValidation() {
 			ptrBook.Entries = append(ptrBook.Entries, newEntry)
 
 			tmp.IsReady = true
+			r.Players[tmp.ID].LastDraft = ""
 		}
 	}
 }
@@ -108,32 +132,32 @@ func (r * Room) forceValidation() {
 /*
 * Fill in the notebook with the player’s ID and the text that is either an IMAGE or a SENTENCE
 */
-func (r *Room) SubmiteAction(playerID int, text string, isFinal bool) {
+func (r *Room) SubmiteAction(playerID int, text string, isFinal bool) error {
 
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	player, ok := r.Players[playerID]
 	if !ok {
-		return
+		return fmt.Errorf("Player not found!")
 	}
 
 	player.LastDraft = text
 
 	if !isFinal {
-		return
+		return nil
 	}
 
 	ptrBook, ok := r.Books[playerID]
 	if !ok {
-		return
+		return fmt.Errorf("Book not found!")
 	}
 
 	newEntry := Entry{
 		AuthorID: playerID,
 		Content: text,
 	}
-	if r.Status == StateWriting {
+	if r.Phase == string(StateWriting) || r.Phase == string(StateGuess) {
 		newEntry.Type = "TEXT"
 	} else {
 		newEntry.Type = "IMAGE"
@@ -142,6 +166,8 @@ func (r *Room) SubmiteAction(playerID int, text string, isFinal bool) {
 	ptrBook.Entries = append(ptrBook.Entries, newEntry)
 
 	r.Players[playerID].IsReady = true
+
+	r.Players[playerID].LastDraft = ""
 
 	readyCount := 0
 	for _, tmp := range r.Players {
@@ -155,6 +181,7 @@ func (r *Room) SubmiteAction(playerID int, text string, isFinal bool) {
 		default:
 		}
 	}
+	return nil
 }
 
 /*
@@ -176,25 +203,34 @@ func (r *Room) rotateBook() {
 	r.Books = nextBook
 }
 
-func (r *Room) GetPlayerTask(playerID int) (taskString string, content string) {
+func (r *Room) GetPlayerTask(playerID int) GameStateRecord {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	val, ok := r.Books[playerID]
-	if !ok { return "", "" }
+	res := GameStateRecord {
+		Type: "game_state",
+		Phase: r.Phase,
+		Room: r.ID,
+	}
 
+	val, ok := r.Books[playerID]
+	if !ok { return res }
 	lenEntries := len(val.Entries)
+
 	if lenEntries == 0 {
-		return "TEXT", ""
+
+		return res
 	} else if lenEntries > 0 {
+
 		last := val.Entries[lenEntries - 1]
+
 		if last.Type == "TEXT" {
-			return "IMAGE", last.Content
+			res.Prompt = last.Content
 		} else {
-			return "TEXT", last.Content
+			res.Drawing = last.Content
 		}
 	}
-	return "", ""
+	return res
 }
 
 /*
@@ -213,7 +249,9 @@ func (r *Room) StartGame() error {
 		return fmt.Errorf("la partie a deja commencer")
 	}
 
-	r.Status = StateWriting
+	r.Status = "started"
+	r.Phase = string(StateWriting)
+	r.CurrentRound = 1
 
 	r.Books = make(map[int]*Book)
 	r.PlayerOrder = []int{}
@@ -228,8 +266,6 @@ func (r *Room) StartGame() error {
 	rand.Shuffle(len(r.PlayerOrder), func(j, i int) {
 		r.PlayerOrder[i], r.PlayerOrder[j] = r.PlayerOrder[j], r.PlayerOrder[i]
 	})
-
-	r.FinishedChan = make(chan bool, len(r.Players))
 
 	go r.RunGameLoop()
 

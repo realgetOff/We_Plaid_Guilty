@@ -120,6 +120,14 @@ deploy-ci: bootstrap init ## Déploie l'infra + lance Ansible (CI/CD, sans promp
 	@echo "$(YELLOW)Récupération des secrets S3...$(RESET)"
 	@aws s3 cp s3://$(BUCKET)/secrets.yml $(ANSIBLE_DIR)/secrets.yml || true
 	@echo "$$ANSIBLE_VAULT_PASSWORD" > $(VAULT_FILE) && chmod 600 $(VAULT_FILE)
+	@echo "$(YELLOW)Attente SSH...$(RESET)"
+	@for i in $$(seq 1 20); do \
+	  ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 \
+	    -i ~/.ssh/github_actions \
+	    ec2-user@$(call tf_output,server_ip) exit 2>/dev/null && break; \
+	  echo "Tentative $$i/20..."; \
+	  sleep 10; \
+	done
 	@echo "$(YELLOW)Lancement du playbook Ansible...$(RESET)"
 	@cd $(ANSIBLE_DIR) && ansible-playbook $(PLAYBOOK) \
 	  -e "kms_key_id=$$(cd ../$(TF_DIR) && terraform output -raw kms_key_id)" \

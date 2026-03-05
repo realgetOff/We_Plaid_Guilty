@@ -202,3 +202,21 @@
       ttl: "1h"
       max_ttl: "24h"
     status_code: [200, 204]
+
+- name: "Feed Vault"
+  uri:
+    url: "{{ vault_api_url }}/v1/secret/data/app/config"
+    method: POST
+    headers:
+      X-Vault-Token: "{{ active_root_toekn }}"
+    body_format: json
+    body: 
+      data:
+        api_key: "{{ app_api_key }}"
+        db_password: "{{ app_db_password }}"
+        jwt_secret: "{{ app_jwt_secret }}"
+    status_code: [200, 204]
+  no_log: true
+  when: not vault_init_status.json.initialized
+
+

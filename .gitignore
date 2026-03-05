@@ -10,6 +10,7 @@ ansible/.vault_pass
 ~/.vault_pass
 
 # Terraform (si tu ne l'as pas déjà fait)
+
 .terraform/
 *.tfstate
 *.tfstate.backup

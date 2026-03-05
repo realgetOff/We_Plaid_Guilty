@@ -18,3 +18,8 @@ variable "admin_public_key" {
   description = "Clé SSH admin"
   type        = string
 }
+
+variable "email" {
+  description = "email-alert"
+  type        = string
+}

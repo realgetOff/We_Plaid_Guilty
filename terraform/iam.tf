@@ -37,4 +37,5 @@ resource "aws_iam_instance_profile" "vault_kms" {
 resource "aws_iam_role_policy_attachment" "ecr_read_only" {
   role = "vault-kms-role"
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+  depends_on = [ aws_iam_role.vault_kms ]
 }

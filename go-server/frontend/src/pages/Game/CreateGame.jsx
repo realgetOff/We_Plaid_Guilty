@@ -126,7 +126,7 @@ const CreateGame = () =>
       timer,
     });
 
-    return () =>
+	  return () =>
     {
       removeListener(handler);
       const code = roomCodeRef.current;

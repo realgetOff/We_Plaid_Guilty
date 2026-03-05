@@ -10,9 +10,12 @@ services:
       - "DB_USER={{ db_user }}"
       - "DB_PASSWORD={{ db_password }}"
       - "DB_NAME={{ db_name }}"
+      - "VAULT_ADDR=http://vault:8200"
     depends_on:
       - db
     restart: always
+    networks:
+      - security_net
 
   db:
     image: postgres:16-alpine
@@ -23,7 +26,13 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: always
+    networks:
+      - security_net
 
 
 volumes:
   postgres_data:
+
+networks:
+  security_net:
+    external: true

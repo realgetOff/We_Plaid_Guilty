@@ -1,8 +1,4 @@
 ---
-- name: "DEBUG - SI TU VOIS CA C'EST QUE LE ROLE TOURNE"
-  debug:
-    msg: "Le rôle go-server est bien chargé !"
-
 - name: "Direcory exist ?"
   file:
     path: "{{ app_path }}"
@@ -23,7 +19,3 @@
   shell: "docker compose up -d --pull always"
   args:
     chdir: "{{ app_path }}"
-# - name: "Clean versionning"
-  # docker_image_prune:
-    # force: yes
-  # when: output.changed

@@ -24,6 +24,11 @@ resource "aws_iam_role_policy" "vault_kms" {
         Effect   = "Allow"
         Action   = ["iam:GetRole", "iam:GetInstanceProfile"]
         Resource = "*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["sts:GetCallerIdentity"]
+        Resource = "*"
       }
     ]
   })

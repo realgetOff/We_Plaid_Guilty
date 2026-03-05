@@ -1,6 +1,9 @@
 # Secrets générés
 ansible/secrets.yml
 
+# Binaire
+go-server/test_server/server_arm64
+
 # Fichiers de mot de passe (temporaires ou non)
 .vault_pass
 ansible/.vault_pass
@@ -10,5 +13,5 @@ ansible/.vault_pass
 .terraform/
 *.tfstate
 *.tfstate.backup
-
+terraform/.terraform.lock.hcl
 compile_commands.json

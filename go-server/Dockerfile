@@ -1,24 +1,21 @@
-FROM node:20-alpine AS frontend-builder
+FROM --platform=linux/amd64 node:20-alpine AS frontend-builder
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
 RUN npm install
 COPY frontend/ .
 RUN npm run build
 
-
-# DO NOT CHANGE THE VERSION NUMBER BEFORE CHECKING IF IT COMPILES WITH AN OLDER VERSION.
-# LORIS NEEDS TO BE ON THE LATEST VERSION OF GO. BECAUSE I AM ON THE LATEST VERSION OF GO.
-
-FROM golang:1.25-alpine AS backend-builder 
+FROM --platform=linux/amd64 golang:1.25-alpine AS backend-builder
+RUN apk add --no-cache ca-certificates
 WORKDIR /app/backend
 COPY backend/go.mod backend/go.sum ./
 RUN go mod download
 COPY backend/ .
-RUN CGO_ENABLED=0 GOOS=linux go build -o /app/server .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o /app/server .
 
-FROM alpine:3.19
-RUN apk add --no-cache ca-certificates
+FROM --platform=linux/arm64 alpine:3.19
 WORKDIR /app
+COPY --from=backend-builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=backend-builder /app/server .
 COPY --from=frontend-builder /app/frontend/dist ./static
 EXPOSE 8080

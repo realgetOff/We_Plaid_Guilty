@@ -2,7 +2,7 @@
 aws_region: eu-north-1
 ecr_url: "437836833311.dkr.ecr.eu-north-1.amazonaws.com"
 repo_name: "gartic-trans-app"
-image_tag: "1.0.0"
+image_tag: "latest"
 db_user: "user_test"
 db_password: "password_ultra_secret_123"
 db_name: "db_test"

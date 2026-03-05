@@ -98,10 +98,6 @@ func main() {
 	if err := loadSecretsFromVault(); err != nil {
 		log.Fatalf("Failed to load secrets from Vault: %v", err)
 	}
-	config.APIKey = "dummy_key"
-    config.DBPassword = "dummy_password"
-    config.JWTSecret = "dummy_secret"
-
 	// Gin router with default "middleware"
 	router := gin.Default();
 	// gin.SetMode(gin.ReleaseMode)

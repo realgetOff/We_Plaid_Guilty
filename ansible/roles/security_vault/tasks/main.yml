@@ -208,7 +208,7 @@
     url: "{{ vault_api_url }}/v1/secret/data/app/config"
     method: POST
     headers:
-      X-Vault-Token: "{{ active_root_toekn }}"
+      X-Vault-Token: "{{ active_root_token }}"
     body_format: json
     body: 
       data:

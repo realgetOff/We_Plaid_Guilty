@@ -94,10 +94,10 @@ func main() {
 	fmt.Println("~o~ This project was brought to you with hate by pmilner- mforest- namichel & lviravon! ~o~")
 	fmt.Println(" ~~ Starting transcendence backend... ~~")
 
-	/*
+	
 	if err := loadSecretsFromVault(); err != nil {
 		log.Fatalf("Failed to load secrets from Vault: %v", err)
-	}*/
+	}
 	config.APIKey = "dummy_key"
     config.DBPassword = "dummy_password"
     config.JWTSecret = "dummy_secret"
@@ -153,21 +153,30 @@ func loadSecretsFromVault() error {
 		return fmt.Errorf("unable to create vault client: %w", err)
 	}
 
-	// Auth via AWS IAM
-	awsAuth, err := awsauth.NewAWSAuth(
-		awsauth.WithRole("app-role"),
-	)
-	if err != nil {
-		return fmt.Errorf("unable to create AWS auth: %w", err)
-	}
+	// Check for local dev/test token first
+    if token := os.Getenv("VAULT_TOKEN"); token != "" {
+        client.SetToken(token)
+        log.Println("Using direct VAULT_TOKEN (Local Dev/Test Mode)")
+    } else {
+        // Fallback to Production AWS IAM Auth
+        awsAuth, err := awsauth.NewAWSAuth(
+            awsauth.WithRole("app-role"),
+        )
+        if err != nil {
+            return fmt.Errorf("unable to create AWS auth: %w", err)
+        }
 
-	authInfo, err := client.Auth().Login(context.Background(), awsAuth)
-	if err != nil {
-		return fmt.Errorf("vault login failed: %w", err)
-	}
-	if authInfo == nil {
-		return fmt.Errorf("no auth info returned")
-	}
+        authInfo, err := client.Auth().Login(context.Background(), awsAuth)
+        if err != nil {
+            return fmt.Errorf("vault login failed: %w", err)
+        }
+        if authInfo == nil {
+            return fmt.Errorf("no auth info returned")
+        }
+        log.Println("Authenticated via AWS IAM")
+    }
+
+    // ... continue to your KV v2 secret reading ...
 
 	// Lecture des secrets KV v2
 	kv, err := client.KVv2("secret").Get(context.Background(), "app/config")
@@ -178,6 +187,8 @@ func loadSecretsFromVault() error {
 	config.APIKey = kv.Data["api_key"].(string)
 	config.DBPassword = kv.Data["db_password"].(string)
 	config.JWTSecret = kv.Data["jwt_secret"].(string)
+
+	fmt.Println("this is wicked insecure, remove this line before moving further on in prod " + config.APIKey + " " + config.DBPassword + " " + config.JWTSecret )
 
 	log.Println("Secrets loaded from Vault successfully")
 	return nil

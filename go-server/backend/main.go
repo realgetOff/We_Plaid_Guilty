@@ -79,7 +79,10 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
-		
+	router.GET("/test-game", func(c *gin.Context) {
+		go gamemanager.RunTestSimulation() // On le lance en arrière-plan
+		c.JSON(200, gin.H{"message": "Simulation lancée dans la console !"})
+	})
 	if err := router.Run(":" + port); err != nil {
 		log.Fatalf("failed to run server: %v", err)	
 	}

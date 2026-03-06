@@ -2,7 +2,7 @@ package gamemanager
 
 import (
 	"fmt"
-	"math/rand/v2"
+	"math/rand"
 	"time"
 )
 
@@ -66,11 +66,11 @@ func (r *Room) RunGameLoop() {
 		}
 
 		if r.Phase == string(StateDrawing) {
-			r.waitForPhase(90 * time.Second)
 			fmt.Printf("Round %d : Drawing starting...\n", round)
+			r.waitForPhase(90 * time.Second)
 		} else {
+			r.waitForPhase(45 * time.Second)
 			fmt.Printf("Round %d : Writting starting...\n", round)
-			r.waitForPhase(60 * time.Second)
 		}
 
 		r.forceValidation()
@@ -132,7 +132,7 @@ func (r * Room) forceValidation() {
 /*
 * Fill in the notebook with the player’s ID and the text that is either an IMAGE or a SENTENCE
 */
-func (r *Room) SubmiteAction(playerID int, text string, isFinal bool) error {
+func (r *Room) SubmiteAction(playerID int, data map[string]interface{}, isFinal bool) error {
 
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -142,7 +142,16 @@ func (r *Room) SubmiteAction(playerID int, text string, isFinal bool) error {
 		return fmt.Errorf("Player not found!")
 	}
 
-	player.LastDraft = text
+	var content string
+	if val, ok := data["prompt"].(string); ok {
+		content = val
+	} else if val, ok := data["drawing"].(string); ok {
+		content = val
+	} else if val, ok := data["guess"].(string); ok {
+		content = val
+	}
+
+	player.LastDraft = content
 
 	if !isFinal {
 		return nil
@@ -155,7 +164,7 @@ func (r *Room) SubmiteAction(playerID int, text string, isFinal bool) error {
 
 	newEntry := Entry{
 		AuthorID: playerID,
-		Content: text,
+		Content: content,
 	}
 	if r.Phase == string(StateWriting) || r.Phase == string(StateGuess) {
 		newEntry.Type = "TEXT"
@@ -224,7 +233,7 @@ func (r *Room) GetPlayerTask(playerID int) GameStateRecord {
 
 		last := val.Entries[lenEntries - 1]
 
-		if last.Type == "TEXT" {
+			if last.Type == "TEXT" {
 			res.Prompt = last.Content
 		} else {
 			res.Drawing = last.Content
@@ -264,6 +273,7 @@ func (r *Room) StartGame() error {
 	}
 
 	rand.Shuffle(len(r.PlayerOrder), func(j, i int) {
+		rand.Seed(time.Now().UnixNano())
 		r.PlayerOrder[i], r.PlayerOrder[j] = r.PlayerOrder[j], r.PlayerOrder[i]
 	})
 

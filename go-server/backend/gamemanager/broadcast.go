@@ -2,6 +2,37 @@ package gamemanager
 
 import "fmt"
 
+func (r *Room) BroadcastLobbyState() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	playerList := []map[string]interface{}{}
+	for _, p := range r.Players {
+		playerList = append(playerList, map[string]interface{}{
+			"id": p.ID,
+			"name": p.Name,
+			"host": p.IsHost,
+			"online": p.isConnected,
+		})
+	}
+
+	for _, p := range r.Players {
+		r.MessageChan <- Notification{
+			PlayerID: p.ID,
+			Data: map[string]interface{}{
+				"type": "lobby_state",
+				"room": r.ID,
+				"player": playerList,
+				"me": map[string]interface{}{
+					"id": p.ID,
+					"name": p.Name,
+					"host": p.IsHost,
+				},
+			},
+		}
+	}
+}
+
 func (r *Room) broadcastGallery() {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -13,7 +44,7 @@ func (r *Room) broadcastGallery() {
 	type Chain struct {
 		ID string `json:"id"`
 		Prompt string `json:"prompt"`
-		Step []Step `json:"step"`
+		Steps []Step `json:"steps"`
 	}
 
 	var allChain []Chain
@@ -34,7 +65,7 @@ func (r *Room) broadcastGallery() {
 			if book.Entries[i].Type == "TEXT" {
 				entryType = "guess"
 			}
-			chain.Step = append(chain.Step, Step{
+			chain.Steps = append(chain.Steps, Step{
 				Type: entryType,
 				Content: book.Entries[i].Content,
 			})

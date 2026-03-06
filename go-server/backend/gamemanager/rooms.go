@@ -82,7 +82,64 @@ func (r *Room) AddPlayer(id int, name string) (error){
 	r.Players[id] = newPlayer
 	r.PlayerOrder = append(r.PlayerOrder, id)
 
+	msg := map[string]interface{}{
+		"type": "player_connected",
+		"room": r.ID,
+		"player": map[string]interface{}{
+			"id": newPlayer.ID,
+			"name": newPlayer.Name,
+			"host": newPlayer.IsHost,
+		},
+	}
+
+	for _, p := range r.Players {
+		r.MessageChan <- Notification{ PlayerID: p.ID, Data: msg, }
+	}
+
 	return nil
+}
+
+func (r *Room) RemovePlayer(playerID int) {
+	r.mu.Lock()
+
+	p, ok := r.Players[playerID]
+	if !ok { 
+		r.mu.Unlock()
+		return
+	}
+
+	wasHost := p.IsHost
+
+	delete(r.Players, playerID)
+
+	newOrder := []int{}
+
+	for _, id := range r.PlayerOrder {
+		if id != playerID {
+			newOrder = append(newOrder, id)
+		}
+	}
+	r.PlayerOrder = newOrder
+
+	if wasHost && len(r.PlayerOrder) > 0 {
+		if nextHost, ok := r.Players[r.PlayerOrder[0]]; ok{
+			nextHost.IsHost = true
+		}
+	}
+	r.mu.Unlock()
+
+	leaveMsg := map[string]interface{}{
+		"type": "player_left",
+		"room": r.ID,
+		"playerId": playerID,
+	}
+
+	r.mu.Lock()
+	for _, p := range r.Players {
+		r.MessageChan <- Notification{ PlayerID: p.ID, Data: leaveMsg, }
+	}
+	r.mu.Unlock()
+
 }
 
 	/*

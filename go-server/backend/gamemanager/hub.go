@@ -1,0 +1,51 @@
+package gamemanager
+
+import (
+	"sync"
+	"math/rand"
+	"time"
+)
+
+const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+type Hub struct {
+	Rooms map[string]*Room
+	mu sync.RWMutex
+}
+
+func (h *Hub) generateRandID(lenght int) (roomId string) {
+
+	ran_str := make([]byte, lenght)
+
+	for i:= 0; i < lenght; i++ {
+		ran_str[i] = charset[rand.Intn(len(charset))]
+	}
+
+	return string(ran_str)
+}
+
+func (h *Hub) CreateRoom() (* Room){
+	var R* Room
+	var IdRoom string
+	rand.Seed(time.Now().UnixNano())
+
+	for {
+		IdRoom = h.generateRandID(6)
+
+		h.mu.Lock()
+		_, ok := h.Rooms[IdRoom]
+		h.mu.Unlock()
+
+		if ok {
+			continue
+		} else {
+			R = NewRoom(IdRoom, 60, 0)
+			break
+		}
+	}
+
+	h.Rooms[IdRoom] = R
+
+
+	return R
+}

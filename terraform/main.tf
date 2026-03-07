@@ -13,53 +13,59 @@ data "aws_ami" "alma_9" {
 
 data "aws_caller_identity" "current" {}
 
-resource "aws_security_group" "ssh_access" {
-  name        = "${var.project_name}-sg"
-  description = "allow ssh"
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  ingress {
-    from_port   = 8200
-    to_port     = 8200
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
 
 resource "aws_key_pair" "admin_key" {
   key_name   = "formation-key"
   public_key = var.admin_public_key
 }
 
-resource "aws_instance" "my_alma_server" {
-  ami                    = data.aws_ami.alma_9.id
-  instance_type          = var.instance_type
-  key_name               = aws_key_pair.admin_key.key_name
-  vpc_security_group_ids = [aws_security_group.ssh_access.id]
-  iam_instance_profile   = aws_iam_instance_profile.vault_kms.name
-  tags                   = { Name = var.project_name }
+module "app" {
+  source = "./modules/compute"
+  project_name = var.project_name
+  instance_name = "EC2-app"
+  instance_type = "t4g.medium"
+  ami_id = data.aws_ami.alma_9.id
+  volume_size = 8
+  volume_type = "gp3"
+  key_name = aws_key_pair.admin_key.key_name
+  sg_list = [aws_security_group.app_sg.id]
+  iam_profile = aws_iam_instance_profile.vault_kms.name
+}
+
+module "elk" {
+  source = "./modules/compute"
+  project_name = var.project_name
+  instance_name = "EC2-elk"
+  instance_type = "t4g.medium"
+  ami_id = data.aws_ami.alma_9.id
+  volume_size = 20
+  volume_type = "gp3"
+  key_name = aws_key_pair.admin_key.key_name
+  sg_list = [aws_security_group.monitoring_sg.id]
+  iam_profile = aws_iam_instance_profile.vault_kms.name
+}
+
+module "grafana" {
+  source = "./modules/compute"
+  project_name = var.project_name
+  instance_name = "EC2-grafana"
+  instance_type = "t4g.small"
+  ami_id = data.aws_ami.alma_9.id
+  volume_size = 8
+  volume_type = "gp3"
+  key_name = aws_key_pair.admin_key.key_name
+  sg_list = [aws_security_group.monitoring_sg.id]
+  iam_profile = aws_iam_instance_profile.vault_kms.name
 }
 
 resource "local_file" "ansible_inventory" {
   filename = "inventory.ini"
   content  = <<-EOT
-    [alma]
-    ${aws_instance.my_alma_server.public_ip} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/github_actions
+  [APP]
+  ${module.app.public_ip} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/github_actions
+  [ELK]
+  ${module.elk.public_ip} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/github_actions
+  [GRAFANA]
+  ${module.grafana.public_ip} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/github_actions
   EOT
 }

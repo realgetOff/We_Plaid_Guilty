@@ -1,13 +1,9 @@
-data "aws_ami" "alma_9" {
+data "aws_ami" "base_trans" {
   most_recent = true
-  owners      = ["679593333241"]
+  owners      = ["self"]
   filter {
     name   = "name"
-    values = ["AlmaLinux OS 9*aarch64*"]
-  }
-  filter {
-    name = "architecture"
-    values = ["arm64"]
+    values = ["base-trans-*"]
   }
 }
 
@@ -24,7 +20,7 @@ module "app" {
   project_name = var.project_name
   instance_name = "EC2-app"
   instance_type = "t4g.medium"
-  ami_id = data.aws_ami.alma_9.id
+  ami_id = data.aws_ami.base_trans.id
   volume_size = 8
   volume_type = "gp3"
   key_name = aws_key_pair.admin_key.key_name
@@ -37,7 +33,7 @@ module "elk" {
   project_name = var.project_name
   instance_name = "EC2-elk"
   instance_type = "t4g.medium"
-  ami_id = data.aws_ami.alma_9.id
+  ami_id = data.aws_ami.base_trans.id
   volume_size = 20
   volume_type = "gp3"
   key_name = aws_key_pair.admin_key.key_name
@@ -50,7 +46,7 @@ module "grafana" {
   project_name = var.project_name
   instance_name = "EC2-grafana"
   instance_type = "t4g.small"
-  ami_id = data.aws_ami.alma_9.id
+  ami_id = data.aws_ami.base_trans.id
   volume_size = 8
   volume_type = "gp3"
   key_name = aws_key_pair.admin_key.key_name

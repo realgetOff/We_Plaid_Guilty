@@ -31,7 +31,7 @@
     permanent: yes
     immediate: yes
     state: enabled
-  loop: "{{ allowed_ports }}"
+  loop: "{{ allowed_ports + extra_ports }}"
   notify: "Reload Firewall"
 
 - name: "Conf sshd_config"

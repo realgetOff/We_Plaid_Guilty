@@ -12,7 +12,7 @@ BUCKET      := transcendance-secrets-43783683331
 REGION      := eu-north-1
 TF_DIR      := terraform
 ANSIBLE_DIR := ansible
-PLAYBOOK    := setup_alma.yml
+PLAYBOOK    := deploy.yml
 VAULT_FILE  := ~/.vault_pass
 DEPLOY_USER ?= manual
 

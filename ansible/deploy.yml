@@ -79,8 +79,10 @@
       hostname:
         name: gartic-elk
     - include_role:
-        name: elastic
-      tags: elasticsearch
+        name: elk-stack
+        apply:
+          tags: elk-stack
+      tags: elk-stack
 
 - name: "Grafana server"
   hosts: GRAFANA
@@ -90,6 +92,7 @@
       hostname:
         name: gartic-grafana
     - include_role:
-        name: grafana
-      tags: grafana
-
+        name: grafana-stack
+        apply:
+          tags: grafana-stack
+      tags: grafana-stack

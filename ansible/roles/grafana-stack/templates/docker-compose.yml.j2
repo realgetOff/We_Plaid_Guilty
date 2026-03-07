@@ -1,0 +1,32 @@
+volumes:
+  grafana_data:
+    driver: local
+
+services:
+  prometheus:
+    image: prom/prometheus:{{ version_prometheus}}
+    ports:
+      - "{{ pt_prom }}:{{ pt_prom }}"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    restart: always
+
+  grafana:
+    image: grafana/grafana:{{ version_grafana }}
+    ports:
+      - "{{ pt_graf }}:{{ pt_graf }}"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD={{ grafana_pass }}
+    depends_on:
+      - prometheus
+    restart: always
+
+  node-exporter:
+    image: prom/node-exporter:{{ version_node_exporter }}
+    ports:
+      - "{{ pt_n_e }}:{{ pt_n_e }}"
+    restart: always

@@ -6,7 +6,7 @@
 terraform {
   backend "s3" {
     bucket = "transcendance-secrets-43783683331"
-    key    = "terraform.tfstate"
+    key    = "terraform-infra.tfstate"
     region = "eu-north-1"
   }
 }

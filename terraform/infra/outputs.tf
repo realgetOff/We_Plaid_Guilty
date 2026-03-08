@@ -28,3 +28,15 @@ output "kms_key_id" {
 output "aws_account_id" {
   value = data.aws_caller_identity.current.account_id
 }
+
+output "vault_kms_role_name" {
+  value = aws_iam_role.vault_kms.name
+}
+
+output "vault_reader_elk_role_name" {
+  value = aws_iam_role.vault_reader_elk.name
+}
+
+output "vault_reader_grafana_role_name" {
+  value = aws_iam_role.vault_reader_grafana.name
+}

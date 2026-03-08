@@ -18,9 +18,3 @@ variable "email" {
   description = "email-alert"
   type        = string
 }
-
-variable "vault_root_token" {
-  description = "Root token Vault"
-  type = string
-  sensitive = true //WARN INPORTANT
-}

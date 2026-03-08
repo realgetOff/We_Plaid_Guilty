@@ -55,7 +55,7 @@ module "grafana" {
 }
 
 resource "local_file" "ansible_inventory" {
-  filename = "inventory.ini"
+  filename = "${path.module}/inventory.ini"
   content  = <<-EOT
   [APP]
   ${module.app.public_ip} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/github_actions

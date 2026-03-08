@@ -24,19 +24,19 @@
     mode: '0644'
   notify: "Restart ELK"
 
-- name: "copy vault agent config"
-  template:
-    src: agent.hcl.j2
-    dest: "{{ elk_path }}/agent.hcl"
-    mode: '0644'
-  notify: "Restart ELK"
-
-- name: "copy secret agent template"
-  template:
-    src: elk.tpl.j2
-    dest: "{{ elk_path }}/elk.tpl"
-    mode: '0644'
-  notify: "Restart ELK"
+# - name: "copy vault agent config"
+  # template:
+    # src: agent.hcl.j2
+    # dest: "{{ elk_path }}/agent.hcl"
+    # mode: '0644'
+  # notify: "Restart ELK"
+# 
+# - name: "copy secret agent template"
+  # template:
+    # src: elk.tpl.j2
+    # dest: "{{ elk_path }}/elk.tpl"
+    # mode: '0644'
+  # notify: "Restart ELK"
 
 - name: "run docker compose (Elk)"
   shell: "docker compose up -d"

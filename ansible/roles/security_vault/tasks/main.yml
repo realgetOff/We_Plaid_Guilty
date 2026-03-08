@@ -162,48 +162,7 @@
     status_code: [200]
   register: auth_methods
 
-- name: "Enable AWS auth method"
-  uri:
-    url: "{{ vault_api_url }}/v1/sys/auth/aws"
-    method: POST
-    headers:
-      X-Vault-Token: "{{ active_root_token }}"
-    body_format: json
-    body:
-      type: "aws"
-    status_code: [200, 204]
-  when: "'aws/' not in auth_methods.json"
-
-- name: "Create app policy"
-  uri:
-    url: "{{ vault_api_url }}/v1/sys/policies/acl/app-policy"
-    method: POST
-    headers:
-      X-Vault-Token: "{{ active_root_token }}"
-    body_format: json
-    body:
-      policy: |
-        path "secret/data/app/*" {
-          capabilities = ["read"]
-        }
-    status_code: [200, 204]
-
-- name: "Create AWS auth role"
-  uri:
-    url: "{{ vault_api_url }}/v1/auth/aws/role/app-role"
-    method: POST
-    headers:
-      X-Vault-Token: "{{ active_root_token }}"
-    body_format: json
-    body:
-      auth_type: "iam"
-      bound_iam_principal_arn: "arn:aws:iam::{{ aws_account_id }}:role/vault-kms-role"
-      policies: ["app-policy"]
-      ttl: "1h"
-      max_ttl: "24h"
-    status_code: [200, 204]
-
-- name: "Feed Vault"
+- name: "Feed Vault for APP"
   uri:
     url: "{{ vault_api_url }}/v1/secret/data/app/config"
     method: POST
@@ -215,5 +174,33 @@
         api_key: "{{ app_api_key }}"
         db_password: "{{ app_db_password }}"
         jwt_secret: "{{ app_jwt_secret }}"
+    status_code: [200, 204]
+  no_log: true
+
+- name: "Feed Vault for elk"
+  uri:
+    url: "{{ vault_api_url }}/v1/secret/data/elk/config"
+    method: POST
+    headers:
+      X-Vault-Token: "{{ active_root_token }}"
+    body_format: json
+    body: 
+      data:
+        elastic_password: "{{ elastic_pass }}"
+        kibana_password: "{{ kibana_pass }}"
+        encrypt_key: "{{ elk_encrypt_key }}"
+    status_code: [200, 204]
+  no_log: true
+
+- name: "Feed Vault for grafana"
+  uri:
+    url: "{{ vault_api_url }}/v1/secret/data/grafana/config"
+    method: POST
+    headers:
+      X-Vault-Token: "{{ active_root_token }}"
+    body_format: json
+    body: 
+      data:
+        grafana_password: "{{ grafana_pass }}"
     status_code: [200, 204]
   no_log: true

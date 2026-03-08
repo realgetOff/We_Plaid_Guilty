@@ -1,4 +1,4 @@
-.PHONY: help bootstrap init plan show output validate fmt deploy deploy-ci deploy-debug ansible destroy destroy-full clean
+.PHONY: help bootstrap init init-upgrade fmt validate plan show output packer deploy deploy-ci deploy-debug ansible destroy destroy-full clean
 
 # ─── Couleurs ────────────────────────────────────────────────────────────────
 GREEN  := \033[0;32m
@@ -12,17 +12,14 @@ BUCKET      := transcendance-secrets-43783683331
 REGION      := eu-north-1
 TF_DIR      := terraform
 ANSIBLE_DIR := ansible
+PACKER_DIR  := packer
 PLAYBOOK    := deploy.yml
 VAULT_FILE  := ~/.vault_pass
 DEPLOY_USER ?= manual
 
 # ─── Helpers internes ────────────────────────────────────────────────────────
 define tf_output
-$(shell cd $(TF_DIR) && terraform output -raw $(1))
-endef
-
-define write_vault_pass
-	echo "$$ANSIBLE_VAULT_PASSWORD" > $(VAULT_FILE) && chmod 600 $(VAULT_FILE)
+$(shell cd $(TF_DIR) && terraform output -raw $(1) 2>/dev/null)
 endef
 
 define run_ansible
@@ -80,9 +77,18 @@ validate: ## Valide la configuration Terraform
 	@echo "$(YELLOW)Validation Terraform...$(RESET)"
 	cd $(TF_DIR) && terraform validate
 
-plan: ## Affiche le plan Terraform
+plan: ## Affiche le plan Terraform (infra AWS uniquement)
 	@echo "$(YELLOW)Plan Terraform...$(RESET)"
-	cd $(TF_DIR) && terraform plan
+	cd $(TF_DIR) && terraform plan \
+	  -target=module.app \
+	  -target=module.elk \
+	  -target=module.grafana \
+	  -target=aws_security_group.app_sg \
+	  -target=aws_security_group.monitoring_sg \
+	  -target=aws_iam_role.vault_kms \
+	  -target=aws_iam_role.vault_reader_elk \
+	  -target=aws_iam_role.vault_reader_grafana \
+	  -target=aws_kms_key.vault_unseal
 
 show: ## Affiche l'état Terraform
 	@echo "$(YELLOW)État Terraform...$(RESET)"
@@ -92,51 +98,130 @@ output: ## Affiche les outputs Terraform
 	@echo "$(YELLOW)Outputs Terraform...$(RESET)"
 	cd $(TF_DIR) && terraform output
 
+# ─── Packer ──────────────────────────────────────────────────────────────────
+
+packer: ## Build l'AMI de base avec Packer
+	@echo "$(YELLOW)Build de l'AMI Packer...$(RESET)"
+	@if [ ! -f $(VAULT_FILE) ]; then \
+	  read -p "Ansible Vault password: " ANSIBLE_VAULT_PASSWORD && \
+	  echo "$$ANSIBLE_VAULT_PASSWORD" > $(VAULT_FILE) && \
+	  chmod 600 $(VAULT_FILE); \
+	fi
+	ANSIBLE_VAULT_PASSWORD_FILE=$(VAULT_FILE) \
+	  packer build $(PACKER_DIR)/alma.pkr.hcl
+	@echo "$(GREEN)AMI buildée avec succès !$(RESET)"
+
 # ─── Déploiement ─────────────────────────────────────────────────────────────
 
-deploy: init ## Déploie l'infra + lance Ansible (interactif)
-	@echo "$(YELLOW)Application du plan Terraform...$(RESET)"
-	cd $(TF_DIR) && terraform apply -auto-approve
+deploy: init ## Déploie l'infra complète (interactif)
 	@echo "$(YELLOW)Récupération des secrets S3...$(RESET)"
 	@aws s3 cp s3://$(BUCKET)/secrets.yml $(ANSIBLE_DIR)/secrets.yml || true
-	@echo "$(YELLOW)Lancement du playbook Ansible...$(RESET)"
 	@read -p "Ansible Vault password: " ANSIBLE_VAULT_PASSWORD && \
 	  echo "$$ANSIBLE_VAULT_PASSWORD" > $(VAULT_FILE) && \
-	  chmod 600 $(VAULT_FILE) && \
-	  cd $(ANSIBLE_DIR) && ansible-playbook $(PLAYBOOK) \
-	    -e "kms_key_id=$$(cd ../$(TF_DIR) && terraform output -raw kms_key_id)" \
-	    -e "aws_account_id=$$(cd ../$(TF_DIR) && terraform output -raw aws_account_id)" \
-	    -e "deploy_user=$(DEPLOY_USER)" \
-	    --vault-password-file $(VAULT_FILE)
+	  chmod 600 $(VAULT_FILE)
+	@echo "$(YELLOW)--- Étape 1/3 : Terraform infra AWS ---$(RESET)"
+	cd $(TF_DIR) && terraform apply -auto-approve \
+	  -target=data.aws_caller_identity.current \
+	  -target=data.aws_ami.base_trans \
+	  -target=module.app \
+	  -target=module.elk \
+	  -target=module.grafana \
+	  -target=aws_iam_role_policy.ecr_auth \
+	  -target=aws_security_group.app_sg \
+	  -target=aws_security_group.monitoring_sg \
+	  -target=aws_iam_role.vault_kms \
+	  -target=aws_iam_role.vault_reader_elk \
+	  -target=aws_iam_role.vault_reader_grafana \
+	  -target=aws_iam_role_policy.vault_kms \
+	  -target=aws_iam_role_policy.vault_elk \
+	  -target=aws_iam_role_policy.vault_grafana \
+	  -target=aws_iam_instance_profile.vault_kms \
+	  -target=aws_iam_instance_profile.vault_elk \
+	  -target=aws_iam_instance_profile.vault_grafana \
+	  -target=aws_iam_role_policy_attachment.ecr_read_only_app \
+	  -target=aws_kms_key.vault_unseal \
+	  -target=aws_kms_alias.vault_unseal \
+	  -target=aws_key_pair.admin_key \
+	  -target=aws_budgets_budget.alerte_money \
+	  -target=local_file.ansible_inventory
+	@echo "$(YELLOW)Attente SSH (30s)...$(RESET)"
+	@sleep 30
+	@echo "$(YELLOW)--- Étape 2/3 : Ansible (services + Vault) ---$(RESET)"
+	@cd $(ANSIBLE_DIR) && ansible-playbook $(PLAYBOOK) \
+	  -e "kms_key_id=$$(cd ../$(TF_DIR) && terraform output -raw kms_key_id)" \
+	  -e "aws_account_id=$$(cd ../$(TF_DIR) && terraform output -raw aws_account_id)" \
+	  -e "deploy_user=$(DEPLOY_USER)" \
+	  --vault-password-file $(VAULT_FILE)
 	@echo "$(YELLOW)Upload des secrets vers S3...$(RESET)"
 	@aws s3 cp $(ANSIBLE_DIR)/secrets.yml s3://$(BUCKET)/secrets.yml
+	@echo "$(YELLOW)--- Étape 3/3 : Terraform Vault (policies + roles) ---$(RESET)"
+	@VAULT_ROOT_TOKEN=$$(ansible-vault decrypt \
+	  --vault-password-file $(VAULT_FILE) \
+	  --output - $(ANSIBLE_DIR)/secrets.yml \
+	  | grep vault_root_token \
+	  | awk '{print $$2}' \
+	  | tr -d '"') && \
+	  cd $(TF_DIR) && TF_VAR_vault_root_token=$$VAULT_ROOT_TOKEN \
+	  terraform apply -auto-approve
 	@echo "$(GREEN)Déployé par $(DEPLOY_USER) — terminé !$(RESET)"
 
-deploy-ci: bootstrap init ## Déploie l'infra + lance Ansible (CI/CD, sans prompt)
+deploy-ci: bootstrap init ## Déploie l'infra (CI/CD, sans prompt)
 	@echo "$(YELLOW)Déployé par : $(DEPLOY_USER)$(RESET)"
-	@if [ -z "$$ANSIBLE_VAULT_PASSWORD" ]; then echo "$(RED)ANSIBLE_VAULT_PASSWORD non défini$(RESET)"; exit 1; fi
-	@echo "$(YELLOW)Application du plan Terraform...$(RESET)"
-	cd $(TF_DIR) && terraform apply -auto-approve
+	@if [ -z "$$ANSIBLE_VAULT_PASSWORD" ]; then \
+	  echo "$(RED)ANSIBLE_VAULT_PASSWORD non défini$(RESET)"; exit 1; fi
+	@echo "$$ANSIBLE_VAULT_PASSWORD" > $(VAULT_FILE) && chmod 600 $(VAULT_FILE)
 	@echo "$(YELLOW)Récupération des secrets S3...$(RESET)"
 	@aws s3 cp s3://$(BUCKET)/secrets.yml $(ANSIBLE_DIR)/secrets.yml || true
-	@echo "$$ANSIBLE_VAULT_PASSWORD" > $(VAULT_FILE) && chmod 600 $(VAULT_FILE)
+	@echo "$(YELLOW)--- Étape 1/3 : Terraform infra AWS ---$(RESET)"
+	cd $(TF_DIR) && terraform apply -auto-approve \
+	  -target=data.aws_caller_identity.current \
+	  -target=data.aws_ami.base_trans \
+	  -target=aws_iam_role_policy.ecr_auth \
+	  -target=module.app \
+	  -target=module.elk \
+	  -target=module.grafana \
+	  -target=aws_security_group.app_sg \
+	  -target=aws_security_group.monitoring_sg \
+	  -target=aws_iam_role.vault_kms \
+	  -target=aws_iam_role.vault_reader_elk \
+	  -target=aws_iam_role.vault_reader_grafana \
+	  -target=aws_iam_role_policy.vault_kms \
+	  -target=aws_iam_role_policy.vault_elk \
+	  -target=aws_iam_role_policy.vault_grafana \
+	  -target=aws_iam_instance_profile.vault_kms \
+	  -target=aws_iam_instance_profile.vault_elk \
+	  -target=aws_iam_instance_profile.vault_grafana \
+	  -target=aws_iam_role_policy_attachment.ecr_read_only_app \
+	  -target=aws_kms_key.vault_unseal \
+	  -target=aws_kms_alias.vault_unseal \
+	  -target=aws_key_pair.admin_key \
+	  -target=aws_budgets_budget.alerte_money \
+	  -target=local_file.ansible_inventory
 	@echo "$(YELLOW)Attente SSH...$(RESET)"
 	@for i in $$(seq 1 20); do \
 	  ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 \
 	    -i ~/.ssh/github_actions \
-	    ec2-user@$(call tf_output,server_ip) exit 2>/dev/null && break; \
+	    ec2-user@$(call tf_output,app_ip) exit 2>/dev/null && break; \
 	  echo "Tentative $$i/20..."; \
 	  sleep 10; \
 	done
-	@echo "$(YELLOW)Lancement du playbook Ansible...$(RESET)"
+	@echo "$(YELLOW)--- Étape 2/3 : Ansible (services + Vault) ---$(RESET)"
 	@cd $(ANSIBLE_DIR) && ansible-playbook $(PLAYBOOK) \
 	  -e "kms_key_id=$$(cd ../$(TF_DIR) && terraform output -raw kms_key_id)" \
 	  -e "aws_account_id=$$(cd ../$(TF_DIR) && terraform output -raw aws_account_id)" \
-	  -e "ansible_vault_password=$$ANSIBLE_VAULT_PASSWORD" \
 	  -e "deploy_user=$$DEPLOY_USER" \
 	  --vault-password-file $(VAULT_FILE)
 	@echo "$(YELLOW)Upload des secrets vers S3...$(RESET)"
 	@aws s3 cp $(ANSIBLE_DIR)/secrets.yml s3://$(BUCKET)/secrets.yml
+	@echo "$(YELLOW)--- Étape 3/3 : Terraform Vault (policies + roles) ---$(RESET)"
+	@VAULT_ROOT_TOKEN=$$(ansible-vault decrypt \
+	  --vault-password-file $(VAULT_FILE) \
+	  --output - $(ANSIBLE_DIR)/secrets.yml \
+	  | grep vault_root_token \
+	  | awk '{print $$2}' \
+	  | tr -d '"') && \
+	  cd $(TF_DIR) && TF_VAR_vault_root_token=$$VAULT_ROOT_TOKEN \
+	  terraform apply -auto-approve
 	@echo "$(GREEN)Déployé par $$DEPLOY_USER — terminé !$(RESET)"
 
 deploy-debug: ## Lance Ansible seul en mode verbeux (-vvv)
@@ -155,10 +240,6 @@ deploy-debug: ## Lance Ansible seul en mode verbeux (-vvv)
 	    --vault-password-file $(VAULT_FILE)
 
 # ─── Ansible seul (infra déjà up) ────────────────────────────────────────────
-# Usage : make ansible                          → playbook complet
-#         make ansible role=docker_install      → un rôle spécifique
-#         make ansible role=security_os,docker_install  → plusieurs rôles
-ROLES ?=
 
 ansible: ## Lance Ansible sans Terraform (make ansible [role=<nom>])
 	@echo "$(YELLOW)Récupération des secrets S3...$(RESET)"
@@ -180,8 +261,11 @@ ansible: ## Lance Ansible sans Terraform (make ansible [role=<nom>])
 destroy: ## Détruit l'infra EC2/SG/KeyPair (conserve KMS + S3)
 	@echo "$(RED)Destruction de l'infra (KMS + S3 conservés)...$(RESET)"
 	cd $(TF_DIR) && terraform destroy \
-	  -target=aws_instance.my_alma_server \
-	  -target=aws_security_group.ssh_access \
+	  -target=module.app.aws_instance.name \
+	  -target=module.elk.aws_instance.name \
+	  -target=module.grafana.aws_instance.name \
+	  -target=aws_security_group.app_sg \
+	  -target=aws_security_group.monitoring_sg \
 	  -target=aws_key_pair.admin_key \
 	  -target=local_file.ansible_inventory \
 	  -compact-warnings \
@@ -211,7 +295,7 @@ destroy-full: ## Détruit TOUT (infra + vide et supprime le bucket S3)
 
 # ─── Nettoyage local ─────────────────────────────────────────────────────────
 
-clean: ## Supprime les fichiers temporaires locaux (vault_pass, inventory...)
+clean: ## Supprime les fichiers temporaires locaux
 	@echo "$(YELLOW)Nettoyage des fichiers temporaires...$(RESET)"
 	@rm -f $(VAULT_FILE) $(ANSIBLE_DIR)/secrets.yml
 	@echo "$(GREEN)Nettoyage terminé.$(RESET)"

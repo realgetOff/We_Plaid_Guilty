@@ -1,0 +1,3 @@
+{{ with secret "secret/data/grafana/config" }}
+{{ .Data.data.grafana_password }}
+{{ end }}

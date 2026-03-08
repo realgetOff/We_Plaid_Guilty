@@ -1,8 +1,24 @@
 volumes:
   grafana_data:
     driver: local
+  secrets:
+    driver: local
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
 
 services:
+  vault-agent:
+    image: hashicorp/vault:{{ vault_version }}
+    command: agent -config=/vault/config/agent.hcl
+    volumes:
+      - ./agent.hcl:/vault/config/agent.hcl:ro
+      - ./grafana.tpl:/vault/templates/grafana.tpl:ro
+      - secrets:/secrets
+    extra_hosts:
+      - "169.254.169.254:127.0.0.1"
+    restart: always
+
   prometheus:
     image: prom/prometheus:{{ version_prometheus}}
     ports:
@@ -12,6 +28,8 @@ services:
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
     restart: always
+    extra_hosts:
+      - "169.254.169.254:127.0.0.1"
 
   grafana:
     image: grafana/grafana:{{ version_grafana }}
@@ -19,14 +37,20 @@ services:
       - "{{ pt_graf }}:{{ pt_graf }}"
     volumes:
       - grafana_data:/var/lib/grafana
+      - secrets:/secrets:ro
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD={{ grafana_pass }}
+      - GF_SECURITY_ADMIN_PASSWORD__FILE=/secrets/grafana-secrets
     depends_on:
       - prometheus
+      - vault-agent
     restart: always
+    extra_hosts:
+      - "169.254.169.254:127.0.0.1"
 
   node-exporter:
     image: prom/node-exporter:{{ version_node_exporter }}
     ports:
       - "{{ pt_n_e }}:{{ pt_n_e }}"
     restart: always
+    extra_hosts:
+      - "169.254.169.254:127.0.0.1"

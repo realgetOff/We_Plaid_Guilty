@@ -19,12 +19,26 @@
     mode: '0644'
   notify: "Restart Grafana"
 
+- name: "copy vault agent config"
+  template:
+    src: agent.hcl.j2
+    dest: "{{ grafana_path }}/agent.hcl"
+    mode: '0644'
+  notify: "Restart Grafana"
+
+- name: "copy secret agent template"
+  template:
+    src: grafana.tpl.j2
+    dest: "{{ grafana_path }}/grafana.tpl"
+    mode: '0644'
+  notify: "Restart Grafana"
+
 - name: "run docker compose"
   shell: "docker compose up -d"
   args:
     chdir: "{{ grafana_path }}"
   environment:
-    GF_SECURITY_ADMIN_PASSWORD: "{{ grafana_pass }}"
+    VAULT_VERSION: "{{ vault_version }}"
     VERSION_PROMETHEUS: "{{ version_prometheus }}"
     VERSION_GRAFANA: "{{ version_grafana }}"
     VERSION_NODE_EXPORTER: "{{ version_node_exporter }}"

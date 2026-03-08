@@ -1,0 +1,23 @@
+vault {
+  address = "http://{{ hostvars[groups['APP'][0]]['ansible_host'] }}:{{ vault_port }}"
+}
+
+auto_auth {
+  method "aws" {
+    config = {
+      type = "iam"
+      role = "{{ service_name }}-role"
+    }
+  }
+  sink "file" {
+    config = {
+      path = "/secrets/.vault-token"
+    }
+  }
+}
+
+template {
+  source = "/vault/templates/{{ service_name }}.tpl"
+  destination = "/secrets/{{ service_name }}-secrets"
+  perms = "0400"
+}

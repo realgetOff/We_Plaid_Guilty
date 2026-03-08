@@ -38,7 +38,7 @@ module "elk" {
   volume_type = "gp3"
   key_name = aws_key_pair.admin_key.key_name
   sg_list = [aws_security_group.monitoring_sg.id]
-  iam_profile = aws_iam_instance_profile.vault_kms.name
+  iam_profile = aws_iam_instance_profile.vault_elk.name
 }
 
 module "grafana" {
@@ -51,7 +51,7 @@ module "grafana" {
   volume_type = "gp3"
   key_name = aws_key_pair.admin_key.key_name
   sg_list = [aws_security_group.monitoring_sg.id]
-  iam_profile = aws_iam_instance_profile.vault_kms.name
+  iam_profile = aws_iam_instance_profile.vault_grafana.name
 }
 
 resource "local_file" "ansible_inventory" {

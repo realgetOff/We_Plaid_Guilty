@@ -64,6 +64,8 @@
     - name: "Vault"
       include_role:
         name: security_vault
+        apply:
+          tags: security_vault
       tags: security_vault
 
     - name: "GO Server"

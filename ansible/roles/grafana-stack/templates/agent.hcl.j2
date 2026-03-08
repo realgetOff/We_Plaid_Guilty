@@ -1,6 +1,5 @@
 vault {
-  address = "http://{{ hostvars[groups['APP'][0]]['ansible_host'] }}:{{ vault_port }}"
-}
+  address = "http://{{ groups['APP'][0] }}:{{ vault_port }}"
 
 auto_auth {
   method "aws" {

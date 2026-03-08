@@ -145,12 +145,13 @@ deploy-ci: bootstrap ## Déploie l'infra (CI/CD, sans prompt)
 	@echo "$(YELLOW)--- Étape 1/3 : Terraform infra AWS ---$(RESET)"
 	cd $(TF_INFRA_DIR) && terraform init && terraform apply -auto-approve
 	@echo "$(YELLOW)Attente SSH...$(RESET)"
-	@for i in $$(seq 1 20); do \
-	  ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 \
-	    -i ~/.ssh/github_actions \
-	    ec2-user@$(call tf_output,app_ip) exit 2>/dev/null && break; \
-	  echo "Tentative $$i/20..."; \
-	  sleep 10; \
+	@APP_IP=$$(cd $(TF_INFRA_DIR) && terraform output -raw app_ip) && \
+	for i in $$(seq 1 20); do \
+		ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 \
+		-i ~/.ssh/github_actions \
+		ec2-user@$$APP_IP exit 2>/dev/null && break; \
+		echo "Tentative $$i/20..."; \
+		sleep 10; \
 	done
 	@echo "$(YELLOW)--- Étape 2/3 : Ansible (services + Vault) ---$(RESET)"
 	@cd $(ANSIBLE_DIR) && ansible-playbook $(PLAYBOOK) \

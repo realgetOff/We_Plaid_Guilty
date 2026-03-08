@@ -19,5 +19,5 @@ auto_auth {
 template {
   source = "/vault/templates/{{ service_name }}.tpl"
   destination = "/secrets/{{ service_name }}-secrets"
-  perms = "0400"
+  perms = "0444"
 }

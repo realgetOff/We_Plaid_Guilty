@@ -15,8 +15,6 @@ services:
       - ./agent.hcl:/vault/config/agent.hcl:ro
       - ./grafana.tpl:/vault/templates/grafana.tpl:ro
       - secrets:/secrets
-    extra_hosts:
-      - "169.254.169.254:127.0.0.1"
     restart: always
 
   prometheus:

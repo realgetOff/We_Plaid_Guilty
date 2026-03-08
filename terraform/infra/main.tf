@@ -16,7 +16,7 @@ resource "aws_key_pair" "admin_key" {
 }
 
 module "app" {
-  source = "./modules/compute"
+  source = "../modules/compute"
   project_name = var.project_name
   instance_name = "EC2-app"
   instance_type = "t4g.medium"
@@ -29,7 +29,7 @@ module "app" {
 }
 
 module "elk" {
-  source = "./modules/compute"
+  source = "../modules/compute"
   project_name = var.project_name
   instance_name = "EC2-elk"
   instance_type = "t4g.medium"
@@ -42,7 +42,7 @@ module "elk" {
 }
 
 module "grafana" {
-  source = "./modules/compute"
+  source = "../modules/compute"
   project_name = var.project_name
   instance_name = "EC2-grafana"
   instance_type = "t4g.small"

@@ -3,7 +3,7 @@ resource "vault_auth_backend" "aws" {
 }
 
 module "vault_app" {
-  source = "./modules/vault-config"
+  source = "../modules/vault-config"
   service_name = "app"
   token_ttl = 3600
   token_max_ttl = 86400
@@ -13,7 +13,7 @@ module "vault_app" {
 }
 
 module "vault_elk" {
-  source = "./modules/vault-config"
+  source = "../modules/vault-config"
   service_name = "elk"
   token_ttl = 3600
   token_max_ttl = 86400
@@ -23,7 +23,7 @@ module "vault_elk" {
 }
 
 module "vault_grafana" {
-  source = "./modules/vault-config"
+  source = "../modules/vault-config"
   service_name = "grafana"
   token_ttl = 3600
   token_max_ttl = 86400

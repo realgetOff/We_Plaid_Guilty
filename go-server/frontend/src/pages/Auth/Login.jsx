@@ -17,21 +17,17 @@ import './Auth.css';
 function Login()
 {
     const navigate = useNavigate();
-	const [playerName, setPlayerName] = useState(
-		localStorage.getItem("playerName") || ''
+	const [authToken, setAuthToken] = useState(
+		localStorage.getItem("authToken") || ''
 	);
 
     const handlePlay = async () =>
 	{
-        let name = localStorage.getItem("playerName");
-
-        if (!name)
+        const token = localStorage.getItem("authToken");
+        if (token)
 		{
-            name = "player_" + Math.random().toString(36).slice(2, 8);
-            localStorage.setItem("playerName", name);
+			setAuthToken(token);
         }
-
-		setPlayerName(name);
         try
 		{
             const res = await fetch("/api/player",
@@ -40,7 +36,6 @@ function Login()
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ playerName: name }),
             });
 
             if (!res.ok)
@@ -49,6 +44,10 @@ function Login()
             }
 
             const data = await res.json();
+
+			localStorage.setItem("authToken", data.token);
+			setAuthToken(data.token);
+
             console.log("Player registered:", data);
 
             navigate("/game");
@@ -69,8 +68,8 @@ function Login()
 				I am!
 			</button>
 			<h2>
-			{playerName && (
-				<p><strong>{playerName}</strong></p>
+			{authToken && (
+				<p><strong>{authToken}</strong></p>
 			)}
 			</h2>
 		</div>

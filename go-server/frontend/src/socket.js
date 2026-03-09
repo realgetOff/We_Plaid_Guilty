@@ -30,17 +30,17 @@ let socket = null;
 let listeners = [];
 let pending = [];
 
-const getPlayerName = () =>
+const getAuthToken = () =>
 {
-	const playerName = localStorage.getItem("playerName");
+	const token = localStorage.getItem("authToken");
 
-	if (!playerName)
+	if (!token)
 	{
 		window.location.href = "/login";
 		return null;
 	}
 
-	return playerName;
+	return token;
 };
 
 const connect = () =>
@@ -49,8 +49,8 @@ const connect = () =>
 		|| socket.readyState === WebSocket.CONNECTING))
 		return;
 
-	const playerName = getPlayerName();
-	if (!playerName)
+	const token = getAuthToken();
+	if (!token)
 		return;
 
 	socket = new WebSocket(getWsUrl());
@@ -58,7 +58,7 @@ const connect = () =>
 	socket.onopen = () =>
 	{
 		console.log('ws connected');
-		send({ type: "set_player", playerName });
+		send({ type: "authenticate", token });
 
 		if (pending.length > 0)
 		{

@@ -71,6 +71,8 @@
     - name: "GO Server"
       include_role:
         name: go-server
+        apply:
+          tags: go-server
       tags: go-server
 
 - name: "ELK server"

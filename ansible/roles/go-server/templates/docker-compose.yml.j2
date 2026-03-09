@@ -31,13 +31,15 @@ services:
     restart: always
     networks:
       - security_net
+    extra_hosts:
+      - "169.254.169.254:127.0.0.1"
 
   db:
     image: postgres:16-alpine
     environment:
-      - POSTGRES_USER_FILE=/secrets/db-user
-      - POSTGRES_PASSWORD_FILE=/secrets/db-pass
-      - POSTGRES_DB_FILE=/secrets/db-name
+      - POSTGRES_USER_FILE=/secrets/db_user
+      - POSTGRES_PASSWORD_FILE=/secrets/db_password
+      - POSTGRES_DB_FILE=/secrets/db_name
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - secrets:/secrets:ro
@@ -46,6 +48,8 @@ services:
       - security_net
     depends_on:
       - vault-agent
+    extra_hosts:
+      - "169.254.169.254:127.0.0.1"
 
 volumes:
   postgres_data:

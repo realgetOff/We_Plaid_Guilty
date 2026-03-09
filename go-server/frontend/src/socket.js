@@ -12,94 +12,116 @@
 
 const getWsUrl = () =>
 {
-  const env = import.meta.env.VITE_WS_URL;
-  if (env && typeof env === 'string' && env.trim() !== '')
-    return env;
-  if (typeof window !== 'undefined' && window.location)
-  {
-    const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    return `${proto}//${window.location.host}/ws`;
-  }
-  return 'ws://localhost:8080/ws';
+	const env = import.meta.env.VITE_WS_URL;
+
+	if (env && typeof env === 'string' && env.trim() !== '')
+		return env;
+
+	if (typeof window !== 'undefined' && window.location)
+	{
+		const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+		return `${proto}//${window.location.host}/ws`;
+	}
+
+	return 'ws://localhost:8080/ws';
 };
 
-let socket    = null;
+let socket = null;
 let listeners = [];
-let pending   = [];
+let pending = [];
+
+const getAuthToken = () =>
+{
+	const token = localStorage.getItem("authToken");
+
+	if (!token)
+	{
+		window.location.href = "/login";
+		return null;
+	}
+
+	return token;
+};
 
 const connect = () =>
 {
-  if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING))
-    return;
+	if (socket && (socket.readyState === WebSocket.OPEN
+		|| socket.readyState === WebSocket.CONNECTING))
+		return;
 
-  socket = new WebSocket(getWsUrl());
+	const token = getAuthToken();
+	if (!token)
+		return;
 
-  socket.onopen = () =>
-  {
-    console.log('ws connecte');
-    if (pending.length > 0)
-    {
-      pending.forEach((data) =>
-      {
-        try
-        {
-          socket.send(data);
-        }
-        catch
-        {
-          // ignore send errors here
-        }
-      });
-      pending = [];
-    }
-  };
+	socket = new WebSocket(getWsUrl());
 
-  socket.onmessage = (event) =>
-  {
-    const msg = JSON.parse(event.data);
-    listeners.forEach((fn) => fn(msg));
-  };
+	socket.onopen = () =>
+	{
+		console.log('ws connected');
+		send({ type: "authenticate", token });
 
-  socket.onclose = () =>
-  {
-    console.log('ws deconnecte');
-    socket = null;
-  };
+		if (pending.length > 0)
+		{
+			pending.forEach((data) =>
+			{
+				try
+				{
+					socket.send(data);
+				}
+				catch
+				{}
+			});
+			pending = [];
+		}
+	};
 
-  socket.onerror = (err) =>
-  {
-    console.error('ws error', err);
-  };
+	socket.onmessage = (event) =>
+	{
+		const msg = JSON.parse(event.data);
+		listeners.forEach((fn) => fn(msg));
+	};
+
+	socket.onclose = () =>
+	{
+		console.log('ws disconnected');
+		socket = null;
+	};
+
+	socket.onerror = (err) =>
+	{
+		console.error('ws error', err);
+	};
 };
 
 const disconnect = () =>
 {
-  if (socket)
-    socket.close();
-  socket = null;
-  listeners = [];
+	if (socket)
+		socket.close();
+	socket = null;
+	listeners = [];
 };
 
 const send = (payload) =>
 {
-  const data = JSON.stringify(payload);
+	const data = JSON.stringify(payload);
 
-  if (socket && socket.readyState === WebSocket.OPEN)
-  {
-    socket.send(data);
-    return;
-  }
-  pending.push(data);
+	if (socket && socket.readyState === WebSocket.OPEN)
+	{
+		socket.send(data);
+		return;
+	}
+
+	pending.push(data);
 };
 
 const addListener = (fn) =>
 {
-  listeners.push(fn);
+	listeners.push(fn);
 };
 
 const removeListener = (fn) =>
 {
-  listeners = listeners.filter((l) => l !== fn);
+	listeners = listeners.filter((l) => l !== fn);
 };
 
 export { connect, disconnect, send, addListener, removeListener };

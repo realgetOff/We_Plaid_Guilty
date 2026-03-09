@@ -31,6 +31,10 @@ type LobbySettings struct {
 	Timer int `json:"timer"`
 }
 
+type playerNameTemp struct {
+	PlayerName string `json:"playerName"`
+}
+
 type CreateLobbyRequest struct {
 	HostID string `json:"hostId"`
 	Settings LobbySettings `json:"settings"`
@@ -155,6 +159,23 @@ var upgrader = websocket.Upgrader{
 	upgrades the http protocol to a websocket, when its "done" it closes the connection
 	"done" is defined by either the webpage being closed, or the websocket handler returned
 */
+
+
+
+func handleLogin(c *gin.Context) {
+	var name playerNameTemp
+
+	if err := c.ShouldBindJSON(&name); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload: " + err.Error()})
+		return
+	}
+
+	fmt.Println("Player name is : " + name.PlayerName)
+
+	c.JSON(http.StatusOK, gin.H{
+		"login": "success",
+	})
+}
 
 func handleWebsocket(c *gin.Context) {
 	// we upgrade the 

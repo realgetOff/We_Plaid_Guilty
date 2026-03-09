@@ -62,21 +62,27 @@ const Navbar = () =>
 
       <div className="hc-menubar__spacer" />
 
+	  <div
+	  className="hc-menubar__item"
+	  role="menuitem"
+	  onClick={() => navigate('/login')}
+	  >
+	  Login
+	  </div>
       <div
         className="hc-menubar__item"
         role="menuitem"
         onClick={() => navigate('/profile/mforest-')}
       >
-        Profile
+	  Profile
       </div>
       <div
         className="hc-menubar__item"
         role="menuitem"
         onClick={() => navigate('/friends')}
       >
-        Friends
+       Friends
       </div>
-
       <NotificationBell />
 
       <Clock />

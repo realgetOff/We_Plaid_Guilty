@@ -33,6 +33,7 @@ const ProtectedRoute = ({ children }) =>
   if (!user)
   {
     const from = location.pathname + location.search;
+
     return <Navigate to={`/login?redirect=${encodeURIComponent(from)}`} replace />;
   }
 

@@ -16,44 +16,59 @@ import { authApi } from '../../api/auth';
 import { useAuth } from '../../context/AuthContext';
 import './Auth.css';
 
-const Login = () =>
+function Login()
 {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const redirect = searchParams.get('redirect') || '/game';
-  const { user, loading, refresh } = useAuth();
+    const navigate = useNavigate();
 
-  useEffect(() =>
-  {
-    if (loading)
-      return;
-    if (user)
-      navigate(redirect, { replace: true });
-  }, [user, loading, redirect, navigate]);
+    const handlePlay = async () =>
+	{
+        let playerName = localStorage.getItem("playerName");
 
-  useEffect(() =>
-  {
-    refresh();
-  }, []);
+        if (!playerName)
+		{
+            playerName = "player_" + Math.random().toString(36).slice(2, 8);
+            localStorage.setItem("playerName", playerName);
+        }
 
-  const oauthUrl = authApi.oauth42Url(redirect);
+        try
+		{
+            const res = await fetch("/api/player",
+			{
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ playerName }),
+            });
 
-  return (
-    <div className="auth">
-      <div className="auth__card">
-        <div className="auth__card-header">🔐 Sign In</div>
-        <div className="auth__body">
-          <p className="auth__hint">
-            Use your 42 account.
-	  </p>
-          <a className="auth__btn auth__btn--primary" href={oauthUrl}>
-            ▶ Sign in with 42
-          </a>
-        </div>
-      </div>
-    </div>
-  );
-};
+            if (!res.ok)
+			{
+                throw new Error("Server error");
+            }
+
+            const data = await res.json();
+            console.log("Player registered:", data);
+
+            navigate("/game");
+        }
+		catch (error)
+		{
+            console.error("Request failed:", error);
+        }
+    };
+
+    return (
+		<div className="login-container">
+		<h1>Click on the button if u are gay</h1>
+		  <button
+            className="auth__btn auth__btn--primary"
+            onClick={handlePlay}
+          >
+            I am!
+          </button>
+		</div>
+		
+    );
+}
 
 export default Login;
-

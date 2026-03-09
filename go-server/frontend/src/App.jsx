@@ -32,6 +32,7 @@ import Lobby from './pages/Game/Lobby';
 import Game from './pages/Game/Game';
 import Profile from './pages/Profile/Profile';
 import Friends from './pages/Friends/Friends';
+import ProtectedRoute from './pages/Legal/ProtectedRoute.jsx'
 import './styles/global.css';
 import './styles/hypercard.css';
 
@@ -44,22 +45,44 @@ const App = () =>
           <Toaster position="top-right" />
           <ToastContainer />
           <Navbar />
-          <main className="hc-main-container">
-            <MacWindow>
-              <Routes>
-                <Route path="/"                   element={<Home />}       />
-                <Route path="/privacy"            element={<Privacy />}    />
-                <Route path="/tos"                element={<Tos />}        />
-                <Route path="/login"              element={<Login />}      />
-                <Route path="/game"               element={<HomeGame />}   />
-                <Route path="/game/create"        element={<CreateGame />} />
-                <Route path="/game/join/:code"    element={<JoinGame />}   />
-                <Route path="/game/lobby/:code"   element={<Lobby />}      />
-                <Route path="/game/play/:code"    element={<Game />}       />
-                <Route path="/profile/:username"  element={<Profile />}    />
-                <Route path="/friends"            element={<Friends />}    />
-                <Route path="*"                   element={<NotFound />}   />
-              </Routes>
+	         <main className="hc-main-container">
+ 	         <MacWindow>
+			 <Routes>
+ 			 	<Route path="/" element={<Home />} />
+ 			 	<Route path="/privacy" element={<Privacy />} />
+ 				<Route path="/tos" element={<Tos />} />
+ 			 	<Route path="/login" element={<Login />} />
+
+ 			 	<Route
+ 			   		path="/game"
+ 			   		element={<ProtectedRoute><HomeGame /></ProtectedRoute>}
+ 			 	/>
+ 			 	<Route
+ 			   		path="/game/create"
+ 			  		element={<ProtectedRoute><CreateGame /></ProtectedRoute>}
+ 			 	/>
+ 			 	<Route
+ 			   		path="/game/join/:code"
+ 			   		element={<ProtectedRoute><JoinGame /></ProtectedRoute>}
+ 			 	/>
+ 			 	<Route
+ 			   		path="/game/lobby/:code"
+ 			    	element={<ProtectedRoute><Lobby /></ProtectedRoute>}
+ 			 	/>
+ 			 	<Route
+ 			    	path="/game/play/:code"
+ 			    	element={<ProtectedRoute><Game /></ProtectedRoute>}
+ 			    />
+ 			    <Route
+  			  		path="/profile/:username"
+   			 		element={<ProtectedRoute><Profile /></ProtectedRoute>}
+  			    />
+  				<Route
+  					path="/friends"
+  			  		element={<ProtectedRoute><Friends /></ProtectedRoute>}
+				/>
+			  	<Route path="*" element={<NotFound />} />
+			</Routes>
             </MacWindow>
           </main>
         </NotificationProvider>

@@ -187,18 +187,14 @@ func main() {
 		c.File("./static/index.html")
 	})
 
-//CHANGEMENT POUR FAIRE TOURNER
-/*
 
-	router.StaticFile("/", "../ft_transcendance/dist/index.html") // for a single file
-	router.Static("/assets", "../ft_transcendance/dist/assets")
-*/
 	// GET endpoint in the router
 	router.GET("/ping", pong)
 	router.GET("/health", health)
 	router.GET("/api/config", vaultstatus)
 	router.GET("/ws", handleWebsocket)
-	router.POST("/api/rooms", createLobby)
+	//router.POST("/api/rooms", createLobby)
+	router.POST("/api/player", handleLogin)
 
 	// get the port defined in the environment variables, if theres fuckall, 8080
 

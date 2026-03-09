@@ -32,7 +32,7 @@ import Lobby from './pages/Game/Lobby';
 import Game from './pages/Game/Game';
 import Profile from './pages/Profile/Profile';
 import Friends from './pages/Friends/Friends';
-import ProtectedRoute from './pages/Legal/ProtectedRoute.jsx'
+// import ProtectedRoute from './pages/Legal/ProtectedRoute.jsx'
 import './styles/global.css';
 import './styles/hypercard.css';
 
@@ -55,31 +55,31 @@ const App = () =>
 
  			 	<Route
  			   		path="/game"
- 			   		element={<ProtectedRoute><HomeGame /></ProtectedRoute>}
+ 			   		element={<HomeGame />}
  			 	/>
  			 	<Route
  			   		path="/game/create"
- 			  		element={<ProtectedRoute><CreateGame /></ProtectedRoute>}
+ 			  		element={<CreateGame />}
  			 	/>
  			 	<Route
  			   		path="/game/join/:code"
- 			   		element={<ProtectedRoute><JoinGame /></ProtectedRoute>}
+ 			   		element={<JoinGame />}
  			 	/>
  			 	<Route
  			   		path="/game/lobby/:code"
- 			    	element={<ProtectedRoute><Lobby /></ProtectedRoute>}
+ 			    	element={<Lobby />}
  			 	/>
  			 	<Route
  			    	path="/game/play/:code"
- 			    	element={<ProtectedRoute><Game /></ProtectedRoute>}
+ 			    	element={<Game />}
  			    />
  			    <Route
   			  		path="/profile/:username"
-   			 		element={<ProtectedRoute><Profile /></ProtectedRoute>}
+   			 		element={<Profile />}
   			    />
   				<Route
   					path="/friends"
-  			  		element={<ProtectedRoute><Friends /></ProtectedRoute>}
+  			  		element={<Friends />}
 				/>
 			  	<Route path="*" element={<NotFound />} />
 			</Routes>

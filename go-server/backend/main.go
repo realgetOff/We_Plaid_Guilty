@@ -237,7 +237,7 @@ func main() {
 	router.GET("/ws", handleWebsocket)
 	//router.POST("/api/rooms", createLobby)
 	//router.POST("/api/player", handleLogin)
-	router.POST("/api/player", handleLogin)
+	router.POST("/api/player", handleGuestAuth)
 
 	// get the port defined in the environment variables, if theres fuckall, 8080
 

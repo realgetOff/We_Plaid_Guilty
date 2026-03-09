@@ -10,26 +10,28 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-import React, { useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { authApi } from '../../api/auth';
-import { useAuth } from '../../context/AuthContext';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Auth.css';
 
 function Login()
 {
     const navigate = useNavigate();
+	const [playerName, setPlayerName] = useState(
+		localStorage.getItem("playerName") || ''
+	);
 
     const handlePlay = async () =>
 	{
-        let playerName = localStorage.getItem("playerName");
+        let name = localStorage.getItem("playerName");
 
-        if (!playerName)
+        if (!name)
 		{
-            playerName = "player_" + Math.random().toString(36).slice(2, 8);
-            localStorage.setItem("playerName", playerName);
+            name = "player_" + Math.random().toString(36).slice(2, 8);
+            localStorage.setItem("playerName", name);
         }
 
+		setPlayerName(name);
         try
 		{
             const res = await fetch("/api/player",
@@ -38,7 +40,7 @@ function Login()
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ playerName }),
+                body: JSON.stringify({ playerName: name }),
             });
 
             if (!res.ok)
@@ -59,15 +61,19 @@ function Login()
 
     return (
 		<div className="login-container">
-		<h1>Click on the button if u are gay</h1>
-		  <button
-            className="auth__btn auth__btn--primary"
-            onClick={handlePlay}
-          >
-            I am!
-          </button>
+			<h1>Click on the button if u are gay</h1>
+			<button
+				className="auth__btn auth__btn--primary"
+				onClick={handlePlay}
+			>
+				I am!
+			</button>
+			<h2>
+			{playerName && (
+				<p><strong>{playerName}</strong></p>
+			)}
+			</h2>
 		</div>
-		
     );
 }
 

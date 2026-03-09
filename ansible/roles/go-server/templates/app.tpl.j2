@@ -1,0 +1,9 @@
+{% raw %}
+{{ with secret "secret/data/app/config" }}
+DB_NAME={{ .Data.data.db_name }}
+DB_USER={{ .Data.data.db_user }}
+DB_PASSWORD={{ .Data.data.db_password }}
+JWT_SECRET={{ .Data.data.jwt_secret }}
+API_KEY={{ .Data.data.api_key }}
+{{ end }}
+{% endraw %}

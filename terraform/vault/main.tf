@@ -10,6 +10,7 @@ module "vault_app" {
   aws_account_id = data.terraform_remote_state.infra.outputs.aws_account_id
   auth_backend_path = vault_auth_backend.aws.path
   iam_role_name = data.terraform_remote_state.infra.outputs.vault_kms_role_name
+  extra_paths = ["secret/data/db/*"]
 }
 
 module "vault_elk" {

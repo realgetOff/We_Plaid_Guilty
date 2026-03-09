@@ -1,0 +1,41 @@
+vault {
+  address = "http://vault:{{ vault_port }}"
+}
+
+auto_auth {
+  method "aws" {
+    config = {
+      type = "iam"
+      role = "{{ app_name }}-role"
+    }
+  }
+  sink "file" {
+    config = {
+      path = "/secrets/.vault-token"
+    }
+  }
+}
+
+template {
+  source = "/vault/templates/{{ app_name }}.tpl"
+  destination = "/secrets/{{ app_name }}-secrets"
+  perms = "0444"
+}
+
+template {
+  source = "/vault/templates/db_name.tpl"
+  destination = "/secrets/db-name"
+  perms = "0444"
+}
+
+template {
+  source = "/vault/templates/db_password.tpl"
+  destination = "/secrets/db-password"
+  perms = "0444"
+}
+
+template {
+  source = "/vault/templates/db_user.tpl"
+  destination = "/secrets/db-user"
+  perms = "0444"
+}

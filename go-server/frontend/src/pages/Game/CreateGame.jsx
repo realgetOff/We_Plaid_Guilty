@@ -65,7 +65,7 @@ const CreateGame = () =>
   const [status,   setStatus]   = useState('checking');
   const [roomCode, setRoomCode] = useState('');
   const [copied,   setCopied]   = useState(false);
-  const [players,  setPlayers]  = useState([]);
+  const [players,  setPlayers]  = useState(localStorage.getItem("authToken"));
   const [rounds,   setRounds]   = useState(3);
   const [timer,    setTimer]    = useState(60);
   const [createErr, setCreateErr] = useState('');
@@ -124,6 +124,7 @@ const CreateGame = () =>
       type: 'create_room',
       rounds,
       timer,
+	  players, 
     });
 
 	  return () =>

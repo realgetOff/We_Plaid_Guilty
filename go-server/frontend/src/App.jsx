@@ -32,6 +32,7 @@ import Lobby from './pages/Game/Lobby';
 import Game from './pages/Game/Game';
 import Profile from './pages/Profile/Profile';
 import Friends from './pages/Friends/Friends';
+import Logout  from './pages/Auth/Logout';
 // import ProtectedRoute from './pages/Legal/ProtectedRoute.jsx'
 import './styles/global.css';
 import './styles/hypercard.css';
@@ -52,6 +53,7 @@ const App = () =>
  			 	<Route path="/privacy" element={<Privacy />} />
  				<Route path="/tos" element={<Tos />} />
  			 	<Route path="/login" element={<Login />} />
+	            <Route path="/logout" element={<Logout />} />
 
  			 	<Route
  			   		path="/game"

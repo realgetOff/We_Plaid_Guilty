@@ -17,78 +17,105 @@ import '../../styles/hypercard.css';
 
 const Clock = () =>
 {
-  const [time, setTime] = useState('');
+	const [time, setTime] = useState('');
 
-  useEffect(() =>
-  {
-    const tick = () =>
-    {
-      const d  = new Date();
-      const h  = d.getHours() % 12 || 12;
-      const m  = String(d.getMinutes()).padStart(2, '0');
-      const ap = d.getHours() >= 12 ? 'PM' : 'AM';
-      setTime(`${h}:${m} ${ap}`);
-    };
+	useEffect(() =>
+	{
+		const tick = () =>
+		{
+			const d  = new Date();
+			const h  = d.getHours() % 12 || 12;
+			const m  = String(d.getMinutes()).padStart(2, '0');
+			const ap = d.getHours() >= 12 ? 'PM' : 'AM';
+			setTime(`${h}:${m} ${ap}`);
+		};
 
-    tick();
-    const id = setInterval(tick, 10000);
-    return () => clearInterval(id);
-  }, []);
+		tick();
+		const id = setInterval(tick, 100);
+		return () => clearInterval(id);
+	}, []);
 
-  return <span className="hc-menubar__clock">{time}</span>;
+	return <span className="hc-menubar__clock">{time}</span>;
 };
 
 const Navbar = () =>
 {
-  const navigate = useNavigate();
+	const navigate = useNavigate();
+	const [isLogged, setIsLogged] = useState(!!localStorage.getItem("authToken"));
 
-  return (
-    <nav className="hc-menubar" role="menubar" aria-label="System menu">
+	useEffect(() =>
+	{
+		const checkAuth = () =>
+		{
+			setIsLogged(!!localStorage.getItem("authToken"));
+		};
 
-      <div className="hc-menubar__apple" role="menuitem" aria-label="Apple menu">
-        &#63743;
-      </div>
-	  <div
-        className="hc-menubar__item"
-        role="menuitem"
-        onClick={() => navigate('/')}
-      >
-	  Home
-	  </div>
-      <div className="hc-menubar__item" role="menuitem">Edit</div>
-      <div className="hc-menubar__item" role="menuitem">Go</div>
-      <div className="hc-menubar__item" role="menuitem">Objects</div>
-      <div className="hc-menubar__item" role="menuitem">Help</div>
+		window.addEventListener('storage', checkAuth);
+		
+		const interval = setInterval(checkAuth, 100);
 
-      <div className="hc-menubar__spacer" />
+		return () =>
+		{
+			window.removeEventListener('storage', checkAuth);
+			clearInterval(interval);
+		};
+	}, []);
 
-	  <div
-	  className="hc-menubar__item"
-	  role="menuitem"
-	  onClick={() => navigate('/login')}
-	  >
-	  Login
-	  </div>
-      <div
-        className="hc-menubar__item"
-        role="menuitem"
-        onClick={() => navigate('/profile/mforest-')}
-      >
-	  Profile
-      </div>
-      <div
-        className="hc-menubar__item"
-        role="menuitem"
-        onClick={() => navigate('/friends')}
-      >
-       Friends
-      </div>
-      <NotificationBell />
+	return (
+		<nav className="hc-menubar" role="menubar" aria-label="System menu">
+			<div className="hc-menubar__apple" role="menuitem" aria-label="Apple menu">
+				&#63743;
+			</div>
+			<div
+				className="hc-menubar__item"
+				role="menuitem"
+				onClick={() => navigate('/')}
+			>
+				Home
+			</div>
+			<div className="hc-menubar__item" role="menuitem">Edit</div>
+			<div className="hc-menubar__item" role="menuitem">Go</div>
+			<div className="hc-menubar__item" role="menuitem">Objects</div>
+			<div className="hc-menubar__item" role="menuitem">Help</div>
 
-      <Clock />
+			<div className="hc-menubar__spacer" />
 
-    </nav>
-  );
+			{isLogged ? (
+				<div
+					className="hc-menubar__item"
+					role="menuitem"
+					onClick={() => navigate('/logout')}
+				>
+					Logout
+				</div>
+			) : (
+				<div
+					className="hc-menubar__item"
+					role="menuitem"
+					onClick={() => navigate('/login')}
+				>
+					Login
+				</div>
+			)}
+
+			<div
+				className="hc-menubar__item"
+				role="menuitem"
+				onClick={() => navigate('/profile/mforest-')}
+			>
+				Profile
+			</div>
+			<div
+				className="hc-menubar__item"
+				role="menuitem"
+				onClick={() => navigate('/friends')}
+			>
+				Friends
+			</div>
+			<NotificationBell />
+			<Clock />
+		</nav>
+	);
 };
 
 export default Navbar;

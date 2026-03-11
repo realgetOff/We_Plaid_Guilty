@@ -20,8 +20,9 @@ const getRouteMeta = (pathname) =>
   if (pathname === '/privacy')               return { title: 'ft_transcendence — Privacy Policy',           card: '🔒 Privacy Policy'  };
   if (pathname === '/tos')                   return { title: 'ft_transcendence — Terms of Service',         card: '📋 Terms of Service'};
   if (pathname === '/login')                 return { title: 'ft_transcendence — Login',                    card: '🔐 Login'           };
+  if (pathname === '/logout')                return { title: 'ft_transcendence — Logout',                   card: '🔐 Logout'          };
   if (pathname === '/game')                  return { title: 'ft_transcendence — HyperCard Gartic Edition', card: '🎲 Game'            };
-  if (pathname === '/game/create')           return { title: 'ft_transcendence — HyperCard Gartic Edition', card: '✏ Create Game'     };
+  if (pathname === '/game/create')           return { title: 'ft_transcendence — HyperCard Gartic Edition', card: '✏ Create Game'      };
   if (pathname === '/friends')               return { title: 'ft_transcendence — Friends',                  card: '👥 Friends'         };
   if (pathname.startsWith('/game/join'))     return { title: 'ft_transcendence — HyperCard Gartic Edition', card: '🔑 Join Game'       };
   if (pathname.startsWith('/game/lobby'))    return { title: 'ft_transcendence — HyperCard Gartic Edition', card: '💭 Lobby'           };

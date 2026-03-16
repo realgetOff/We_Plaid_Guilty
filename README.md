@@ -11,13 +11,13 @@
 ### Joe,Jack,William & Averell
 
 - **namichel** — DevOps  
-  Network Architecture, Docker Config, CI/CD, WebSockets Management.
+  Network Architecture, Docker Config, CI/CD.
 - **pmilner-** — Backend  
   Game Logic (Go), Database Management, REST API.
 - **lviravon** — Backend  
   Authentication (Go), User Management, REST API.
 - **mforest-** — Frontend  
-  User Interface (React), Drawing Canvas, UX, API Integration.
+  User Interface (React), UI/UX, API Integration.
 
 <p align="center">
   <img src="readme_img/team.png">

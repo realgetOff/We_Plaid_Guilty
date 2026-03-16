@@ -20,6 +20,7 @@ const getRouteMeta = (pathname) =>
   if (pathname === '/privacy')               return { title: 'ft_transcendence — Privacy Policy',           card: '🔒 Privacy Policy'  };
   if (pathname === '/tos')                   return { title: 'ft_transcendence — Terms of Service',         card: '📋 Terms of Service'};
   if (pathname === '/login')                 return { title: 'ft_transcendence — Login',                    card: '🔐 Login'           };
+  if (pathname === '/credits')               return { title: 'ft_transcendence — Credits',                  card: '🎬 Credits'         };
   if (pathname === '/logout')                return { title: 'ft_transcendence — Logout',                   card: '🔐 Logout'          };
   if (pathname === '/game')                  return { title: 'ft_transcendence — HyperCard Gartic Edition', card: '🎲 Game'            };
   if (pathname === '/game/create')           return { title: 'ft_transcendence — HyperCard Gartic Edition', card: '✏ Create Game'      };
@@ -28,6 +29,7 @@ const getRouteMeta = (pathname) =>
   if (pathname.startsWith('/game/lobby'))    return { title: 'ft_transcendence — HyperCard Gartic Edition', card: '💭 Lobby'           };
   if (pathname.startsWith('/game/play'))     return { title: 'ft_transcendence — HyperCard Gartic Edition', card: '🎨 Draw!'           };
   if (pathname.startsWith('/profile'))       return { title: 'ft_transcendence — Profile',                  card: '👤 Profile'         };
+
   return { title: 'ft_transcendence — page not found', card: '⚠ error 404' };
 };
 
@@ -56,7 +58,7 @@ const MacWindow = ({ children }) =>
           ft_transcendence v1.0 · HyperCard Edition
         </span>
         <div className="hc-footer__links">
-          <Link to="/"        className="hc-footer__link">Home</Link>
+          <Link to="/credits" className="hc-footer__link">Credits</Link>
           <Link to="/privacy" className="hc-footer__link">Privacy Policy</Link>
           <Link to="/tos"     className="hc-footer__link">Terms of Service</Link>
         </div>

@@ -82,7 +82,8 @@ const CreateGame = () =>
 	settings:
 	{
             rounds: rounds,
-		    timer: timer
+		    timer: timer,
+			status: status
 	}
     });
 

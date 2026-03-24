@@ -1,0 +1,23 @@
+[req]
+default_bits = 4096
+prompt = no
+default_md = sha256
+distinguished_name = dn
+x509_extensions = v3_req
+
+[dn]
+C  = {{ tls_country }}
+ST = {{ tls_state }}
+O  = {{ tls_org }}
+CN = {{ tls_cn }}
+
+[v3_req]
+subjectAltName = @alt_names
+keyUsage = digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth
+
+[alt_names]
+DNS.1 = {{ tls_cn }}
+DNS.2 = localhost
+IP.1  = {{ ansible_host }}
+IP.2  = 127.0.0.1

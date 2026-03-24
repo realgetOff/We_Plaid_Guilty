@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"math/rand"
 	"time"
+	"context"
 
 	"net/http"
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type LobbySettings struct {
@@ -82,13 +84,21 @@ func createLobby(c *gin.Context) {
 	})
 }
 
-func handleGuestAuth(c *gin.Context){
+func handleGuestAuth(c *gin.Context, db *pgxpool.Pool){
 	guestName := fmt.Sprintf("guest_%d%d", rand.Intn(99), time.Now().UnixNano()%1000)
 
-	fmt.Println("Guest name: " + guestName)
-	c.JSON(http.StatusOK, AuthResponse{
-		Token: guestName,
-	})
+
+	query := "INSERT INTO users (username, is_guest) VALUES ($1, TRUE)"
+	_, err := db.Exec(context.Background(), query, guestName)
+
+	if (err != nil) {
+		fmt.Println("Guest creation failed")
+	} else {
+		fmt.Println("Guest name: " + guestName)
+			c.JSON(http.StatusOK, AuthResponse{
+			Token: guestName,
+		})
+	}
 }
 
 func handleLogin(c *gin.Context) {
@@ -99,7 +109,7 @@ func handleLogin(c *gin.Context) {
 		return
 	}
 
-	fmt.Println("Player name is : " + name.PlayerName)
+	fmt.Println("Player name is : " + name.PlayerName)	
 
 	c.JSON(http.StatusOK, gin.H{
 		"login": "success",

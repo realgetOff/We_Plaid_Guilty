@@ -80,9 +80,13 @@ func main() {
 	router.GET("/ws", func (c *gin.Context){
 		handleWebsocket(c, db)
 	})
+	router.POST("/api/player", func (c *gin.Context){
+		handleGuestAuth(c, db)
+	})
+
 	//router.POST("/api/rooms", createLobby)
 	//router.POST("/api/player", handleLogin)
-	router.POST("/api/player", handleGuestAuth)
+	// router.POST("/api/player", handleGuestAuth)
 
 	// get the port defined in the environment variables, if theres fuckall, 8080
 

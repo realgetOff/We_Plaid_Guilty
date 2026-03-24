@@ -93,9 +93,12 @@ func handleGuestAuth(c *gin.Context, db *pgxpool.Pool){
 
 	if (err != nil) {
 		fmt.Println("Guest creation failed")
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Server couldn't create a guest user in the database."})
+	
 	} else {
 		fmt.Println("Guest name: " + guestName)
-			c.JSON(http.StatusOK, AuthResponse{
+		c.JSON(http.StatusOK, AuthResponse{
 			Token: guestName,
 		})
 	}

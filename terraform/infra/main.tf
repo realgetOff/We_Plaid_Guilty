@@ -15,53 +15,53 @@ resource "aws_key_pair" "admin_key" {
   public_key = var.admin_public_key
 }
 
-module "app" {
+module "master" { //APP
   source = "../modules/compute"
   project_name = var.project_name
-  instance_name = "EC2-app"
+  instance_name = "EC2-master"
   instance_type = "t4g.medium"
   ami_id = data.aws_ami.base_trans.id
   volume_size = 8
   volume_type = "gp3"
   key_name = aws_key_pair.admin_key.key_name
-  sg_list = [aws_security_group.app_sg.id]
-  iam_profile = aws_iam_instance_profile.vault_kms.name
+  sg_list = [aws_security_group.master_sg.id]
+  iam_profile = aws_iam_instance_profile.k3s.name
 }
 
-module "elk" {
+module "worker1" { //ELK
   source = "../modules/compute"
   project_name = var.project_name
-  instance_name = "EC2-elk"
+  instance_name = "EC2-worker1"
   instance_type = "t4g.medium"
   ami_id = data.aws_ami.base_trans.id
   volume_size = 20
   volume_type = "gp3"
   key_name = aws_key_pair.admin_key.key_name
-  sg_list = [aws_security_group.monitoring_sg.id]
-  iam_profile = aws_iam_instance_profile.vault_elk.name
+  sg_list = [aws_security_group.worker_sg.id]
+  iam_profile = aws_iam_instance_profile.k3s.name
 }
 
-module "grafana" {
+module "worker2" { //GRAFANA
   source = "../modules/compute"
   project_name = var.project_name
-  instance_name = "EC2-grafana"
+  instance_name = "EC2-worker2"
   instance_type = "t4g.small"
   ami_id = data.aws_ami.base_trans.id
   volume_size = 8
   volume_type = "gp3"
   key_name = aws_key_pair.admin_key.key_name
-  sg_list = [aws_security_group.monitoring_sg.id]
-  iam_profile = aws_iam_instance_profile.vault_grafana.name
+  sg_list = [aws_security_group.worker_sg.id]
+  iam_profile = aws_iam_instance_profile.k3s.name
 }
 
 resource "local_file" "ansible_inventory" {
   filename = "${path.module}/inventory.ini"
   content  = <<-EOT
-  [APP]
-  ${module.app.public_ip} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/github_actions
-  [ELK]
-  ${module.elk.public_ip} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/github_actions
-  [GRAFANA]
-  ${module.grafana.public_ip} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/github_actions
+  [MASTER]
+  ${module.master.public_ip} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/github_actions
+  [WORKER1]
+  ${module.worker1.public_ip} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/github_actions
+  [WORKER2]
+  ${module.worker2.public_ip} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/github_actions
   EOT
 }

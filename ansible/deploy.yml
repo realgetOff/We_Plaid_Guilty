@@ -48,13 +48,14 @@
         name: docker_install
       tags: docker_install
 
-- name: "App server"
-  hosts: APP
+- name: "Master node"
+  hosts: MASTER
   become: true
   tasks:
     - name: "Rename"
       hostname:
-        name: gartic-app
+        name: gartic-master
+
     - name: "Load Vault secrets"
       include_vars:
         file: "{{ playbook_dir }}/secrets.yml"
@@ -68,35 +69,29 @@
           tags: security_vault
       tags: security_vault
 
-    - name: "GO Server"
-      include_role:
-        name: go-server
-        apply:
-          tags: go-server
-      tags: go-server
+    - name: "K3s master"
+      include_role: k3s_master
+      apply:
+        tags: k3s_master
+      tags: k3s_master
 
-- name: "ELK server"
-  hosts: ELK
+- name: "Worker nodes"
+  hosts: WORKERS
   become: true
   tasks:
-    - name: "Rename"
+    - name: "Rename w1(elk)"
       hostname:
         name: gartic-elk
-    - include_role:
-        name: elk-stack
-        apply:
-          tags: elk-stack
-      tags: elk-stack
+      when: inventory_hostanme == groups['WORKERS'][0]
 
-- name: "Grafana server"
-  hosts: GRAFANA
-  become: true
-  tasks:
-    - name: "Rename"
+    - name: "Rename w2(grafana)"
       hostname:
         name: gartic-grafana
-    - include_role:
-        name: grafana-stack
+      when: inventory_hostname == groups['WORKERS'][1]
+
+    - name: "k3s worker"
+      include_role:
+        name: k3s_worker
         apply:
-          tags: grafana-stack
-      tags: grafana-stack
+          tags: k3s_worker
+      tags: k3s_worker

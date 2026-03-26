@@ -1,0 +1,29 @@
+---
+- name: "k3s dir"
+  file:
+    path: "{{ config_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: "cpy config"
+  template:
+    src: config.yaml.j2
+    dest: "{{ config_dir }}/config.yaml"
+    mode: '0644'
+
+- name: "Install worker"
+  shell: |
+    curl -sfL https://get.k3s.io | \
+    INSTALL_K3S_VERSION={{ version }} \
+    K3S_URL=https://{{ master_ip }}:6443 \
+    K3S_TOKEN={{ k3s_node_token }} \
+    sh -s - agent \
+    --config {{ config_dir }}/config.yaml
+  args:
+    creates: /usr/local/bin/k3s
+
+- name: "Wait agent"
+  wait_for:
+    path: /var/lib/rancher/k3s/agent/kubelet.kubeconfig
+    state: present
+    timeout: 60

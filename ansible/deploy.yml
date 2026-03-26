@@ -70,19 +70,22 @@
       tags: security_vault
 
     - name: "K3s master"
-      include_role: k3s_master
-      apply:
-        tags: k3s_master
+      include_role: 
+        name: k3s_master
+        apply:
+          tags: k3s_master
       tags: k3s_master
 
 - name: "Worker nodes"
   hosts: WORKERS
   become: true
+  vars:
+    k3s_node_token: "{{ hostvars[groups['MASTER'][0]]['k3s_node_token'] }}"
   tasks:
     - name: "Rename w1(elk)"
       hostname:
         name: gartic-elk
-      when: inventory_hostanme == groups['WORKERS'][0]
+      when: inventory_hostname == groups['WORKERS'][0]
 
     - name: "Rename w2(grafana)"
       hostname:

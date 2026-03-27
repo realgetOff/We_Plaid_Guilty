@@ -35,7 +35,7 @@ const getAuthToken = async() =>
 	try
 	{
 			
-		const res = await fetch('api/player/auth');
+		const res = await fetch('api/auth/player');
 		const data = await res.json();
 		if(!data.token || !res.ok)
 		{

@@ -1,0 +1,8 @@
+---
+tls_dir: /etc/ssl/trans
+tls_ca_dir: "{{ tls_dir }}/ca.key"
+tls_ca_cert: "{{ tls_dir }}/ca.cert"
+tls_cert_days: 365
+tls_country: FR
+tls_state: angouleme
+tls_org: transcendance

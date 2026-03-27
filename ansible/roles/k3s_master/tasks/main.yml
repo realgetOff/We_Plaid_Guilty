@@ -1,0 +1,65 @@
+---
+- name: "Create K3s directory"
+  file:
+    path: "{{ config_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: "Copy K3s conf"
+  template:
+    src: config.yaml.j2
+    dest: "{{ config_dir }}/config.yaml"
+    mode: '0644'
+
+- name: ".kub dir"
+  file:
+    path: /home/ec2-user/.kube
+    state: directory
+    owner: ec2-user
+    mode: '0755'
+
+- name: "Installe master"
+  shell: |
+    curl -sfL https://get.k3s.io | \
+    INSTALL_K3S_VERSION={{ version }} \
+    sh -s - server \
+    --config {{ config_dir }}/config.yaml
+  args:
+    creates: /usr/local/bin/k3s
+
+- name: "Waiting k3s"
+  wait_for:
+    path: "{{ token_file }}"
+    state: present
+    timeout: 60
+
+- name: "Get node toekn"
+  slurp:
+    src: "{{ token_file }}"
+  register: k3s_token
+
+- name: "Set toekn"
+  set_fact:
+    k3s_node_token: "{{ k3s_token.content | b64decode | trim }}"
+
+- name: "Add k3s to PATH"
+  file:
+    src: /usr/local/bin/k3s
+    dest: /usr/bin/k3s
+    state: link
+
+- name: "Wait node"
+  shell: k3s kubectl get nodes
+  register: nodes
+  until: "'Ready' in nodes.stdout"
+  retries: 20
+  delay: 10
+
+- name: "Copy conf to ec2"
+  copy:
+    src: "{{ kubeconfig }}"
+    dest: /home/ec2-user/.kube/config
+    remote_src: yes
+    owner: ec2-user
+    mode: '0600'
+

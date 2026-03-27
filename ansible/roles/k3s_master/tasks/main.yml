@@ -1,7 +1,7 @@
 ---
 - name: "Create K3s directory"
   file:
-    path: "{{ k3s_config_dir }}"
+    path: "{{ config_dir }}"
     state: directory
     mode: '0755'
 
@@ -42,6 +42,12 @@
   set_fact:
     k3s_node_token: "{{ k3s_token.content | b64decode | trim }}"
 
+- name: "Add k3s to PATH"
+  file:
+    src: /usr/local/bin/k3s
+    dest: /usr/bin/k3s
+    state: link
+
 - name: "Wait node"
   shell: k3s kubectl get nodes
   register: nodes
@@ -51,7 +57,7 @@
 
 - name: "Copy conf to ec2"
   copy:
-    src: "{{ k3s_kubeconfig }}"
+    src: "{{ kubeconfig }}"
     dest: /home/ec2-user/.kube/config
     remote_src: yes
     owner: ec2-user

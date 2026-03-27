@@ -79,9 +79,17 @@
 - name: "Worker nodes"
   hosts: WORKERS
   become: true
-  vars:
-    k3s_node_token: "{{ hostvars[groups['MASTER'][0]]['k3s_node_token'] }}"
   tasks:
+    - name: "Get K3s token from master"
+      slurp:
+        src: /var/lib/rancher/k3s/server/node-token
+      register: k3s_token_raw
+      delegate_to: "{{ groups['MASTER'][0] }}"
+
+    - name: "Set K3s token"
+      set_fact:
+        k3s_node_token: "{{ k3s_token_raw.content | b64decode | trim }}"
+
     - name: "Rename w1(elk)"
       hostname:
         name: gartic-elk

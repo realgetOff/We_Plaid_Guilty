@@ -59,9 +59,8 @@ resource "local_file" "ansible_inventory" {
   content  = <<-EOT
   [MASTER]
   ${module.master.public_ip} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/github_actions
-  [WORKER1]
+  [WORKERS]
   ${module.worker1.public_ip} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/github_actions
-  [WORKER2]
   ${module.worker2.public_ip} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/github_actions
   EOT
 }

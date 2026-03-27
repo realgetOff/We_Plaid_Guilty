@@ -1,4 +1,4 @@
-resource "aws_security_group" "app_sg" {
+resource "aws_security_group" "master_sg" {
   name = "${var.project_name}-master_sg"
   description = "Allow ports on master node"
   ingress {

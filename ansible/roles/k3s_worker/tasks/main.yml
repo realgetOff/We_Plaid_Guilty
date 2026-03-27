@@ -11,6 +11,13 @@
     dest: "{{ config_dir }}/config.yaml"
     mode: '0644'
 
+- name: "Add k3s to PATH"
+  file:
+    src: /usr/local/bin/k3s
+    dest: /usr/bin/k3s
+    state: link
+    force: yes
+
 - name: "Install worker"
   shell: |
     curl -sfL https://get.k3s.io | \
@@ -19,8 +26,7 @@
     K3S_TOKEN={{ k3s_node_token }} \
     sh -s - agent \
     --config {{ config_dir }}/config.yaml
-  args:
-    creates: /usr/local/bin/k3s
+  changed_when: true
 
 - name: "Wait agent"
   wait_for:

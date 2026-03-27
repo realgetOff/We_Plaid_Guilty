@@ -2,4 +2,5 @@
 version: "v1.32.3+k3s1"
 config_dir: /etc/rancher/k3s
 kubeconfig: /etc/rancher/k3s/k3s.yaml
-master_ip: "{{ hostvars[groups['MASTER'][0]]['ansible_host'] }}"
+master_ip: "{{ groups['MASTER'][0] }}"
+k3s_node_token: ""

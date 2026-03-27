@@ -1,5 +1,7 @@
+{% raw %}
 {{ with secret "secret/data/elk/config" }}
 ELASTIC_PASSWORD={{ .Data.data.elastic_password }}
 KIBANA_PASSWORD={{ .Data.data.kibana_password }}
 ENCRYPTION_KEY={{ .Data.data.encrypt_key }}
 {{ end }}
+{% endraw %}

@@ -27,3 +27,9 @@ variable "auth_backend_path" {
   description = "auth backend path"
   type = string
 }
+
+variable "extra_paths" {
+  description = "Paths supp fro policy"
+  type        = list(string)
+  default     = []
+}

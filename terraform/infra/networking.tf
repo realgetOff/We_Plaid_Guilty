@@ -1,6 +1,6 @@
-resource "aws_security_group" "app_sg" {
-  name = "${var.project_name}-app_sg"
-  description = "Allow ports on app instance"
+resource "aws_security_group" "master_sg" {
+  name = "${var.project_name}-master_sg"
+  description = "Allow ports on master node"
   ingress {
     description = "SSH"
     cidr_blocks = ["0.0.0.0/0"]
@@ -9,11 +9,60 @@ resource "aws_security_group" "app_sg" {
     to_port = 22
   }
   ingress {
+    description = "HTTPS"
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port = 443
+    protocol = "tcp"
+    to_port = 443
+  }
+  ingress {
     description = "HTTP"
     cidr_blocks = ["0.0.0.0/0"]
     from_port = 80
     protocol = "tcp"
     to_port = 80
+  }
+  ingress {
+    description = "API K3s"
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port = 6443
+    protocol = "tcp"
+    to_port = 6443
+  }
+  ingress {
+    description = "Kubelet"
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port = 10250
+    protocol = "tcp"
+    to_port = 10250
+  }
+  ingress {
+    description = "etcd"
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port = 2379
+    protocol = "tcp"
+    to_port = 2380
+  }
+  ingress {
+    description = "Flannel"
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port = 8472
+    protocol = "udp"
+    to_port = 8472
+  }
+  ingress {
+    description = "WireGuard" //WARN Cilium ?
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port = 51820
+    protocol = "udp"
+    to_port = 51820
+  }
+  ingress {
+    description = "Node Port"
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port = 30000
+    protocol = "tcp"
+    to_port = 32767
   }
   ingress {
     description = "Vault"
@@ -37,9 +86,9 @@ resource "aws_security_group" "app_sg" {
   }
 }
 
-resource "aws_security_group" "monitoring_sg" {
-  name = "${var.project_name}-monitoring_sg"
-  description = "Allow ports on monitoring instances"
+resource "aws_security_group" "worker_sg" {
+  name = "${var.project_name}-worker_sg"
+  description = "Allow ports on ports on workers"
   ingress {
     description = "SSH"
     cidr_blocks = ["0.0.0.0/0"]
@@ -47,6 +96,35 @@ resource "aws_security_group" "monitoring_sg" {
     protocol = "tcp"
     to_port = 22
   }
+  ingress {
+    description = "Kubelet"
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port = 10250
+    protocol = "tcp"
+    to_port = 10250
+  }
+  ingress {
+    description = "Flannel"
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port = 8472
+    protocol = "udp"
+    to_port = 8472
+  }
+  ingress {
+    description = "WireGuard" //WARN Cilium ?
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port = 51820
+    protocol = "udp"
+    to_port = 51820
+  }
+  ingress {
+    description = "Node Port"
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port = 30000
+    protocol = "tcp"
+    to_port = 32767
+  }
+/*
   ingress {
     description = "Kibana"
     cidr_blocks = ["0.0.0.0/0"]
@@ -81,7 +159,7 @@ resource "aws_security_group" "monitoring_sg" {
     from_port = 9090
     protocol = "tcp"
     to_port = 9090
-  }
+  }*/
   ingress {
     description = "Node exporter"
     cidr_blocks = ["0.0.0.0/0"]

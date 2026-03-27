@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type LobbySettings struct {
@@ -84,9 +85,12 @@ func createLobby(c *gin.Context) {
 	})
 }
 
+var jwtSecret = []byte("replace_with_env_or_equivalent_later")
+
+
+
 func handleGuestAuth(c *gin.Context, db *pgxpool.Pool){
 	guestName := fmt.Sprintf("guest_%d%d", rand.Intn(99), time.Now().UnixNano()%1000)
-
 
 	query := "INSERT INTO users (username, is_guest) VALUES ($1, TRUE)"
 	_, err := db.Exec(context.Background(), query, guestName)

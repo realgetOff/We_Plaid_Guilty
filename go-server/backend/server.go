@@ -11,7 +11,7 @@ import (
 )
 
 func socketLogic(conn *websocket.Conn, db *pgxpool.Pool) {
-	var currentUsername string
+	var UserToken string
 	for {
 		var msg Message
 		// Read JSON from the frontend
@@ -23,8 +23,8 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool) {
 		fmt.Println("type: " + msg.Type + " code: " + msg.Code + " reason " + msg.Reason)
 
 		if msg.Type == "authenticate" {
-			currentUsername = msg.Token
-            fmt.Println("WS authenticated for player: " + currentUsername)
+			UserToken = msg.Token
+            fmt.Println("WS authenticated for player: " + UserToken)
 			continue
 		}
 
@@ -81,7 +81,10 @@ var upgrader = websocket.Upgrader{
 */
 
 func handleWebsocket(c *gin.Context, db *pgxpool.Pool) {
-	// we upgrade the 
+	// we upgrade the connection to a websocket
+	// MALO SENDS THE TOKEN WITH SEND, NEEDS TO BE CHECKED.
+
+
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil )
 	if err != nil {
 		return 

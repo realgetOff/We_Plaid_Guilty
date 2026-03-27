@@ -1,5 +1,5 @@
-resource "aws_iam_role" "vault_kms" {
-  name = "vault-kms-role"
+resource "aws_iam_role" "k3s" {
+  name = "k3s-role"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
@@ -10,6 +10,8 @@ resource "aws_iam_role" "vault_kms" {
   })
 }
 
+
+/*
 resource "aws_iam_role" "vault_reader_elk" {
   name = "vault_reader_elk_role"
   assume_role_policy = jsonencode({
@@ -33,9 +35,9 @@ resource "aws_iam_role" "vault_reader_grafana" {
     }]
   })
 }
-
-resource "aws_iam_role_policy" "vault_kms" {
-  role = aws_iam_role.vault_kms.id
+*/
+resource "aws_iam_role_policy" "k3s_kms" {
+  role = aws_iam_role.k3s.id
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -53,11 +55,16 @@ resource "aws_iam_role_policy" "vault_kms" {
         Effect   = "Allow"
         Action   = ["sts:GetCallerIdentity"]
         Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = ["ecr:GetAuthorizationToken"]
+        Resource = "*"
       }
     ]
   })
 }
-
+/*
 resource "aws_iam_role_policy" "vault_elk" {
   role = aws_iam_role.vault_reader_elk.id
   policy = jsonencode({
@@ -112,9 +119,16 @@ resource "aws_iam_instance_profile" "vault_kms" {
   name = "vault-kms-profile"
   role = aws_iam_role.vault_kms.name
 }
+*/
+
 
 resource "aws_iam_role_policy_attachment" "ecr_read_only" {
-  role = "vault-kms-role"
+  role = aws_iam_role.k3s.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-  depends_on = [ aws_iam_role.vault_kms ]
+  depends_on = [ aws_iam_role.k3s ]
+}
+
+resource "aws_iam_instance_profile" "k3s" {
+  name = "k3s-profile"
+  role = aws_iam_role.k3s.name
 }

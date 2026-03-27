@@ -204,3 +204,35 @@
         grafana_password: "{{ grafana_pass }}"
     status_code: [200, 204]
   no_log: true
+
+- name: "Feed Vault for db"
+  uri:
+    url: "{{ vault_api_url }}/v1/secret/data/db/config"
+    method: POST
+    headers:
+      X-Vault-Token: "{{ active_root_token }}"
+    body_format: json
+    body: 
+      data:
+        db_password: "{{ db_password }}"
+        db_user: "{{ db_user }}"
+        db_name: "{{ db_name }}"
+    status_code: [200, 204]
+  no_log: true
+
+- name: "Feed Vault for app"
+  uri:
+    url: "{{ vault_api_url }}/v1/secret/data/app/config"
+    method: POST
+    headers:
+      X-Vault-Token: "{{ active_root_token }}"
+    body_format: json
+    body: 
+      data:
+        db_password: "{{ db_password }}"
+        db_user: "{{ db_user }}"
+        db_name: "{{ db_name }}"
+        jwt_secret: "{{ app_jwt_secret }}"
+        api_key: "{{ app_api_key }}"
+    status_code: [200, 204]
+  no_log: true

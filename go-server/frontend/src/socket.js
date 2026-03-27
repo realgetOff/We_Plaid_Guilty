@@ -30,88 +30,85 @@ let socket = null;
 let listeners = [];
 let pending = [];
 
-const getAuthToken = () =>
+const getAuthToken = async() =>
 {
-	const token = localStorage.getItem("authToken");
-
-	if (!token)
+	try
+	{
+			
+		const res = await fetch('api/player/auth');
+		const data = res.json();
+		if(!data.token || !res.json)
+		{
+			window.location.href = "/login";
+			return null;
+		}
+		return(data.token)
+	}
+	catch(err)
 	{
 		window.location.href = "/login";
 		return null;
 	}
-
-	return token;
 };
 
-const connect = () =>
+const setupSocketHandlers = (token) =>
 {
-	if (socket && (socket.readyState === WebSocket.OPEN
-		|| socket.readyState === WebSocket.CONNECTING))
-		return;
-
-	const token = getAuthToken();
-	if (!token)
-		return;
-
-	socket = new WebSocket(getWsUrl());
-
 	socket.onopen = () =>
 	{
-		console.log('ws connected');
-		send({ type: "authenticate", token });
-
-		if (pending.length > 0)
-		{
-			pending.forEach((data) =>
+		send({type: 'authenticate', token});
+		pending.forEach((data) =>
 			{
 				try
 				{
 					socket.send(data);
 				}
-				catch
-				{}
+				catch (e) {}
 			});
-			pending = [];
-		}
+		pending = [];
 	};
-
 	socket.onmessage = (event) =>
 	{
-		const msg = JSON.parse(event.data);
-		listeners.forEach((fn) => fn(msg));
+		const    msg = JSON.parse(event.data);
+		listeners.forEach((fn) =>
+		{
+			fn(msg);
+		});
 	};
-
 	socket.onclose = () =>
 	{
-		console.log('ws disconnected');
 		socket = null;
 	};
-
 	socket.onerror = (err) =>
 	{
 		console.error('ws error', err);
 	};
 };
 
+const connect = async () =>
+{
+	const    token = await getAuthToken();
+
+	if (socket && (socket.readyState === WebSocket.OPEN
+		|| socket.readyState === WebSocket.CONNECTING))
+	{
+		return ;
+	}
+	if (!token)
+	{
+		return ;
+	}
+	socket = new WebSocket(getWsUrl());
+	setupSocketHandlers(token);
+};
+
 const disconnect = () =>
 {
 	if (socket)
+	{
 		socket.close();
+	}
 	socket = null;
 	listeners = [];
-};
-
-const send = (payload) =>
-{
-	const data = JSON.stringify(payload);
-
-	if (socket && socket.readyState === WebSocket.OPEN)
-	{
-		socket.send(data);
-		return;
-	}
-
-	pending.push(data);
 };
 
 const addListener = (fn) =>

@@ -1,10 +1,15 @@
 resource "vault_policy" "name" {
   name = "${var.service_name}-policy"
-  policy = <<-EOT
-  path "secret/data/${var.service_name}/*" {
-     capabilities = ["read"]
-   }
-   EOT
+  policy = <<EOT
+path "secret/data/${var.service_name}/*" {
+  capabilities = ["read"]
+}
+%{ for path in var.extra_paths ~}
+path "${path}" {
+  capabilities = ["read"]
+}
+%{ endfor ~}
+EOT
 }
 
 resource "vault_aws_auth_backend_role" "name" {

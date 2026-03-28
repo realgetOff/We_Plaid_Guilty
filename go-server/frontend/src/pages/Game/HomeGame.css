@@ -152,4 +152,10 @@
   background: #dddddd;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 480px)
+{
+  .homegame
+  {
+    gap: 10px;
+  }
+}

@@ -1,0 +1,125 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Credits.css                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mforest- <marvin@d42.fr>                   +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/03/16 21:08:06 by mforest-          #+#    #+#             */
+/*   Updated: 2026/03/16 21:08:06 by mforest-         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+.credits
+{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-family: 'Courier New', Courier, monospace;
+  color: #000000;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.credits__card
+{
+  border: 1px solid #000000;
+  background: #ffffff;
+  box-shadow: 2px 2px 0 #000000;
+}
+
+.credits__card-header
+{
+  background: #000000;
+  color: #ffffff;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+}
+
+.credits__card-sub
+{
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: normal;
+  opacity: 0.6;
+}
+
+.credits__card-body
+{
+  padding: 0;
+}
+
+.credits__row
+{
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid #eeeeee;
+}
+
+.credits__row:last-child
+{
+  border-bottom: none;
+}
+
+.credits__avatar
+{
+  width: 36px;
+  height: 36px;
+  background: #000000;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid #000000;
+  box-shadow: 1px 1px 0 #444444;
+}
+
+.credits__info
+{
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.credits__username
+{
+  font-size: 13px;
+  font-weight: bold;
+  color: #000000;
+}
+
+.credits__tags
+{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.credits__tag
+{
+  font-size: 10px;
+  font-weight: bold;
+  border: 1px solid #000000;
+  padding: 1px 6px;
+  background: #ffffff;
+  color: #000000;
+  white-space: nowrap;
+}
+
+.credits__footer
+{
+  font-size: 10px;
+  font-weight: bold;
+  color: #888888;
+  text-align: center;
+}

@@ -2,6 +2,7 @@ package gamemanager
 
 import (
 	"sync"
+	"github.com/gorilla/websocket"
 )
 
 type GameStates string
@@ -47,6 +48,7 @@ type Player struct {
 	ID int
 	Score int
 	Name string
+	Conn *websocket.Conn
 	LastDraft string
 	IsHost bool
 	IsReady bool

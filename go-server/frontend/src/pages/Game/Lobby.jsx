@@ -239,7 +239,7 @@ const Lobby = () =>
   {
     send({
       type: 'leave_lobby',
-      room: code?.toUpperCase(),
+      room: normalized,
     });
     navigate('/game');
   };

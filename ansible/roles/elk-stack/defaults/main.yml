@@ -1,0 +1,12 @@
+---
+elk_stack_version: "8.19.0"
+cluster_name: "trans"
+licence: "basic"
+es_port: "9200"
+kibana_port: "5601"
+el_mem: "1073741824"
+kb_mem: "1073741824"
+ls_mem: "1073741824"
+elk_path: "/opt/elk/"
+service_name: "elk"
+vault_port: "8200"

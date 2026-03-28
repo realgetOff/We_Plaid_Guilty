@@ -10,50 +10,70 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-import React, { useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { authApi } from '../../api/auth';
-import { useAuth } from '../../context/AuthContext';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Auth.css';
 
-const Login = () =>
+function Login()
 {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const redirect = searchParams.get('redirect') || '/game';
-  const { user, loading, refresh } = useAuth();
+    const navigate = useNavigate();
+	const [authToken, setAuthToken] = useState(
+		localStorage.getItem("authToken") || ''
+	);
 
-  useEffect(() =>
-  {
-    if (loading)
-      return;
-    if (user)
-      navigate(redirect, { replace: true });
-  }, [user, loading, redirect, navigate]);
+    const handlePlay = async () =>
+	{
+        const token = localStorage.getItem("authToken");
+        if (token)
+		{
+			setAuthToken(token);
+        }
+        try
+		{
+            const res = await fetch("/api/player",
+			{
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
 
-  useEffect(() =>
-  {
-    refresh();
-  }, []);
+            if (!res.ok)
+			{
+                throw new Error("Server error");
+            }
 
-  const oauthUrl = authApi.oauth42Url(redirect);
+            const data = await res.json();
 
-  return (
-    <div className="auth">
-      <div className="auth__card">
-        <div className="auth__card-header">🔐 Sign In</div>
-        <div className="auth__body">
-          <p className="auth__hint">
-            Use your 42 account.
-	  </p>
-          <a className="auth__btn auth__btn--primary" href={oauthUrl}>
-            ▶ Sign in with 42
-          </a>
-        </div>
-      </div>
-    </div>
-  );
-};
+			localStorage.setItem("authToken", data.token);
+			setAuthToken(data.token);
+
+            console.log("Player registered:", data);
+
+            navigate("/game");
+        }
+		catch (error)
+		{
+            console.error("Request failed:", error);
+        }
+    };
+
+    return (
+		<div className="login-container">
+			<h1>Click on the button if u are gay</h1>
+			<button
+				className="auth__btn auth__btn--primary"
+				onClick={handlePlay}
+			>
+				I am!
+			</button>
+			<h2>
+			{authToken && (
+				<p><strong>{authToken}</strong></p>
+			)}
+			</h2>
+		</div>
+    );
+}
 
 export default Login;
-

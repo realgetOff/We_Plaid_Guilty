@@ -1,8 +1,9 @@
 package gamemanager
 
 import (
-	"sync"
+	"fmt"
 	"math/rand"
+	"sync"
 	"time"
 )
 
@@ -24,8 +25,19 @@ func (h *Hub) generateRandID(lenght int) (roomId string) {
 	return string(ran_str)
 }
 
+func (h *Hub) GetRoom(id string) (* Room, error) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	ptr, err := h.Rooms[id]
+	if err {
+		return nil, fmt.Errorf("invalid id %d", id)
+	}
+	return ptr, nil
+}
+
 func (h *Hub) CreateRoom() (* Room){
-	var R* Room
+	var R *Room
 	var IdRoom string
 	rand.Seed(time.Now().UnixNano())
 
@@ -40,12 +52,14 @@ func (h *Hub) CreateRoom() (* Room){
 			continue
 		} else {
 			R = NewRoom(IdRoom, 60, 0)
+			go R.listenForNotifaction()
 			break
 		}
 	}
 
+	h.mu.Lock()
 	h.Rooms[IdRoom] = R
-
+	h.mu.Unlock()
 
 	return R
 }

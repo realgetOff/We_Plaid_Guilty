@@ -20,6 +20,21 @@ func (r *Room) waitForPhase(timeout time.Duration) {
 	}
 }
 
+func (r *Room) listenForNotifaction() {
+	for notification := range r.MessageChan {
+			r.mu.Lock()
+			player, ok := r.Players[notification.PlayerID]
+			r.mu.Unlock()
+
+		if (ok && player.Conn != nil) {
+			err := player.Conn.WriteJSON(notification.Data)
+			if (err != nil) {
+				fmt.Printf("Erreur d'envoi au joueur %s: %v\n", player.Name, err)
+			}
+		}
+	}
+}
+
 /*
 * The RunGameLoop function manages the main game cycle of a room.
 * It alternates between writing and drawing phases for several rounds.

@@ -1,0 +1,30 @@
+---
+- name: "Create TLS dir"
+  file:
+    path: "{{ tls_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: "generate CA key"
+  command: >
+    openssl genrsa -out {{ tls_ca_key }} 4096
+  args:
+    creates: "{{ tls_ca_key }}"
+
+- name: "generate the key"
+  command: >
+    openssl req -new -x509 -days {{ tls_cert_days }}
+    -key {{ tls_ca_key }}
+    -out {{ tls_ca_cert }}
+  args:
+    creates: "{{ tls_ca_cert }}"
+  run_once: true
+  delegate_to: "{{ groups['APP'][0] }}"
+
+- name: "Get CA cert"
+  fetch:
+    src: "{{ tls_ca_cert }}"
+    dest: "/tmp/trans-ca.crt"
+    flat: yes
+  run_once: true
+  delegate_to: "{{ groups['APP'][0] }}"

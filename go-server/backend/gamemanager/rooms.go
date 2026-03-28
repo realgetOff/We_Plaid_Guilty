@@ -2,6 +2,7 @@ package gamemanager
 
 import (
 	"fmt"
+	"github.com/gorilla/websocket"
 )
 
 /*
@@ -57,7 +58,7 @@ func NewRoom(id string, timer int, totalRound int) (*Room) {
 /*
 * Add player in the room.
 */
-func (r *Room) AddPlayer(id int, name string) (error){
+func (r *Room) AddPlayer(id int, name string, conn *websocket.Conn) (error){
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -75,6 +76,7 @@ func (r *Room) AddPlayer(id int, name string) (error){
 		ID: id,
 		Name: name,
 		IsHost: isFirst,
+		Conn: conn,
 		isConnected: true,
 		IsReady: false,
 	}
@@ -82,19 +84,21 @@ func (r *Room) AddPlayer(id int, name string) (error){
 	r.Players[id] = newPlayer
 	r.PlayerOrder = append(r.PlayerOrder, id)
 
-	msg := map[string]interface{}{
-		"type": "player_connected",
-		"room": r.ID,
-		"player": map[string]interface{}{
-			"id": newPlayer.ID,
-			"name": newPlayer.Name,
-			"host": newPlayer.IsHost,
-		},
-	}
+	// msg := map[string]interface{}{
+		// "type": "player_connected",
+		// "room": r.ID,
+		// "player": map[string]interface{}{
+			// "id": newPlayer.ID,
+			// "name": newPlayer.Name,
+			// "host": newPlayer.IsHost,
+		// },
+	// }
 
-	for _, p := range r.Players {
-		r.MessageChan <- Notification{ PlayerID: p.ID, Data: msg, }
-	}
+	// for _, p := range r.Players {
+		// r.MessageChan <- Notification{ PlayerID: p.ID, Data: msg, }
+	// }
+
+	r.BroadcastLobbyState()
 
 	return nil
 }
@@ -142,7 +146,7 @@ func (r *Room) RemovePlayer(playerID int) {
 
 }
 
-	/*
+/*
 * Reset the status player (Ready (to)-> NotReady)
 */
 func (r *Room) resetPlayer() {

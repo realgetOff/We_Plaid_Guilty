@@ -2,6 +2,6 @@ allowed_ports:
   - "22/tcp"
   - "80/tcp"
   - "443/tcp"
-  - "8200/tcp"
+extra_ports: []
 ssh_port: 22
 permit_root_login: "no"

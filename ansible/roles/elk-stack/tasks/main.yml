@@ -1,0 +1,56 @@
+---
+- name: "Directory exist ?"
+  file:
+    path: "{{ elk_path }}"
+    state: directory
+    mode: '0755'
+
+- name: "Directory exist ?(pipeline)"
+  file:
+    path: "{{ elk_path }}/pipeline/"
+    state: directory
+    mode: '0755'
+
+- name: "copy docker compose(elk)"
+  copy:
+    src: docker-compose.yml
+    dest: "{{ elk_path }}/docker-compose.yml"
+    mode: '0644'
+
+- name: "copy logstash.conf"
+  template:
+    src: logstash.conf.j2
+    dest: "{{ elk_path }}/pipeline/logstash.conf"
+    mode: '0644'
+  notify: "Restart ELK"
+
+# - name: "copy vault agent config"
+  # template:
+    # src: agent.hcl.j2
+    # dest: "{{ elk_path }}/agent.hcl"
+    # mode: '0644'
+  # notify: "Restart ELK"
+# 
+# - name: "copy secret agent template"
+  # template:
+    # src: elk.tpl.j2
+    # dest: "{{ elk_path }}/elk.tpl"
+    # mode: '0644'
+  # notify: "Restart ELK"
+
+- name: "run docker compose (Elk)"
+  shell: "docker compose up -d"
+  args:
+    chdir: "{{ elk_path }}"
+  environment:
+    ELASTIC_PASSWORD: "{{ elastic_pass }}"
+    KIBANA_PASSWORD: "{{ kibana_pass }}"
+    STACK_VERSION: "{{ elk_stack_version }}"
+    CLUSTER_NAME: "{{ cluster_name }}"
+    LICENSE: "{{ licence }}"
+    ES_PORT: "{{ es_port }}"
+    KIBANA_PORT: "{{ kibana_port }}"
+    ES_MEM_LIMIT: "{{ el_mem }}"
+    KB_MEM_LIMIT: "{{ kb_mem }}"
+    LS_MEM_LIMIT: "{{ ls_mem }}"
+    ENCRYPTION_KEY: "{{ elk_encrypt_key }}"

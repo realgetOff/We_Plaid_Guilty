@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
-	// "github.com/golang-jwt/jwt/v5"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type LobbySettings struct {
@@ -87,6 +87,31 @@ func createLobby(c *gin.Context) {
 
 var jwtSecret = []byte("replace_with_env_or_equivalent_later")
 
+type MyCustomClaims struct {
+	Username string `json:"username"`
+	UserID string `json:"id"`
+	jwt.RegisteredClaims
+}
+
+func generateJWT(userID string, guestName string) (string, error) {
+	claims := MyCustomClaims{
+		Username:	guestName,
+		UserID:		userID,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)), // change later, temporarily 24h
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	
+	signedToken, err := token.SignedString(jwtSecret)
+	if ( err != nil ) {
+		fmt.Println("Couldn't sign / generate JWT for guest " + guestName + " where id = " + userID)
+		return "", err
+	}
+	return signedToken, nil
+}
 
 
 func handleGuestAuth(c *gin.Context, db *pgxpool.Pool){
@@ -100,6 +125,7 @@ func handleGuestAuth(c *gin.Context, db *pgxpool.Pool){
 		fmt.Println("Guest creation failed")
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Server couldn't create a guest user in the database."})
+		return
 	}
 	// query = "SELECT id FROM users WHERE username = $1"
 	// id, err := db.Exec(context.Background(), query, guestName)
@@ -110,8 +136,18 @@ func handleGuestAuth(c *gin.Context, db *pgxpool.Pool){
 	// 	return
 	// }
 	fmt.Println("Guest name: " + guestName + " guest ID = " + userID)
+
+	var SignedString string
+	SignedString, err = generateJWT(userID, guestName)
+	if (err != nil) {
+		// fmt.Println("Guest creation failed")
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Server sign the JWT."})
+		return 
+	}
+
 	c.JSON(http.StatusOK, AuthResponse{
-		Token: guestName,
+		Token: SignedString,
 		})
 }
 

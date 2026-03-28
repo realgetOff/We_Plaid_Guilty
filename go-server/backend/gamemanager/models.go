@@ -7,11 +7,20 @@ import (
 type GameStates string
 
 const (
-	StateWaiting	GameStates = "WAITING"
-	StateWriting	GameStates = "WRITING"
-	StateDrawing	GameStates = "DRAWING"
-	StateFinished	GameStates = "FINISHED"
+	StateWaiting	GameStates = "waiting"
+	StateWriting	GameStates = "write"
+	StateDrawing	GameStates = "draw"
+	StateGuess		GameStates = "guess"
+	StateFinished	GameStates = "gallery"
 )
+
+type GameStateRecord struct {
+	Type    string `json:"type"`
+    Phase   string `json:"phase"`
+    Room    string `json:"room"`
+    Prompt  string `json:"prompt,omitempty"`
+    Drawing string `json:"drawing,omitempty"`
+}
 
 /* 
 * The entry structure is like a new page from a book.
@@ -39,8 +48,14 @@ type Player struct {
 	Score int
 	Name string
 	LastDraft string
+	IsHost bool
 	IsReady bool
 	isConnected bool
+}
+
+type Notification struct {
+	PlayerID int
+	Data interface{}
 }
 
 /*
@@ -49,10 +64,15 @@ type Player struct {
 */
 type Room struct {
 	ID string
+	Phase string
+	Timer int
+	TotalRound int
+	CurrentRound int
 	Players map[int]*Player
 	Books map[int]*Book
 	PlayerOrder []int
 	FinishedChan chan bool
 	Status GameStates
+	MessageChan chan Notification
 	mu sync.Mutex
 }

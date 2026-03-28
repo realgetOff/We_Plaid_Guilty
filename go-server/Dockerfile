@@ -1,13 +1,23 @@
 
+<<<<<<< HEAD
 FROM --platform=linux/amd64 node:20-alpine AS frontend-builder
+=======
+# THE BELOW CODE IS THE PRODUCTION ENVIRONMENT, DONT TOUCH IT PLEASE
+
+FROM node:20-alpine AS frontend-builder
+>>>>>>> 5fe6cb6f876601e10f69acdbe2579727f8c9fe60
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
 RUN npm install
 COPY frontend/ .
 RUN npm run build
 
+<<<<<<< HEAD
 FROM --platform=linux/amd64 golang:1.25-alpine AS backend-builder
 RUN apk add --no-cache ca-certificates
+=======
+FROM golang:1.25-alpine AS backend-builder 
+>>>>>>> 5fe6cb6f876601e10f69acdbe2579727f8c9fe60
 WORKDIR /app/backend
 COPY backend/go.mod backend/go.sum ./
 RUN go mod download

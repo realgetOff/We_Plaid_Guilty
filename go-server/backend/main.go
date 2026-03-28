@@ -24,6 +24,10 @@ omitempty: omits empty strings, lowering network traffic
 
 */
 
+<<<<<<< HEAD
+=======
+var globalHub *gamemanager.Hub
+>>>>>>> 5fe6cb6f876601e10f69acdbe2579727f8c9fe60
 
 func connectToDatabase () (*pgxpool.Pool, error) {
 	// Need to get the postgres identification from somewhere, for right now, environment variables
@@ -85,9 +89,13 @@ func main() {
 	router.GET("/ws", func (c *gin.Context){
 		handleWebsocket(c, db, globalHub)
 	})
+	router.POST("/api/player", func (c *gin.Context){
+		handleGuestAuth(c, db)
+	})
+
 	//router.POST("/api/rooms", createLobby)
 	//router.POST("/api/player", handleLogin)
-	router.POST("/api/player", handleGuestAuth)
+	// router.POST("/api/player", handleGuestAuth)
 
 	// get the port defined in the environment variables, if theres fuckall, 8080
 

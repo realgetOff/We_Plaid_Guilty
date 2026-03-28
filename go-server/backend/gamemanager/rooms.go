@@ -58,8 +58,14 @@ func NewRoom(id string, timer int, totalRound int) (*Room) {
 /*
 * Add player in the room.
 */
+<<<<<<< HEAD
 func (r *Room) AddPlayer(id int, name string, conn *websocket.Conn) (error){
 	r.mu.Lock()
+=======
+func (r *Room) AddPlayer(id int, name string) (error){
+	r.mu.Lock()
+	defer r.mu.Unlock()
+>>>>>>> 5fe6cb6f876601e10f69acdbe2579727f8c9fe60
 
 	if r.Status != StateWaiting {
 		return fmt.Errorf("Game started, too late!\n")
@@ -75,16 +81,36 @@ func (r *Room) AddPlayer(id int, name string, conn *websocket.Conn) (error){
 		ID: id,
 		Name: name,
 		IsHost: isFirst,
+<<<<<<< HEAD
 		Conn: conn,
+=======
+>>>>>>> 5fe6cb6f876601e10f69acdbe2579727f8c9fe60
 		isConnected: true,
 		IsReady: false,
 	}
 
 	r.Players[id] = newPlayer
 	r.PlayerOrder = append(r.PlayerOrder, id)
+<<<<<<< HEAD
 	r.mu.Unlock()
 
 	r.BroadcastLobbyState()
+=======
+
+	msg := map[string]interface{}{
+		"type": "player_connected",
+		"room": r.ID,
+		"player": map[string]interface{}{
+			"id": newPlayer.ID,
+			"name": newPlayer.Name,
+			"host": newPlayer.IsHost,
+		},
+	}
+
+	for _, p := range r.Players {
+		r.MessageChan <- Notification{ PlayerID: p.ID, Data: msg, }
+	}
+>>>>>>> 5fe6cb6f876601e10f69acdbe2579727f8c9fe60
 
 	return nil
 }

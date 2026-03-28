@@ -3,13 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
-	"math/rand/v2"
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"main.go/gamemanager"
+	"math/rand/v2"
+	"net/http"
+	
 )
 
 func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
@@ -25,8 +25,8 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 		fmt.Println("type: " + msg.Type + " code: " + msg.Code + " reason " + msg.Reason)
 
 		if msg.Type == "authenticate" {
-			currentUsername = msg.Token
-            fmt.Println("WS authenticated for player: " + currentUsername)
+			UserToken := msg.Token
+            fmt.Println("WS authenticated for player: " + UserToken)
 			continue
 		}
 
@@ -132,7 +132,11 @@ var upgrader = websocket.Upgrader{
 */
 
 func handleWebsocket(c *gin.Context, db *pgxpool.Pool, hub *gamemanager.Hub) {
-	// we upgrade the 
+	// we upgrade the connection to a websocket
+	// MALO SENDS THE TOKEN WITH SEND, NEEDS TO BE CHECKED.
+
+
+	
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil )
 	if err != nil {
 		return 

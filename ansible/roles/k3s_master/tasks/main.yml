@@ -63,3 +63,27 @@
     owner: ec2-user
     mode: '0600'
 
+- name: "Install helm"
+  shell: |
+    curl -sfL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+  args:
+    creates: /usr/local/bin/helm
+  ignore_errors: true
+
+- name: "symlink helm"
+  file:
+    src: /usr/local/bin/helm
+    dest: /usr/bin/helm
+    state: link
+    force: yes
+    follow: false
+
+- name: "add helm repo"
+  shell: |
+    helm repo add hashicorp https://helm.releases.hashicorp.com
+    helm repo add elastic https://helm.elastic.co
+    helm repo add grafana https://grafana.github.io/helm-charts
+    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+    helm repo update
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml

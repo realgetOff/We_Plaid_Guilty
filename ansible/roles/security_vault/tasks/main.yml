@@ -1,63 +1,40 @@
 ---
-- name: "create vault user"
-  user:
-    name: vault
-    uid: 100
-    system: yes
-    create_home: no
+- name: "Create vault namespace"
+  command: >
+    /usr/local/bin/kubectl create namespace vault
+    --dry-run=client -o yaml
+  register: vault_ns_yaml
+  changed_when: false
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
 
-- name: "Docker network is up ?"
-  docker_network:
-    name: security_net
-    state: present
+- name: "Apply vault namespace"
+  command: /usr/local/bin/kubectl apply -f -
+  args:
+    stdin: "{{ vault_ns_yaml.stdout }}"
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
 
-- name: "Creation volumes"
-  file:
-    path: "{{ item }}"
-    state: directory
-    owner: "{{ vault_user_id }}"
-    group: "{{ vault_user_id }}"
-    mode: '0700'
-  loop:
-    - "{{ vault_base_dir }}/config"
-    - "{{ vault_base_dir }}/data"
+- name: "Create Vault ConfigMap"
+  command: /usr/local/bin/kubectl apply -f -
+  args:
+    stdin: "{{ lookup('template', 'vault_configmap.j2') }}"
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
 
-- name: "Config Vault"
-  template:
-    src: vault.hcl.j2
-    dest: "{{ vault_base_dir }}/config/vault.hcl"
-    owner: "{{ vault_user_id }}"
-    mode: '0644'
-  notify: "Restart Vault"
+- name: "Install Vault via Helm"
+  command: >
+    /usr/local/bin/helm upgrade --install vault hashicorp/vault
+    --namespace vault
+    --values {{ playbook_dir }}/../helm/values/vault.yaml
+    --wait
+    --timeout 120s
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
 
-- name: "Launch Vault container"
-  docker_container:
-    name: "{{ vault_container_name }}"
-    image: "hashicorp/vault:{{ vault_version }}"
-    published_ports: ["8200:8200"]
-    state: started
-    restart_policy: always
-    user: "{{ vault_user_id }}"
-    entrypoint: vault
-    command: server -config=/vault/config/vault.hcl
-    read_only: false
-    cap_drop:
-    - ALL
-    capabilities: ["IPC_LOCK"]
-    networks:
-      - name: security_net
-    volumes:
-      - "{{ vault_base_dir }}/config:/vault/config:ro"
-      - "{{ vault_base_dir }}/data:/vault/file"
-
-- name: "Get Vault container internal IP"
-  docker_container_info:
-    name: "{{ vault_container_name }}"
-  register: vault_info
-
-- name: "Set vault api url value"
+- name: "Set vault api url"
   set_fact:
-    vault_api_url: "http://{{ vault_info.container.NetworkSettings.Networks.security_net.IPAddress }}:{{ vault_port }}"
+    vault_api_url: "http://127.0.0.1:30820"
 
 - name: "Wait for Vault API"
   uri:
@@ -84,18 +61,18 @@
       recovery_shares: "{{ vault_recovery_shares }}"
       recovery_threshold: "{{ vault_recovery_threshold }}"
     status_code: [200]
-  when : not vault_init_status.json.initialized
+  when: not vault_init_status.json.initialized
   register: vault_init_result
   no_log: true
 
 - name: "Set active root token"
   set_fact:
-    active_root_token: "{{ vault_init_result.json.root_token if (vault_init_result is defined and vault_init_result.json is defined) else vault_root_token }}"
+    active_root_token: "{{ vault_init_result.json.root_token if (vault_init_result is not skipped and vault_init_result.json is defined) else vault_root_token }}"
   no_log: true
 
 - name: "Vérification de la présence du token"
   fail:
-    msg: "Erreur : active_root_token est vide. Vérifiez que secrets.yml est présent ou que l'initialisation a réussi."
+    msg: "active_root_token est vide — secrets.yml absent ou init échouée."
   when: active_root_token == "" or active_root_token is none
 
 - name: "Verify vault pass file presence"
@@ -107,7 +84,7 @@
   failed_when: not pass_file.stat.exists
   when: not vault_init_status.json.initialized
 
-- name: "root token to file"
+- name: "Root token to file"
   copy:
     content: |
       vault_root_token: "{{ vault_init_result.json.root_token }}"
@@ -118,14 +95,16 @@
   no_log: true
 
 - name: "Encrypt secrets file"
-  command: "ansible-vault encrypt {{ vault_secrets_file }} --vault-password-file {{ vault_password_file }}"
+  command: >
+    ansible-vault encrypt {{ vault_secrets_file }}
+    --vault-password-file {{ vault_password_file }}
   delegate_to: localhost
   become: false
   when: not vault_init_status.json.initialized
 
 - name: "Vault initialization done"
   debug:
-    msg: "Vault initialisé - secrets.yml chiffré et sauvegardé dans {{ vault_secrets_file }}"
+    msg: "Vault initialisé — secrets.yml chiffré"
   when: not vault_init_status.json.initialized
 
 - name: "Check if KV v2 is enabled"
@@ -135,7 +114,6 @@
     headers:
       X-Vault-Token: "{{ active_root_token }}"
     status_code: [200, 404, 400]
-  delegate_to: "{{ inventory_hostname }}"
   register: kv_status
 
 - name: "Enable KV v2"
@@ -152,59 +130,6 @@
     status_code: [200, 204]
   when: kv_status.status == 404 or kv_status.status == 400
 
-# Ajout : check si AWS auth est déjà activé
-- name: "Check AWS auth method"
-  uri:
-    url: "{{ vault_api_url }}/v1/sys/auth"
-    method: GET
-    headers:
-      X-Vault-Token: "{{ active_root_token }}"
-    status_code: [200]
-  register: auth_methods
-
-- name: "Feed Vault for APP"
-  uri:
-    url: "{{ vault_api_url }}/v1/secret/data/app/config"
-    method: POST
-    headers:
-      X-Vault-Token: "{{ active_root_token }}"
-    body_format: json
-    body: 
-      data:
-        api_key: "{{ app_api_key }}"
-        db_password: "{{ app_db_password }}"
-        jwt_secret: "{{ app_jwt_secret }}"
-    status_code: [200, 204]
-  no_log: true
-
-- name: "Feed Vault for elk"
-  uri:
-    url: "{{ vault_api_url }}/v1/secret/data/elk/config"
-    method: POST
-    headers:
-      X-Vault-Token: "{{ active_root_token }}"
-    body_format: json
-    body: 
-      data:
-        elastic_password: "{{ elastic_pass }}"
-        kibana_password: "{{ kibana_pass }}"
-        encrypt_key: "{{ elk_encrypt_key }}"
-    status_code: [200, 204]
-  no_log: true
-
-- name: "Feed Vault for grafana"
-  uri:
-    url: "{{ vault_api_url }}/v1/secret/data/grafana/config"
-    method: POST
-    headers:
-      X-Vault-Token: "{{ active_root_token }}"
-    body_format: json
-    body: 
-      data:
-        grafana_password: "{{ grafana_pass }}"
-    status_code: [200, 204]
-  no_log: true
-
 - name: "Feed Vault for db"
   uri:
     url: "{{ vault_api_url }}/v1/secret/data/db/config"
@@ -212,7 +137,7 @@
     headers:
       X-Vault-Token: "{{ active_root_token }}"
     body_format: json
-    body: 
+    body:
       data:
         db_password: "{{ db_password }}"
         db_user: "{{ db_user }}"
@@ -227,12 +152,40 @@
     headers:
       X-Vault-Token: "{{ active_root_token }}"
     body_format: json
-    body: 
+    body:
       data:
         db_password: "{{ db_password }}"
         db_user: "{{ db_user }}"
         db_name: "{{ db_name }}"
         jwt_secret: "{{ app_jwt_secret }}"
         api_key: "{{ app_api_key }}"
+    status_code: [200, 204]
+  no_log: true
+
+- name: "Feed Vault for elk"
+  uri:
+    url: "{{ vault_api_url }}/v1/secret/data/elk/config"
+    method: POST
+    headers:
+      X-Vault-Token: "{{ active_root_token }}"
+    body_format: json
+    body:
+      data:
+        elastic_password: "{{ elastic_pass }}"
+        kibana_password: "{{ kibana_pass }}"
+        encrypt_key: "{{ elk_encrypt_key }}"
+    status_code: [200, 204]
+  no_log: true
+
+- name: "Feed Vault for grafana"
+  uri:
+    url: "{{ vault_api_url }}/v1/secret/data/grafana/config"
+    method: POST
+    headers:
+      X-Vault-Token: "{{ active_root_token }}"
+    body_format: json
+    body:
+      data:
+        grafana_password: "{{ grafana_pass }}"
     status_code: [200, 204]
   no_log: true

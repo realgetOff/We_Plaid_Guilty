@@ -62,6 +62,13 @@
       # ignore_errors: true
       when: lookup('fileglob', playbook_dir + '/secrets.yml') != []
 
+    - name: "K3s master"
+      include_role:
+        name: k3s_master
+        apply:
+          tags: k3s_master
+      tags: k3s_master
+
     - name: "Vault"
       include_role:
         name: security_vault
@@ -69,12 +76,6 @@
           tags: security_vault
       tags: security_vault
 
-    - name: "K3s master"
-      include_role: 
-        name: k3s_master
-        apply:
-          tags: k3s_master
-      tags: k3s_master
 
 - name: "Worker nodes"
   hosts: WORKERS

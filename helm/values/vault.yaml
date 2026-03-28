@@ -1,0 +1,52 @@
+global:
+  enabled: true
+
+injector:
+  enabled: true
+
+server:
+  image:
+    repository: hashicorp/vault
+    tag: "1.21.2"
+
+  standalone:
+    enabled: true
+    config: ""
+
+  extraVolumes:
+    - type: configMap
+      name: vault-config
+
+  volumes:
+    - name: vault-config
+      configMap:
+        name: vault-config
+
+  volumeMounts:
+    - name: vault-config
+      mountPath: /vault/config/vault.hcl
+      subPath: vault.hcl
+
+  dataStorage:
+    enabled: true
+    size: 5Gi
+    storageClass: local-path
+
+  affinity: |
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: kubernetes.io/hostname
+            operator: In
+            values:
+            - gartic-master
+
+  service:
+    type: NodePort
+    nodePort: 30820
+
+ui:
+  enabled: true
+  serviceType: NodePort
+  serviceNodePort: 30821

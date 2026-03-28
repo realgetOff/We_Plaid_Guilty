@@ -38,7 +38,8 @@ const getAuthToken = async() =>
 		const data = await res.json();
 		if(!data.token || !res.ok)
 		{
-			window.location.href = "/login";
+			console.log("test");
+			// window.location.href = "/login";
 			return null;
 		}
 		console.log("token: ", data.token);
@@ -46,7 +47,8 @@ const getAuthToken = async() =>
 	}
 	catch(err)
 	{
-		window.location.href = "/login";
+		console.log("AAAAAAAAAAAAAAA");
+		// window.location.href = "/login";
 		return null;
 	}
 };
@@ -98,19 +100,25 @@ const setupSocketHandlers = (token) =>
 
 const connect = async () =>
 {
+	console.log("connect test 1");
 	const    token = await getAuthToken();
 
+	console.log("connect test 2");
 	if (socket && (socket.readyState === WebSocket.OPEN
 		|| socket.readyState === WebSocket.CONNECTING))
 	{
+		console.log("connect test 3");
 		return ;
 	}
 	if (!token)
 	{
+		console.log("connect test 4");
 		return ;
 	}
+	console.log("connect test 5");
 	socket = new WebSocket(getWsUrl());
 	setupSocketHandlers(token);
+	console.log("connect test 6");
 };
 
 const disconnect = () =>

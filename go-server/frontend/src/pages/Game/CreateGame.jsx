@@ -36,7 +36,7 @@ const CreateGame = () =>
   useEffect(() =>
   {
     connect();
-
+	console.log("createGame test 1");
     const handler = (msg) =>
     {
       if (msg.type === 'room_created')

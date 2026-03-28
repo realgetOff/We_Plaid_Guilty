@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/jackc/pgx/v5/pgxpool"
+	
 )
 
 func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
@@ -111,7 +112,11 @@ var upgrader = websocket.Upgrader{
 */
 
 func handleWebsocket(c *gin.Context, db *pgxpool.Pool, hub *gamemanager.Hub) {
-	// we upgrade the 
+	// we upgrade the connection to a websocket
+	// MALO SENDS THE TOKEN WITH SEND, NEEDS TO BE CHECKED.
+
+
+	
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil )
 	if err != nil {
 		return 

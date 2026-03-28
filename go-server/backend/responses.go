@@ -91,34 +91,41 @@ var jwtSecret = []byte("replace_with_env_or_equivalent_later")
 
 func handleGuestAuth(c *gin.Context, db *pgxpool.Pool){
 	guestName := fmt.Sprintf("guest_%d%d", rand.Intn(99), time.Now().UnixNano()%1000)
+	var userID string
 
-	query := "INSERT INTO users (username, is_guest) VALUES ($1, TRUE)"
-	_, err := db.Exec(context.Background(), query, guestName)
+	query := "INSERT INTO users (username, is_guest) VALUES ($1, TRUE) RETURNING id;"
+	err := db.QueryRow(context.Background(), query, guestName).Scan(&userID);
 
 	if (err != nil) {
 		fmt.Println("Guest creation failed")
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Server couldn't create a guest user in the database."})
-	
-	} else {
-		fmt.Println("Guest name: " + guestName)
-		c.JSON(http.StatusOK, AuthResponse{
-			Token: guestName,
+	}
+	// query = "SELECT id FROM users WHERE username = $1"
+	// id, err := db.Exec(context.Background(), query, guestName)
+	// if (err != nil) {
+	// 	fmt.Println("Couldn'tget user id from username")
+	// 	c.JSON(http.StatusInternalServerError, gin.H{
+	// 		"error": "Server couldn't get user id from username in the database."})
+	// 	return
+	// }
+	fmt.Println("Guest name: " + guestName + " guest ID = " + userID)
+	c.JSON(http.StatusOK, AuthResponse{
+		Token: guestName,
 		})
-	}
 }
 
-func handleLogin(c *gin.Context) {
-	var name playerNameTemp
+// func handleLogin(c *gin.Context) {
+// 	var name playerNameTemp
 
-	if err := c.ShouldBindJSON(&name); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload: " + err.Error()})
-		return
-	}
+// 	if err := c.ShouldBindJSON(&name); err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload: " + err.Error()})
+// 		return
+// 	}
 
-	fmt.Println("Player name is : " + name.PlayerName)	
+// 	fmt.Println("Player name is : " + name.PlayerName)	
 
-	c.JSON(http.StatusOK, gin.H{
-		"login": "success",
-	})
-}
+// 	c.JSON(http.StatusOK, gin.H{
+// 		"login": "success",
+// 	})
+// }

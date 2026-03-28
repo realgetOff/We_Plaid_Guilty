@@ -33,15 +33,15 @@ let pending = [];
 const getAuthToken = async() =>
 {
 	try
-	{
-			
-		const res = await fetch('api/player/auth');
-		const data = res.json();
-		if(!data.token || !res.json)
+	{		
+		const res = await fetch('api/auth/player');
+		const data = await res.json();
+		if(!data.token || !res.ok)
 		{
 			window.location.href = "/login";
 			return null;
 		}
+		console.log("token: ", data.token);
 		return(data.token)
 	}
 	catch(err)
@@ -49,6 +49,18 @@ const getAuthToken = async() =>
 		window.location.href = "/login";
 		return null;
 	}
+};
+
+const send = (payload) =>
+{
+    const    data = JSON.stringify(payload);
+
+    if (socket && socket.readyState === WebSocket.OPEN)
+    {
+        socket.send(data);
+        return ;
+    }
+    pending.push(data);
 };
 
 const setupSocketHandlers = (token) =>

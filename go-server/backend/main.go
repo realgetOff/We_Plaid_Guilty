@@ -6,6 +6,7 @@ import (
 	"log"
 	"fmt"
 	"os"
+	"main.go/gamemanager"
 	// following two are for lobby generation
 	//"math/rand/v2"
 	// "sync"
@@ -22,6 +23,8 @@ code: room code
 omitempty: omits empty strings, lowering network traffic
 
 */
+
+var globalHub *gamemanager.Hub
 
 func connectToDatabase () (*pgxpool.Pool, error) {
 	// Need to get the postgres identification from somewhere, for right now, environment variables
@@ -78,7 +81,7 @@ func main() {
 	router.GET("/health", health)
 	router.GET("/api/config", vaultstatus)
 	router.GET("/ws", func (c *gin.Context){
-		handleWebsocket(c, db)
+		handleWebsocket(c, db, globalHub)
 	})
 	router.POST("/api/player", func (c *gin.Context){
 		handleGuestAuth(c, db)

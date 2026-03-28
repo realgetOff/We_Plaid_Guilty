@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/golang-jwt/jwt/v5"
+	// "github.com/golang-jwt/jwt/v5"
 )
 
 type LobbySettings struct {

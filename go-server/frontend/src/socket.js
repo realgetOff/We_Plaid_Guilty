@@ -33,8 +33,7 @@ let pending = [];
 const getAuthToken = async() =>
 {
 	try
-	{
-			
+	{		
 		const res = await fetch('api/auth/player');
 		const data = await res.json();
 		if(!data.token || !res.ok)
@@ -42,6 +41,7 @@ const getAuthToken = async() =>
 			window.location.href = "/login";
 			return null;
 		}
+		console.log("token: ", data.token);
 		return(data.token)
 	}
 	catch(err)

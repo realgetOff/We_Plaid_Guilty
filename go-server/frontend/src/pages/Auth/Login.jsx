@@ -46,6 +46,7 @@ function Login()
             const data = await res.json();
 
 			localStorage.setItem("authToken", data.token);
+			console.log("token: ", data.token);
 			setAuthToken(data.token);
 
             console.log("Player registered:", data);

@@ -51,8 +51,11 @@ func (h *Hub) CreateRoom() (* Room){
 		if ok {
 			continue
 		} else {
+			fmt.Println("HUB: Création de l'objet Room...")
 			R = NewRoom(IdRoom, 60, 0)
+			fmt.Println("HUB: Tentative de lancement de la Goroutine...")
 			go R.listenForNotifaction()
+			fmt.Println("HUB: Goroutine lancée, sortie de boucle.")
 			break
 		}
 	}

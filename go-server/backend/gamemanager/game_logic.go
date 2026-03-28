@@ -22,17 +22,21 @@ func (r *Room) waitForPhase(timeout time.Duration) {
 
 func (r *Room) listenForNotifaction() {
 	for notification := range r.MessageChan {
-			r.mu.Lock()
-			player, ok := r.Players[notification.PlayerID]
-			r.mu.Unlock()
+        
+        r.mu.Lock()
+        player, ok := r.Players[notification.PlayerID]
+        r.mu.Unlock()
 
-		if (ok && player.Conn != nil) {
-			err := player.Conn.WriteJSON(notification.Data)
-			if (err != nil) {
-				fmt.Printf("Erreur d'envoi au joueur %s: %v\n", player.Name, err)
-			}
-		}
-	}
+        if !ok {
+            continue
+        }
+		player.WriteMu.Lock()
+        err := player.Conn.WriteJSON(notification.Data)
+		player.WriteMu.Unlock()
+        if err != nil {
+            fmt.Printf("DEBUG: Erreur WriteJSON: %v\n", err)
+        }
+    }
 }
 
 /*

@@ -24,7 +24,6 @@ omitempty: omits empty strings, lowering network traffic
 
 */
 
-var globalHub *gamemanager.Hub
 
 func connectToDatabase () (*pgxpool.Pool, error) {
 	// Need to get the postgres identification from somewhere, for right now, environment variables
@@ -60,6 +59,9 @@ func main() {
 	}
 	defer db.Close()
 
+	globalHub := &gamemanager.Hub{
+		Rooms: make(map[string]*gamemanager.Room),
+	}
 
 	// if err := loadSecretsFromVault(); err != nil {
 	// 	log.Fatalf("Failed to load secrets from Vault: %v", err)

@@ -52,6 +52,7 @@ type Player struct {
 	LastDraft string
 	IsHost bool
 	IsReady bool
+	WriteMu sync.Mutex
 	isConnected bool
 }
 

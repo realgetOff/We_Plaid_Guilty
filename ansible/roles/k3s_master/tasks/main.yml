@@ -80,10 +80,10 @@
 
 - name: "add helm repo"
   shell: |
-    helm repo add hashicorp https://helm.releases.hashicorp.com
-    helm repo add elastic https://helm.elastic.co
-    helm repo add grafana https://grafana.github.io/helm-charts
-    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-    helm repo update
+    /usr/local/bin/helm repo add hashicorp https://helm.releases.hashicorp.com
+    /usr/local/bin/helm repo add elastic https://helm.elastic.co
+    /usr/local/bin/helm repo add grafana https://grafana.github.io/helm-charts
+    /usr/local/bin/helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+    /usr/local/bin/helm repo update
   environment:
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml

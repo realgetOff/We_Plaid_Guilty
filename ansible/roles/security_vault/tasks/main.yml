@@ -1,32 +1,16 @@
 ---
-- name: "Create vault namespace"
-  command: >
-    /usr/local/bin/kubectl create namespace vault
-    --dry-run=client -o yaml
-  register: vault_ns_yaml
-  changed_when: false
-  environment:
-    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
-
-- name: "Apply vault namespace"
-  command: /usr/local/bin/kubectl apply -f -
-  args:
-    stdin: "{{ vault_ns_yaml.stdout }}"
-  environment:
-    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
-
-- name: "Create Vault ConfigMap"
-  command: /usr/local/bin/kubectl apply -f -
-  args:
-    stdin: "{{ lookup('template', 'vault_configmap.j2') }}"
-  environment:
-    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+- name: "Template vault values"
+  template:
+    src: "{{ playbook_dir }}/../helm/values/vault.yaml.j2"
+    dest: /tmp/vault-values.yaml
+    mode: '0644'
 
 - name: "Install Vault via Helm"
   command: >
     /usr/local/bin/helm upgrade --install vault hashicorp/vault
     --namespace vault
-    --values {{ playbook_dir }}/../helm/values/vault.yaml
+    --create-namespace
+    --values /tmp/vault-values.yaml
     --wait
     --timeout 120s
   environment:

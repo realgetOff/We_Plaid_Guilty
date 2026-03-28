@@ -1,0 +1,5 @@
+{% raw %}
+{{ with secret "secret/data/db/config" }}
+POSTGRES_USER={{ .Data.data.db_user }}
+{{ end }}
+{% endraw %}

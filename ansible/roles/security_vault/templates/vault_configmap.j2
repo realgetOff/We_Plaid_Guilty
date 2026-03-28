@@ -3,9 +3,15 @@ kind: ConfigMap
 metadata:
   name: vault-config
   namespace: vault
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    meta.helm.sh/release-name: vault
+    meta.helm.sh/release-namespace: vault
 data:
   vault.hcl: |
     ui = true
+    log_level = "trace"
     listener "tcp" {
       tls_disable = 1
       address = "[::]:8200"

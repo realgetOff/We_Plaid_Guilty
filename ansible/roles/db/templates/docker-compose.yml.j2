@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  vault-agent:
+    image: hashicorp/vault:{{ vault_version }}
+    command: agent -config=/vault/config/agent.hcl
+    volumes:
+      - ./agent.hcl:/vault/config/agent.hcl:ro
+      - ./app.tpl:/vault/templates/app.tpl:ro
+      - ./db_user.tpl:/vault/templates/db_user.tpl:ro
+      - ./db_password.tpl:/vault/templates/db_password.tpl:ro
+      - ./db_name.tpl:/vault/templates/db_name.tpl:ro
+      - secrets:/secrets
+    restart: always
+    networks:
+      - security_net
+    extra_hosts:
+      - "vault:host-gateway"
+
+  db:
+  image: postgres:{{ pg_version }}
+    environment:
+      - POSTGRES_USER_FILE=/secrets/db_user
+      - POSTGRES_PASSWORD_FILE=/secrets/db_password
+      - POSTGRES_DB_FILE=/secrets/db_name
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - secrets:/secrets:ro
+    restart: always
+    networks:
+      - security_net
+    depends_on:
+      - vault-agent
+    extra_hosts:
+      - "169.254.169.254:127.0.0.1"
+
+volumes:
+  postgres_data:
+    driver: local
+  secrets:
+    driver: local
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+      o: "size=10m,uid=0"
+
+networks:
+  security_net:
+    external: true

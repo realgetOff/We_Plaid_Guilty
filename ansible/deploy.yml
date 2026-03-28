@@ -76,6 +76,12 @@
           tags: security_vault
       tags: security_vault
 
+    - name: "start DB"
+      include_role:
+        name: db
+        apply:
+          tags: db
+      tags: db
 
 - name: "Worker nodes"
   hosts: WORKERS

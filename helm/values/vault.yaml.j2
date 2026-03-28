@@ -11,21 +11,21 @@ server:
 
   standalone:
     enabled: true
-    config: ""
-
-  extraVolumes:
-    - type: configMap
-      name: vault-config
-
-  volumes:
-    - name: vault-config
-      configMap:
-        name: vault-config
-
-  volumeMounts:
-    - name: vault-config
-      mountPath: /vault/config/vault.hcl
-      subPath: vault.hcl
+    config: |
+      ui = true
+      log_level = "trace"
+      listener "tcp" {
+        tls_disable = 1
+        address = "[::]:8200"
+        cluster_address = "[::]:8201"
+      }
+      seal "awskms" {
+        region     = "eu-north-1"
+        kms_key_id = "{{ kms_key_id }}"
+      }
+      storage "file" {
+        path = "/vault/data"
+      }
 
   dataStorage:
     enabled: true

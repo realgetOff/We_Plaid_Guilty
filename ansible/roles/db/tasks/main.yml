@@ -1,0 +1,46 @@
+---
+- name: "Directory exist ?"
+  file:
+    path: "{{ db_path }}"
+    state: directory
+    mode: '0755'
+
+- name: "Copy vault agent config"
+  template:
+    src: agent.hcl.j2
+    dest: "{{ db_path }}/agent.hcl"
+    mode: '0644'
+  notify: "Restart db"
+
+- name: "Copy db_user secret template"
+  template:
+    src: db_user.tpl.j2
+    dest: "{{ db_path }}/db_user.tpl"
+    mode: '0644'
+  notify: "Restart db"
+
+- name: "Copy db_password secret template"
+  template:
+    src: db_password.tpl.j2
+    dest: "{{ db_path }}/db_password.tpl"
+    mode: '0644'
+  notify: "Restart db"
+
+- name: "Copy db_name secret template"
+  template:
+    src: db_name.tpl.j2
+    dest: "{{ db_path }}/db_name.tpl"
+    mode: '0644'
+  notify: "Restart db"
+
+- name: "Copy docker-compose"
+  template:
+    src: docker-compose.yml.j2
+    dest: "{{ db_path }}/docker-compose.yml"
+    mode: '0644'
+  notify: "Restart db"
+
+- name: "Pull and start containers"
+  shell: "docker compose up -d --pull always"
+  args:
+    chdir: "{{ db_path }}"

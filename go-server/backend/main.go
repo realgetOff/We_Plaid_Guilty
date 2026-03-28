@@ -24,10 +24,7 @@ omitempty: omits empty strings, lowering network traffic
 
 */
 
-<<<<<<< HEAD
-=======
 var globalHub *gamemanager.Hub
->>>>>>> 5fe6cb6f876601e10f69acdbe2579727f8c9fe60
 
 func connectToDatabase () (*pgxpool.Pool, error) {
 	// Need to get the postgres identification from somewhere, for right now, environment variables

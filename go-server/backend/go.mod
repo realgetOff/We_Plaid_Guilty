@@ -4,10 +4,7 @@ go 1.25.6
 
 require (
 	github.com/gin-gonic/gin v1.12.0
-<<<<<<< HEAD
-=======
 	github.com/golang-jwt/jwt/v5 v5.3.1
->>>>>>> 5fe6cb6f876601e10f69acdbe2579727f8c9fe60
 	github.com/gorilla/websocket v1.5.3
 	github.com/hashicorp/vault/api v1.22.0
 	github.com/hashicorp/vault/api/auth/aws v0.11.0

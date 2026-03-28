@@ -4,18 +4,11 @@ import (
 	"fmt"
 	"math/rand"
 	"time"
-<<<<<<< HEAD
-
-	"net/http"
-	"github.com/gin-gonic/gin"
-=======
 	"context"
-
 	"net/http"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/golang-jwt/jwt/v5"
->>>>>>> 5fe6cb6f876601e10f69acdbe2579727f8c9fe60
 )
 
 type LobbySettings struct {
@@ -91,31 +84,6 @@ func createLobby(c *gin.Context) {
 	})
 }
 
-<<<<<<< HEAD
-func handleGuestAuth(c *gin.Context){
-	guestName := fmt.Sprintf("guest_%d%d", rand.Intn(99), time.Now().UnixNano()%1000)
-
-	fmt.Println("Guest name: " + guestName)
-	c.JSON(http.StatusOK, AuthResponse{
-		Token: guestName,
-	})
-}
-
-func handleLogin(c *gin.Context) {
-	var name playerNameTemp
-
-	if err := c.ShouldBindJSON(&name); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload: " + err.Error()})
-		return
-	}
-
-	fmt.Println("Player name is : " + name.PlayerName)
-
-	c.JSON(http.StatusOK, gin.H{
-		"login": "success",
-	})
-}
-=======
 var jwtSecret = []byte("replace_with_env_or_equivalent_later")
 
 type MyCustomClaims struct {
@@ -196,4 +164,3 @@ func handleGuestAuth(c *gin.Context, db *pgxpool.Pool){
 // 		"login": "success",
 // 	})
 // }
->>>>>>> 5fe6cb6f876601e10f69acdbe2579727f8c9fe60

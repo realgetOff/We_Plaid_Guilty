@@ -11,10 +11,6 @@ CREATE TABLE IF NOT EXISTS rooms (
 CREATE TABLE IF NOT EXISTS users (
 	id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 	username VARCHAR(20) UNIQUE NOT NULL,
-<<<<<<< HEAD
-
-=======
 	is_guest BOOLEAN DEFAULT FALSE,
->>>>>>> 5fe6cb6f876601e10f69acdbe2579727f8c9fe60
 	is_online BOOLEAN DEFAULT FALSE
 );

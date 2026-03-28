@@ -33,38 +33,22 @@ let pending = [];
 const getAuthToken = async() =>
 {
 	try
-<<<<<<< HEAD
-	{
-			
-		const res = await fetch('api/auth/player');
-		const data = await res.json();
-		if(!data.token || !res.ok)
-		{
-			window.location.href = "/login";
-			return null;
-		}
-=======
 	{		
 		const res = await fetch('/api/auth/player');
 		const data = await res.json();
 		if(!data.token || !res.ok)
 		{
 			console.log("test");
-			// window.location.href = "/login";
+			window.location.href = "/login";
 			return null;
 		}
 		console.log("token: ", data.token);
->>>>>>> 5fe6cb6f876601e10f69acdbe2579727f8c9fe60
 		return(data.token)
 	}
 	catch(err)
 	{
-<<<<<<< HEAD
-		window.location.href = "/login";
-=======
 		console.log("AAAAAAAAAAAAAAA");
-		// window.location.href = "/login";
->>>>>>> 5fe6cb6f876601e10f69acdbe2579727f8c9fe60
+		window.location.href = "/login";
 		return null;
 	}
 };
@@ -116,13 +100,6 @@ const setupSocketHandlers = (token) =>
 
 const connect = async () =>
 {
-<<<<<<< HEAD
-	const    token = await getAuthToken();
-
-	if (socket && (socket.readyState === WebSocket.OPEN
-		|| socket.readyState === WebSocket.CONNECTING))
-	{
-=======
 	console.log("connect test 1");
 	const    token = await getAuthToken();
 
@@ -131,17 +108,10 @@ const connect = async () =>
 		|| socket.readyState === WebSocket.CONNECTING))
 	{
 		console.log("connect test 3");
->>>>>>> 5fe6cb6f876601e10f69acdbe2579727f8c9fe60
 		return ;
 	}
 	if (!token)
 	{
-<<<<<<< HEAD
-		return ;
-	}
-	socket = new WebSocket(getWsUrl());
-	setupSocketHandlers(token);
-=======
 		console.log("connect test 4");
 		return ;
 	}
@@ -149,7 +119,6 @@ const connect = async () =>
 	socket = new WebSocket(getWsUrl());
 	setupSocketHandlers(token);
 	console.log("connect test 6");
->>>>>>> 5fe6cb6f876601e10f69acdbe2579727f8c9fe60
 };
 
 const disconnect = () =>

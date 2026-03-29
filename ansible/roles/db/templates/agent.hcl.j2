@@ -6,7 +6,7 @@ auto_auth {
   method "aws" {
     config = {
       type = "iam"
-      role = "{{ app_name }}-role"
+      role = "db-role"
     }
   }
   sink "file" {
@@ -14,12 +14,6 @@ auto_auth {
       path = "/secrets/.vault-token"
     }
   }
-}
-
-template {
-  source = "/vault/templates/{{ app_name }}.tpl"
-  destination = "/secrets/{{ app_name }}-secrets"
-  perms = "0444"
 }
 
 template {

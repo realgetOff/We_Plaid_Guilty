@@ -48,6 +48,8 @@
     dest: /usr/bin/k3s
     state: link
 
+#WARN ADD REGEX for sudo path
+
 - name: "Wait node"
   shell: k3s kubectl get nodes
   register: nodes
@@ -84,6 +86,51 @@
     /usr/local/bin/helm repo add elastic https://helm.elastic.co
     /usr/local/bin/helm repo add grafana https://grafana.github.io/helm-charts
     /usr/local/bin/helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+    /usr/local/bin/helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
     /usr/local/bin/helm repo update
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+
+#WARN FAIRE LA CHART HELM ET DEGAGER LES --SET
+- name: "Lauch Ingress-nginx"
+  command: >
+    /usr/local/bin/helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx
+    --namespace ingress-nginx
+    --create-namespace
+    --set controller.config.enable-modsecurity=true
+    --set controller.config.enable-owasp-modsecurity-crs=true
+    --set controller.config.modsecurity-snippet="SecRuleEngine On"
+    --set controller.allowSnippetAnnotations=true
+    --wait
+    --timeout 120s
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+- name: "Copy app chart to master"
+  copy:
+    src: "{{ playbook_dir }}/../helm/app/"
+    dest: /tmp/gartic-app/
+    mode: '0644'
+
+- name: "Create ECR image pull secret"
+  shell: |
+    TOKEN=$(aws ecr get-login-password --region eu-north-1)
+    /usr/local/bin/kubectl create secret docker-registry ecr-secret \
+      --docker-server=437836833311.dkr.ecr.eu-north-1.amazonaws.com \
+      --docker-username=AWS \
+      --docker-password=$TOKEN \
+      --namespace=default \
+      --dry-run=client -o yaml | \
+    /usr/local/bin/kubectl apply -f -
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+- name: "Deploy app Go via Helm"
+  command: >
+    /usr/local/bin/helm upgrade --install gartic-app /tmp/gartic-app
+    --namespace default
+    --wait
+    --timeout 120s
   environment:
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml

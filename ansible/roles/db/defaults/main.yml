@@ -1,6 +1,5 @@
 ---
-pg_version: "16-alpine"
-pg_path: "/opt/postgres"
+db_version: "16-alpine"
+db_path: "/opt/postgres"
 vault_version: "1.21.2"
 vault_port: 30820
-app_name: "app"

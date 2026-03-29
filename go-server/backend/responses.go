@@ -35,6 +35,10 @@ type Message struct {
 	Token	string `json:"token,omitempty"`
 	Code	string `json:"code,omitempty"`
 	Reason	string `json:"reason,omitempty"`
+
+	Prompt   string `json:"prompt,omitempty"` 
+    Drawing  string `json:"drawing,omitempty"`
+    Guess    string `json:"guess,omitempty"`
 }
 
 type AuthResponse struct {

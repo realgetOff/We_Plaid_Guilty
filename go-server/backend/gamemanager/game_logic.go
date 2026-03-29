@@ -74,9 +74,9 @@ func (r *Room) RunGameLoop() {
 
 		if r.Phase == string(StateDrawing) {
 			fmt.Printf("Round %d : Drawing starting...\n", round)
-			r.waitForPhase(90 * time.Second)
+			r.waitForPhase(10 * time.Second)
 		} else {
-			r.waitForPhase(45 * time.Second)
+			r.waitForPhase(10 * time.Second)
 			fmt.Printf("Round %d : Writing starting...\n", round)
 		}
 

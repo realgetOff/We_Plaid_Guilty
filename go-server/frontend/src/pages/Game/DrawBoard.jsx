@@ -21,7 +21,7 @@ const COLORS =
 	'#aa00aa', '#ff44ff', '#884400', '#00cccc',
 ];
 
-const TIMER_SEC = 90;
+const TIMER_SEC = 89;
 const MAX_UNDO  = 30;
 const TOLERANCE = 30;
 

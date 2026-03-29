@@ -13,7 +13,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './WritePrompt.css';
 
-const TIMER_SEC = 60;
+const TIMER_SEC = 44;
 
 const WritePrompt = ({ onDone }) =>
 {
@@ -70,7 +70,7 @@ const WritePrompt = ({ onDone }) =>
 						type="text"
 						value={text}
 						onChange={(e) => { setText(e.target.value); setError(''); }}
-						onKeyDown={(e) => { if (e.key === 'Enter' || seconds <= 0) handleSubmit(); }}
+						onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit(); }}
 						placeholder="e.g. a cat riding a skateboard"
 						maxLength={60}
 						autoFocus

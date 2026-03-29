@@ -13,7 +13,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './GuessPrompt.css';
 
-const TIMER_SEC = 60;
+const TIMER_SEC = 44;
 
 const GuessPrompt = ({ drawing, onDone }) =>
 {

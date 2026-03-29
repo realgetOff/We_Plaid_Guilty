@@ -1,73 +1,176 @@
 package main
 
 import (
-	//"encoding/json"
 	"context"
+	//"encoding/json"
 	"log"
 	"fmt"
+	"net/http"
 	"os"
-	"main.go/gamemanager"
 	// following two are for lobby generation
+	"math/rand"
 	//"math/rand/v2"
+	"time"
 	// "sync"
 
 	"github.com/gin-gonic/gin"
 	//"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/joho/godotenv"
+
+	// TODO: remove when Vault Agent Injector is fully configured
+	// vault "github.com/hashicorp/vault/api"
+	// awsauth "github.com/hashicorp/vault/api/auth/aws"
 )
 
-/*
-The message structure contains the json information to be sent / received by the websocket for room generation
-type: state before / after generation of the room code
-code: room code
-omitempty: omits empty strings, lowering network traffic
+type Config struct {
+	APIKey     string `json:"api_key"`
+	DBPassword string `json:"db_password"`
+	JWTSecret  string `json:"jwt_secret"`
+}
 
-*/
+type LobbySettings struct {
+	Rounds int `json:"rounds"`
+	Timer int `json:"timer"`
+}
 
-var globalHub *gamemanager.Hub
+type CreateLobbyRequest struct {
+	HostID string `json:"hostId"`
+	Settings LobbySettings `json:"settings"`
+}
 
-func connectToDatabase () (*pgxpool.Pool, error) {
-	// Need to get the postgres identification from somewhere, for right now, environment variables
+type CreateLobbyResponse struct {
+	LobbyCode string `json:"lobbyCode"`
+}
 
-	db_host := os.Getenv("DB_HOST")
-	db_port := os.Getenv("DB_PORT")
-	db_user := os.Getenv("DB_USER")
-	db_password := os.Getenv("DB_PASSWORD")
-	db_name := os.Getenv("DB_NAME")
+var config Config
 
-	connection_url := "postgres://" + db_user + ":" + db_password + "@" + db_host + ":" + db_port + "/" + db_name
-
-	fmt.Println("Attempting to connect to :" + connection_url)
-
-	db, err := pgxpool.New(context.Background(), connection_url)
-	if err != nil {
-		return nil, err
+func generateLobbyCode(length int) string {
+	const charset = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	seededRand := rand.New(rand.NewSource(time.Now().UnixNano()))
+	
+	ret := make([]byte, length)
+	for i := range ret {
+		ret[i] = charset[seededRand.Intn(len(charset))]
 	}
 
-	fmt.Println("Connection to PostgreSQL database successful")
-
-	return db, nil
+	return string(ret)
 }
+
+func createLobby(c *gin.Context) {
+	lobbyCode := generateLobbyCode(6)
+	c.JSON(http.StatusOK, CreateLobbyResponse{
+		LobbyCode: lobbyCode,
+	})
+}
+
+func pong(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+		"message": "pong",
+	})
+}
+
+func health(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+		"status": "ok",
+	})
+}
+
+func vaultstatus(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+		"api_key_loaded":     config.APIKey != "",
+		"db_password_loaded": config.DBPassword != "",
+		"jwt_secret_loaded":  config.JWTSecret != "",
+	})
+}
+
+// loadSecrets reads secrets from /vault/secrets/app-secrets
+// injected by Vault Agent Injector sidecar.
+// Retries until the file is available (agent-init-first handles ordering
+// but we keep retries as safety net).
+func loadSecrets() error {
+	secretsFile := "/vault/secrets/app-secrets"
+
+	// Wait for Vault Agent to write the secrets file
+	maxRetries := 10
+	for i := 0; i < maxRetries; i++ {
+		if _, err := os.Stat(secretsFile); err == nil {
+			break
+		}
+		log.Printf("Waiting for secrets file %s... (%d/%d)", secretsFile, i+1, maxRetries)
+		time.Sleep(2 * time.Second)
+	}
+
+	if err := godotenv.Load(secretsFile); err != nil {
+		return fmt.Errorf("failed to load secrets from %s: %w", secretsFile, err)
+	}
+
+	config.APIKey     = os.Getenv("API_KEY")
+	config.DBPassword = os.Getenv("DB_PASSWORD")
+	config.JWTSecret  = os.Getenv("JWT_SECRET")
+
+	log.Println("Secrets loaded from Vault Agent Injector successfully")
+	return nil
+}
+
+// TODO: remove when Vault Agent Injector is fully configured
+// func loadSecretsFromVault() error {
+// 	vaultAddr := os.Getenv("VAULT_ADDR")
+// 	if vaultAddr == "" {
+// 		vaultAddr = "http://vault:8200"
+// 	}
+// 
+// 	cfg := vault.DefaultConfig()
+// 	cfg.Address = vaultAddr
+// 
+// 	client, err := vault.NewClient(cfg)
+// 	if err != nil {
+// 		return fmt.Errorf("unable to create vault client: %w", err)
+// 	}
+// 
+// 	if token := os.Getenv("VAULT_TOKEN"); token != "" {
+// 		client.SetToken(token)
+// 		log.Println("Using direct VAULT_TOKEN (Local Dev/Test Mode)")
+// 	} else {
+// 		awsAuth, err := awsauth.NewAWSAuth(
+// 			awsauth.WithRole("app-role"),
+// 		)
+// 		if err != nil {
+// 			return fmt.Errorf("unable to create AWS auth: %w", err)
+// 		}
+// 		authInfo, err := client.Auth().Login(context.Background(), awsAuth)
+// 		if err != nil {
+// 			return fmt.Errorf("vault login failed: %w", err)
+// 		}
+// 		if authInfo == nil {
+// 			return fmt.Errorf("no auth info returned")
+// 		}
+// 		log.Println("Authenticated via AWS IAM")
+// 	}
+// 
+// 	kv, err := client.KVv2("secret").Get(context.Background(), "app/config")
+// 	if err != nil {
+// 		return fmt.Errorf("failed to read secrets: %w", err)
+// 	}
+// 
+// 	config.APIKey     = kv.Data["api_key"].(string)
+// 	config.DBPassword = kv.Data["db_password"].(string)
+// 	config.JWTSecret  = kv.Data["jwt_secret"].(string)
+// 
+// 	fmt.Println("this is wicked insecure, remove this line before moving further on in prod " + config.APIKey + " " + config.DBPassword + " " + config.JWTSecret)
+// 
+// 	log.Println("Secrets loaded from Vault successfully")
+// 	return nil
+// }
 
 func main() {
 	fmt.Println("~o~ This project was brought to you with hate by pmilner- mforest- namichel & lviravon! ~o~")
 	fmt.Println(" ~~ Starting transcendence backend... ~~")
 
-	db, err := connectToDatabase()
-
-	if err != nil {
-		log.Fatalf("Couldn't connect to the PostgreSQL database: %v", err)
+	if err := loadSecrets(); err != nil {
+		log.Fatalf("Failed to load secrets: %v", err)
 	}
-	defer db.Close()
 
-
-	// if err := loadSecretsFromVault(); err != nil {
-	// 	log.Fatalf("Failed to load secrets from Vault: %v", err)
-	// }
-	// Gin router with default "middleware"
-	router := gin.Default();
-	// gin.SetMode(gin.ReleaseMode)
-	// https://github.com/gin-gonic/gin/blob/master/docs/doc.md#dont-trust-all-proxies 
+	router := gin.Default()
 
 	router.Static("/assets", "./static/assets")
 	router.StaticFile("/favicon.ico", "./static/favicon.ico")
@@ -75,27 +178,20 @@ func main() {
 		c.File("./static/index.html")
 	})
 
-
-	// GET endpoint in the router
 	router.GET("/ping", pong)
 	router.GET("/health", health)
 	router.GET("/api/config", vaultstatus)
-	router.GET("/ws", func (c *gin.Context){
-		handleWebsocket(c, db, globalHub)
-	})
-	//router.POST("/api/rooms", createLobby)
-	//router.POST("/api/player", handleLogin)
-	router.POST("/api/player", handleGuestAuth)
-
-	// get the port defined in the environment variables, if theres fuckall, 8080
+	router.POST("/api/rooms", createLobby)
 
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
-		
+
 	if err := router.Run(":" + port); err != nil {
-		log.Fatalf("Failed to run server: %v", err)	
+		log.Fatalf("failed to run server: %v", err)
 	}
 }
 
+// unused imports kept for reference — remove with commented code above
+var _ = context.Background

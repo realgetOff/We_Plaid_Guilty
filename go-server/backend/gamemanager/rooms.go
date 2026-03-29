@@ -104,7 +104,6 @@ func (r *Room) JoinGame(playerID string, newConn *websocket.Conn) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if oldPlayer, ok := r.Players[playerID]; ok {
-		oldPlayer.IsReady = false
 		oldPlayer.Conn = newConn
 		oldPlayer.IsConnected = true
 	}

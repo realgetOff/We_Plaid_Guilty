@@ -35,7 +35,7 @@ const Game = () =>
 
 	const [status,  setStatus]  = useState('checking');
 	const [deny,    setDeny]    = useState('');
-	const [phase,   setPhase]   = useState('write');
+	const [phase,   setPhase]   = useState(null);
 	const [prompt,  setPrompt]  = useState('');
 	const [drawing, setDrawing] = useState(null);
 	const [chains,  setChains]  = useState([]);
@@ -59,10 +59,9 @@ const Game = () =>
 
 			if (msg.type === 'game_state')
 			{
-				if (msg.phase)
-					setPhase(msg.phase);
-				setPrompt(typeof msg.prompt === 'string' ? msg.prompt : '');
-				setDrawing(typeof msg.drawing === 'string' ? msg.drawing : null);
+				setPhase(msg.phase || null);
+				setPrompt(msg.prompt || '');
+				setDrawing(msg.drawing || null);
 				if (Array.isArray(msg.chains))
 					setChains(msg.chains);
 				setStatus('playing');
@@ -74,14 +73,6 @@ const Game = () =>
 				setDeny(msg.reason || DENY_REASONS.unknown);
 				setStatus('denied');
 				return;
-			}
-
-			if (msg.type === 'game_phase')
-			{
-				if (msg.phase)
-					setPhase(msg.phase);
-				setPrompt(typeof msg.prompt === 'string' ? msg.prompt : '');
-				setDrawing(typeof msg.drawing === 'string' ? msg.drawing : null);
 			}
 		};
 
@@ -105,36 +96,30 @@ const Game = () =>
 	const handlePromptDone = (text) =>
 	{
 		send({
-			type: 'prompt_submitted',
-			code: code?.toUpperCase(),
+			type:   'prompt_submitted',
+			code:   code?.toUpperCase(),
 			prompt: text,
 		});
-		setPrompt('');
-		setDrawing(null);
 		setPhase('waiting');
 	};
 
 	const handleDrawDone = (dataURL) =>
 	{
 		send({
-			type: 'drawing_submitted',
-			code: code?.toUpperCase(),
+			type:    'drawing_submitted',
+			code:    code?.toUpperCase(),
 			drawing: dataURL,
 		});
-		setPrompt('');
-		setDrawing(null);
 		setPhase('waiting');
 	};
 
-	const handleGuessDone = (_guess) =>
+	const handleGuessDone = (guess) =>
 	{
 		send({
-			type: 'guess_submitted',
-			code: code?.toUpperCase(),
-			guess: _guess,
+			type:  'guess_submitted',
+			code:  code?.toUpperCase(),
+			guess: guess,
 		});
-		setPrompt('');
-		setDrawing(null);
 		setPhase('waiting');
 	};
 
@@ -163,10 +148,7 @@ const Game = () =>
 					<div className="game__guard-icon">✕</div>
 					<p className="game__guard-msg">⚠ {deny}</p>
 					<div className="game__guard-actions">
-						<button
-							className="game__guard-btn"
-							onClick={() => navigate('/game')}
-						>
+						<button className="game__guard-btn" onClick={() => navigate('/game')}>
 							← back to home
 						</button>
 						{deny === DENY_REASONS.waiting &&
@@ -210,10 +192,13 @@ const Game = () =>
 				</div>
 			}
 			{phase === 'gallery' &&
-				<Gallery
-					chains={chains}
-					onBack={() => navigate('/game')}
-				/>
+				<Gallery chains={chains} onBack={() => navigate('/game')} />
+			}
+			{!phase &&
+				<div className="game__waiting">
+					<span className="game__waiting-spinner">⧗</span>
+					<p>Connecting…</p>
+				</div>
 			}
 		</div>
 	);

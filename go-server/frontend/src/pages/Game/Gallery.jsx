@@ -15,69 +15,51 @@ import './Gallery.css';
 
 const Gallery = ({ chains, onBack }) =>
 {
-  const scrollRef = useRef(null);
+	const scrollRef = useRef(null);
+	useEffect(() =>
+	{
+		scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
+	}, []);
 
-  useEffect(() =>
-  {
-    scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, []);
+	if (!Array.isArray(chains) || chains.length === 0)
+	{
+		return (
+			<div className="gallery">
+				<p className="gallery__empty">No chains to display.</p>
+				<button className="gallery__btn" onClick={onBack}>← Back</button>
+			</div>
+		);
+	}
 
-  if (!Array.isArray(chains) || chains.length === 0)
-  {
-    return (
-      <div className="gallery">
-        <p className="gallery__empty">No chains to display yet.</p>
-        <button className="gallery__btn" onClick={onBack}>
-          ← Back to game
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="gallery">
-      <div className="gallery__scroll" ref={scrollRef}>
-        {chains.map((chain, idx) =>
-        {
-          return (
-            <div key={chain.id ?? idx} className="gallery__chain">
-              <div className="gallery__chain-header">
-                Chain #{idx + 1}
-              </div>
-              <div className="gallery__chain-body">
-                <div className="gallery__step gallery__step--prompt">
-                  <span className="gallery__step-label">Prompt</span>
-                  <p className="gallery__step-content">{chain.prompt ?? '(empty)'}</p>
-                </div>
-                {Array.isArray(chain.steps) && chain.steps.map((step, si) =>
-                {
-                  return (
-                    <div key={si} className={`gallery__step gallery__step--${step.type}`}>
-                      <span className="gallery__step-label">
-                        {step.type === 'drawing' ? '🎨 Drawing' : '🔍 Guess'}
-                      </span>
-                      {step.type === 'drawing' && step.content ? (
-                        <img
-                          src={step.content}
-                          alt=""
-                          className="gallery__step-img"
-                        />
-                      ) : (
-                        <p className="gallery__step-content">{step.content ?? '(empty)'}</p>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      <button className="gallery__btn" onClick={onBack}>
-        ← Back to game
-      </button>
-    </div>
-  );
+	return (
+		<div className="gallery">
+			<div className="gallery__scroll" ref={scrollRef}>
+				{chains.map((chain, idx) => (
+					<div key={chain.id ?? idx} className="gallery__chain">
+						<div className="gallery__chain-header">Chain #{idx + 1}</div>
+						<div className="gallery__chain-body">
+							<div className="gallery__step gallery__step--prompt">
+								<span className="gallery__step-label">Prompt</span>
+								<p className="gallery__step-content">{chain.prompt}</p>
+							</div>
+							{Array.isArray(chain.steps) && chain.steps.map((step, si) => (
+								<div key={si} className={`gallery__step gallery__step--${step.type}`}>
+									<span className="gallery__step-label">
+										{step.type === 'drawing' ? '🎨 Drawing' : '🔍 Guess'}
+									</span>
+									{step.type === 'drawing'
+										? <img src={step.content} alt="" className="gallery__step-img" />
+										: <p className="gallery__step-content">{step.content}</p>
+									}
+								</div>
+							))}
+						</div>
+					</div>
+				))}
+			</div>
+			<button className="gallery__btn" onClick={onBack}>← Back</button>
+		</div>
+	);
 };
 
 export default Gallery;

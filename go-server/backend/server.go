@@ -40,15 +40,17 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 		}
 
 		if msg.Type == "authenticate" {
-			claims, err := validateAndGetClaims(msg.Token)
-			if err != nil {
-				fmt.Println("WS Auth Failed:", err)
-				return
-			}
-			currentUsername = claims.Username
-			currentUserID = claims.UserID
-			fmt.Printf("WS Authenticated: %s (ID: %s)\n", currentUsername, currentUserID)
-			continue
+    	claims, err := validateAndGetClaims(msg.Token)
+    	if err != nil {
+    	    fmt.Println("WS Auth Failed:", err)
+    	    conn.WriteMessage(websocket.CloseMessage,
+    	   	websocket.FormatCloseMessage(4001, "token expired"))
+    		return
+    	}
+		currentUsername = claims.Username
+		currentUserID = claims.UserID
+		fmt.Printf("WS Authenticated: %s (ID: %s)\n", currentUsername, currentUserID)
+		continue
 		}
 
 		if msg.Type == "create_room" {

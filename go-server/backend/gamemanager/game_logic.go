@@ -38,7 +38,7 @@ func (r *Room) listenForNotifaction() {
 func (r *Room) RunGameLoop() {
 	TotalRound := len(r.Players)
 
-	if TotalRound%2 == 0 {
+	if TotalRound % 2 == 0 {
 		TotalRound++
 	}
 
@@ -72,9 +72,9 @@ func (r *Room) RunGameLoop() {
 
 		fmt.Printf("Round %d : %s starting...\n", round, r.Phase)
 		if r.Phase == string(StateDrawing) {
-			r.waitForPhase(90 * time.Second)
+			r.waitForPhase(95 * time.Second)
 		} else {
-			r.waitForPhase(45 * time.Second)
+			r.waitForPhase(50 * time.Second)
 		}
 
 		// r.forceValidation()

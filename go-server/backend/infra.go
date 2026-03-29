@@ -65,8 +65,6 @@ func loadSecretsFromVault() error {
         log.Println("Authenticated via AWS IAM")
     }
 
-    // ... continue to your KV v2 secret reading ...
-
 	// Lecture des secrets KV v2
 	kv, err := client.KVv2("secret").Get(context.Background(), "app/config")
 	if err != nil {

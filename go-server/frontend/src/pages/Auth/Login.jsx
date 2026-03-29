@@ -16,65 +16,51 @@ import './Auth.css';
 
 function Login()
 {
-    const navigate = useNavigate();
-	const [authToken, setAuthToken] = useState(
-		localStorage.getItem("authToken") || ''
-	);
+	const navigate = useNavigate();
+	const [authToken, setAuthToken] = useState(localStorage.getItem("authToken") || '');
 
-    const handlePlay = async () =>
+	const handlePlay = async () =>
 	{
-        const token = localStorage.getItem("authToken");
-        if (token)
+		try
 		{
-			setAuthToken(token);
-        }
-        try
-		{
-            const res = await fetch("/api/player",
+			const res = await fetch("/api/auth/player", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+			});
+
+			if (!res.ok)
+				throw new Error("Server error");
+
+			const data = await res.json();
+
+			if (data.token)
 			{
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            });
-
-            if (!res.ok)
-			{
-                throw new Error("Server error");
-            }
-
-            const data = await res.json();
-
-			localStorage.setItem("authToken", data.token);
-			console.log("when login button is press: token: ", data.token);
-			setAuthToken(data.token);
-
-            console.log("Player registered:", data);
-
-            navigate("/game");
-        }
+				localStorage.setItem("authToken", data.token);
+				setAuthToken(data.token);
+				navigate("/game");
+			}
+		}
 		catch (error)
 		{
-            console.error("Request failed:", error);
-        }
-    };
+			console.error("Login failed:", error);
+		}
+	};
 
-    return (
+	return (
 		<div className="login-container">
-			<h1>Click on the button if u are gay</h1>
-			<button
-				className="auth__btn auth__btn--primary"
-				onClick={handlePlay}
-			>
-				I am!
+			<h1>Click here if ur are not loris</h1>
+			<button className="auth__btn auth__btn--primary" onClick={handlePlay}>
+				Login
 			</button>
-			<h2>
 			{authToken && (
-				<p><strong>{authToken}</strong></p>
+				<div className="token-display">
+					<p>Connected</p>
+				</div>
 			)}
-			</h2>
 		</div>
-    );
+	);
 }
 
 export default Login;

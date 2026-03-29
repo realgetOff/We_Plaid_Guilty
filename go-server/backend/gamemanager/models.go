@@ -17,65 +17,61 @@ const (
 
 type GameStateRecord struct {
 	Type    string `json:"type"`
-    Phase   string `json:"phase"`
-    Room    string `json:"room"`
-    Prompt  string `json:"prompt,omitempty"`
-    Drawing string `json:"drawing,omitempty"`
+	Phase   string `json:"phase"`
+	Room    string `json:"room"`
+	Prompt  string `json:"prompt,omitempty"`
+	Drawing string `json:"drawing,omitempty"`
 }
 
-/* 
-* The entry structure is like a new page from a book.
+/* * The entry structure is like a new page from a book.
 */
 type Entry struct {
-	AuthorID int
-	Content string
-	Type string
+	AuthorID string `json:"authorId"`
+	Content  string `json:"content"`
+	Type     string `json:"type"`
 }
 
-/* 
-* The Book structure is a mere structure for the Players.
-* It is exchanged with all the players of the game/room. 
+/* * The Book structure is a mere structure for the Players.
 */
 type Book struct {
-	OwnerID int
-	Entries []Entry
+	OwnerID string  `json:"ownerId"`
+	Entries []Entry `json:"entries"`
 }
 
 /*
 * A simple Player struct.
 */
 type Player struct {
-	ID int
-	Score int
-	Name string
-	Conn *websocket.Conn
-	LastDraft string
-	IsHost bool
-	IsReady bool
-	WriteMu sync.Mutex
-	isConnected bool
+	ID          string          `json:"id"`
+	Score       int             `json:"score"`
+	Name        string          `json:"name"`
+	Conn        *websocket.Conn `json:"-"`
+	LastDraft   string          `json:"lastDraft"`
+	IsHost      bool            `json:"isHost"`
+	IsReady     bool            `json:"isReady"`
+	WriteMu     sync.Mutex      `json:"-"`
+	IsConnected bool            `json:"isConnected"`
 }
 
 type Notification struct {
-	PlayerID int
-	Data interface{}
+	PlayerID string      `json:"playerId"`
+	Data     interface{} `json:"data"`
 }
 
 /*
 * All the others structs are contained in the Room structure.
-* The main structure for the game.
 */
 type Room struct {
-	ID string
-	Phase string
-	Timer int
-	TotalRound int
+	ID           string
+	Phase        string
+	Timer        int
+	TotalRound   int
 	CurrentRound int
-	Players map[int]*Player
-	Books map[int]*Book
-	PlayerOrder []int
+	Players      map[string]*Player
+	Books        map[string]*Book
+	PlayerOrder  []string  
 	FinishedChan chan bool
-	Status GameStates
-	MessageChan chan Notification
-	mu sync.Mutex
+	Status       GameStates
+	MessageChan  chan Notification
+	mu           sync.Mutex
 }

@@ -4,9 +4,11 @@ import (
 	//"encoding/json"
 	"context"
 	"log"
-	"fmt"
 	"os"
+	"fmt"
+	"strings"
 	"main.go/gamemanager"
+	"net/http"
 	// following two are for lobby generation
 	//"math/rand/v2"
 	// "sync"
@@ -27,7 +29,6 @@ omitempty: omits empty strings, lowering network traffic
 var globalHub *gamemanager.Hub
 
 func connectToDatabase () (*pgxpool.Pool, error) {
-	// Need to get the postgres identification from somewhere, for right now, environment variables
 
 	db_host := os.Getenv("DB_HOST")
 	db_port := os.Getenv("DB_PORT")
@@ -60,7 +61,7 @@ func main() {
 	}
 	defer db.Close()
 
-	globalHub := &gamemanager.Hub{
+	globalHub = &gamemanager.Hub{
 		Rooms: make(map[string]*gamemanager.Room),
 	}
 
@@ -79,20 +80,30 @@ func main() {
 	})
 
 
-	// GET endpoint in the router
+	router.GET("/api/rooms/:code", func(c *gin.Context) {
+		code := strings.ToUpper(c.Param("code"))
+		room, err := globalHub.GetRoom(code)
+
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "room not found"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"code":    room.ID,
+			"status":  room.Status,
+			"players": len(room.Players),
+		})
+	})
 	router.GET("/ping", pong)
 	router.GET("/health", health)
 	router.GET("/api/config", vaultstatus)
 	router.GET("/ws", func (c *gin.Context){
 		handleWebsocket(c, db, globalHub)
 	})
-	router.POST("/api/player", func (c *gin.Context){
+	router.POST("/api/auth/player", func (c *gin.Context){
 		handleGuestAuth(c, db)
 	})
-
-	//router.POST("/api/rooms", createLobby)
-	//router.POST("/api/player", handleLogin)
-	// router.POST("/api/player", handleGuestAuth)
 
 	// get the port defined in the environment variables, if theres fuckall, 8080
 
@@ -105,4 +116,3 @@ func main() {
 		log.Fatalf("Failed to run server: %v", err)	
 	}
 }
-

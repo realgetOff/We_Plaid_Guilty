@@ -30,27 +30,32 @@ let socket = null;
 let listeners = [];
 let pending = [];
 
+export const getUsernameFromToken = () =>
+{
+    const token = localStorage.getItem("authToken");
+    if (!token)
+		return null;
+    try
+	{
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return payload.username;
+    }
+	catch (e)
+	{
+        return null;
+    }
+};
+
 const getAuthToken = async() =>
 {
-	try
-	{		
-		const res = await fetch('/api/auth/player');
-		const data = await res.json();
-		if(!data.token || !res.ok)
-		{
-			console.log("test");
-			window.location.href = "/login";
-			return null;
-		}
-		console.log("token: ", data.token);
-		return(data.token)
-	}
-	catch(err)
-	{
-		console.log("AAAAAAAAAAAAAAA");
-		window.location.href = "/login";
-		return null;
-	}
+    const localToken = localStorage.getItem("authToken");
+
+    if (localToken)
+        return localToken;
+
+    console.log("[getAuthToken] no token found");
+    window.location.href = "/login";
+    return null;
 };
 
 const send = (payload) =>
@@ -69,7 +74,7 @@ const setupSocketHandlers = (token) =>
 {
 	socket.onopen = () =>
 	{
-		send({type: 'authenticate', token});
+		send({type: 'authenticate', token: token});
 		pending.forEach((data) =>
 			{
 				try
@@ -88,8 +93,10 @@ const setupSocketHandlers = (token) =>
 			fn(msg);
 		});
 	};
-	socket.onclose = () =>
+	socket.onclose = (event) =>
 	{
+		console.log("[onCllose] closed for:", event.reason);
+
 		socket = null;
 	};
 	socket.onerror = (err) =>
@@ -100,25 +107,19 @@ const setupSocketHandlers = (token) =>
 
 const connect = async () =>
 {
-	console.log("connect test 1");
 	const    token = await getAuthToken();
 
-	console.log("connect test 2");
 	if (socket && (socket.readyState === WebSocket.OPEN
 		|| socket.readyState === WebSocket.CONNECTING))
 	{
-		console.log("connect test 3");
 		return ;
 	}
 	if (!token)
 	{
-		console.log("connect test 4");
 		return ;
 	}
-	console.log("connect test 5");
 	socket = new WebSocket(getWsUrl());
 	setupSocketHandlers(token);
-	console.log("connect test 6");
 };
 
 const disconnect = () =>

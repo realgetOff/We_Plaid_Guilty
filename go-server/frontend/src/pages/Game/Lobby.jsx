@@ -5,8 +5,8 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: mforest- <marvin@d42.fr>                   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/02/23 23:30:46 by mforest-          #+#    #+#             */
-/*   Updated: 2026/02/23 23:30:46 by mforest-         ###   ########.fr       */
+/*   Created: 2026/03/28 19:52:46 by mforest-          #+#    #+#             */
+/*   Updated: 2026/03/28 19:52:46 by mforest-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,382 +18,184 @@ import './Lobby.css';
 
 const DENY_REASONS =
 {
-  invalid:   'invalid room code format.',
-  not_found: 'room not found.',
-  started:   'this game has already started.',
-  finished:  'this game is already finished.',
-  unknown:   'cannot access this room.',
+	invalid:   'invalid room code format.',
+	not_found: 'room not found.',
+	started:   'this game has already started.',
+	finished:  'this game is already finished.',
+	unknown:   'cannot access this room.',
 };
 
 const Lobby = () =>
 {
-  const { code } = useParams();
-  const navigate = useNavigate();
-  const msgEndRef = useRef(null);
+	const { code } = useParams();
+	const navigate  = useNavigate();
+	const msgEndRef = useRef(null);
 
-  const [status,    setStatus]    = useState('checking');
-  const [deny,      setDeny]      = useState('');
-  const [players,   setPlayers]   = useState([]);
-  const [messages,  setMessages]  = useState([]);
-  const [input,     setInput]     = useState('');
-  const [countdown, setCountdown] = useState(null);
-  const [isHost,    setIsHost]    = useState(false);
-  const [myName,    setMyName]    = useState('');
+	const [status,   setStatus]   = useState('checking');
+	const [deny,     setDeny]     = useState('');
+	const [players,  setPlayers]  = useState([]);
+	const [messages, setMessages] = useState([]);
+	const [input,    setInput]    = useState('');
+	const [isHost,   setIsHost]   = useState(false);
+	const [myName,   setMyName]   = useState('');
 
-  useEffect(() =>
-  {
-    const check = async () =>
-    {
-      const normalized = code?.toUpperCase();
+	const normalized = code?.toUpperCase();
 
-      if (!normalized || !/^[A-Z]{6}$/.test(normalized))
-      {
-        setDeny(DENY_REASONS.invalid);
-        setStatus('denied');
-        return;
-      }
+	useEffect(() =>
+	{
+		const checkRoom = async () =>
+		{
+			if (!normalized || !/^[A-Z]{6}$/.test(normalized))
+			{
+				setDeny(DENY_REASONS.invalid);
+				setStatus('denied');
+				return;
+			}
+			try
+			{
+				const room = await roomsApi.getRoom(normalized);
+				if (!room || room.status === 'started')
+				{
+					setDeny(room?.status === 'started' ? DENY_REASONS.started : DENY_REASONS.not_found);
+					setStatus('denied');
+					return;
+				}
+				setStatus('ready');
+			}
+			catch (err)
+			{
+				setDeny(DENY_REASONS.not_found);
+				setStatus('denied');
+			}
+		};
+		checkRoom();
+	}, [normalized]);
 
-      let room;
-      try
-      {
-        room = await roomsApi.getRoom(normalized);
-      }
-      catch
-      {
-        setDeny(DENY_REASONS.not_found);
-        setStatus('denied');
-        return;
-      }
+	useEffect(() =>
+	{
+		if (status !== 'ready')
+			return;
 
-      if (!room || !room.status)
-      {
-        setDeny(DENY_REASONS.not_found);
-        setStatus('denied');
-        return;
-      }
-      if (room.status === 'started')
-      {
-        setDeny(DENY_REASONS.started);
-        setStatus('denied');
-        return;
-      }
-      if (room.status === 'finished')
-      {
-        setDeny(DENY_REASONS.finished);
-        setStatus('denied');
-        return;
-      }
-      if (room.status !== 'waiting')
-      {
-        setDeny(DENY_REASONS.unknown);
-        setStatus('denied');
-        return;
-      }
+		connect();
 
-      if (Array.isArray(room.players))
-        setPlayers(room.players);
-      setStatus('ready');
-    };
+		const handler = (msg) =>
+		{
+			if (!msg)
+				return;
 
-    check();
-  }, [code]);
+			const roomMatch = msg.room === normalized || msg.code === normalized;
 
-  // websocket: rejoindre le lobby et ecouter les mises a jour
-  useEffect(() =>
-  {
-    const normalized = code?.toUpperCase();
-    if (!normalized || !/^[A-Z]{6}$/.test(normalized))
-      return;
+			if (msg.type === 'lobby_state' && roomMatch)
+			{
+				if (Array.isArray(msg.players)) setPlayers(msg.players);
+				if (msg.me)
+				{
+					setIsHost(!!msg.me.host);
+					setMyName(msg.me.name || '');
+				}
+			}
 
-    connect();
+			if (msg.type === 'chat_message' && roomMatch)
+			{
+				setMessages((prev) => [...prev,
+				{
+					id:   msg.id || Date.now(),
+					user: msg.user,
+					text: msg.text,
+				}]);
+			}
 
-    const playerName = 'guest-' + Math.floor(Math.random() * 10000);
+			if (msg.type === 'start_game' && roomMatch)
+				navigate(`/game/play/${normalized}`);
 
-    const handler = (msg) =>
-    {
-      if (!msg || msg.room !== normalized)
-        return;
+			if (msg.type === 'join_denied')
+			{
+				setDeny(msg.reason || DENY_REASONS.unknown);
+				setStatus('denied');
+			}
+		};
 
-      if (msg.type === 'lobby_state')
-      {
-        if (Array.isArray(msg.players))
-          setPlayers(msg.players);
-        if (Array.isArray(msg.messages))
-          setMessages(msg.messages);
-        if (msg.me)
-        {
-          if (typeof msg.me.host === 'boolean')
-            setIsHost(msg.me.host);
-          if (msg.me.name)
-            setMyName(msg.me.name);
-        }
-      }
+		addListener(handler);
+		send({ type: 'join_room', code: normalized });
 
-      if (msg.type === 'player_joined')
-      {
-        if (msg.player)
-        {
-          setPlayers((prev) =>
-          {
-            const exists = prev.some((p) => p.id === msg.player.id);
-            if (exists)
-              return prev;
-            return [...prev, msg.player];
-          });
-        }
-      }
+		return () =>
+		{
+			removeListener(handler);
+			send({ type: 'leave_lobby', code: normalized });
+		};
+	}, [status, normalized, navigate]);
 
-      if (msg.type === 'player_left' && msg.playerId !== undefined)
-      {
-        setPlayers((prev) => prev.filter((p) => p.id !== msg.playerId));
-      }
+	useEffect(() =>
+	{
+		msgEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+	}, [messages]);
 
-      if (msg.type === 'chat_message')
-      {
-        if (msg.text && msg.user)
-        {
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: msg.id ?? Date.now(),
-              user: msg.user,
-              text: msg.text,
-            },
-          ]);
-        }
-      }
+	const handleSend = () =>
+	{
+		if (!input.trim())
+			return;
+		send({ type: 'chat_message', code: normalized, text: input.trim() });
+		setInput('');
+	};
 
-      if (msg.type === 'start_game')
-      {
-        navigate(`/game/play/${normalized}`);
-      }
+	const handleStart = () =>
+	{
+		if (players.length < 3)
+			return;
+		send({ type: 'start_game', code: normalized });
+	};
 
-      if (msg.type === 'lobby_denied')
-      {
-        setDeny(msg.reason || DENY_REASONS.unknown);
-        setStatus('denied');
-      }
-    };
+	if (status === 'checking')
+		return <div className="lobby__guard">Verifying {normalized}...</div>;
+	if (status === 'denied')  
+		return <div className="lobby__guard">⚠ {deny}</div>;
 
-    addListener(handler);
+	return (
+		<div className="lobby">
+			<div className="lobby__code-band">ROOM: <span className="lobby__code">{normalized}</span></div>
 
-    send({
-      type: 'join_lobby',
-      room: normalized,
-      name: playerName,
-    });
+			<div className="lobby__columns">
+				<div className="lobby__card lobby__card--players">
+					<div className="lobby__card-header">👥 Players ({players.length}/8)</div>
+					<div className="lobby__player-list">
+						{players.map((p) => (
+							<div key={p.id} className="lobby__player-row">
+								<span className="lobby__player-name">{p.name}</span>
+								{p.host && <span className="lobby__badge">HOST</span>}
+							</div>
+						))}
+					</div>
+				</div>
 
-    return () =>
-    {
-      removeListener(handler);
-      send({
-        type: 'leave_lobby',
-        room: normalized,
-      });
-    };
-  }, [code, navigate]);
+				<div className="lobby__card lobby__card--chat">
+					<div className="lobby__card-header">💬 Chat</div>
+					<div className="lobby__chat-messages">
+						{messages.map((m) => (
+							<div key={m.id} className={`lobby__msg ${m.user === myName ? 'lobby__msg--me' : ''}`}>
+								<strong>{m.user}:</strong> {m.text}
+							</div>
+						))}
+						<div ref={msgEndRef} />
+					</div>
+					<div className="lobby__chat-input-row">
+						<input
+							value={input}
+							onChange={(e) => setInput(e.target.value)}
+							onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+						/>
+						<button onClick={handleSend}>→</button>
+					</div>
+				</div>
+			</div>
 
-  useEffect(() =>
-  {
-    msgEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-  useEffect(() =>
-  {
-    if (countdown === null)
-      return;
-    if (countdown === 0)
-    {
-      navigate(`/game/play/${code?.toUpperCase()}`);
-      return;
-    }
-    const id = setTimeout(() => setCountdown((c) => c - 1), 1000);
-    return () => clearTimeout(id);
-  }, [countdown, code, navigate]);
-
-  const handleSend = () =>
-  {
-    const text = input.trim();
-    if (!text)
-      return;
-    setInput('');
-    send({
-      type: 'chat_message',
-      room: code?.toUpperCase(),
-      text,
-    });
-  };
-
-  const handleStart = () =>
-  {
-    if (players.length < 2)
-      return;
-    send({
-      type: 'start_game',
-      room: code?.toUpperCase(),
-    });
-    setCountdown(5);
-  };
-
-  const handleLeave = () =>
-  {
-    send({
-      type: 'leave_lobby',
-      room: normalized,
-    });
-    navigate('/game');
-  };
-
-  if (status === 'checking')
-  {
-    return (
-      <div className="lobby__guard">
-        <span className="lobby__guard-spinner">⧗</span>
-        verifying room <strong>{code?.toUpperCase()}</strong>…
-      </div>
-    );
-  }
-
-  if (status === 'denied')
-  {
-    let extraBtn = null;
-    if (deny === DENY_REASONS.started)
-      extraBtn = (
-        <button
-          className="lobby__guard-btn lobby__guard-btn--primary"
-          onClick={() => navigate(`/game/play/${code?.toUpperCase()}`)}
-        >
-          → go to game
-        </button>
-      );
-
-    return (
-      <div className="lobby__guard">
-        <div className="lobby__guard-card">
-          <div className="lobby__guard-icon">✕</div>
-          <p className="lobby__guard-msg">⚠ {deny}</p>
-          <div className="lobby__guard-actions">
-            <button
-              className="lobby__guard-btn"
-              onClick={() => navigate('/game')}
-            >
-              ← back to home
-            </button>
-            {extraBtn}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  let startTitle = '';
-  if (players.length < 2)
-    startTitle = 'need at least 2 players';
-
-  return (
-    <div className="lobby">
-
-      <div className="lobby__code-band">
-        room code : <span className="lobby__code">{code?.toUpperCase()}</span>
-      </div>
-
-      <div className="lobby__columns">
-
-        <div className="lobby__card lobby__card--players">
-          <div className="lobby__card-header">
-            👥 players
-            <span className="lobby__header-count">{players.length} / 8</span>
-          </div>
-          <div className="lobby__player-list">
-            {players.map((p) =>
-            {
-              return (
-                <div key={p.id} className="lobby__player-row">
-                  <span className="lobby__dot" />
-                  <span className="lobby__player-name">{p.name}</span>
-                  {p.host && <span className="lobby__badge">HOST</span>}
-                </div>
-              );
-            })}
-            {players.length < 2 && (
-              <p className="lobby__waiting">⧗ waiting for more players…</p>
-            )}
-          </div>
-        </div>
-
-        <div className="lobby__card lobby__card--chat">
-          <div className="lobby__card-header">💬 chat</div>
-          <div className="lobby__chat-messages">
-            {messages.map((m) =>
-            {
-              let cls = 'lobby__msg';
-              if (myName && m.user === myName)
-                cls += ' lobby__msg--me';
-              return (
-                <div key={m.id} className={cls}>
-                  <span className="lobby__msg-user">{m.user}:</span> {m.text}
-                </div>
-              );
-            })}
-            <div ref={msgEndRef} />
-          </div>
-          <div className="lobby__chat-input-row">
-            <textarea
-              className="lobby__chat-input"
-              value={input}
-              onChange={(e) => setInput(e.target.value.slice(0, 80))}
-              onKeyDown={(e) =>
-              {
-                if (e.key === 'Enter' && !e.shiftKey)
-                {
-                  e.preventDefault();
-                  handleSend();
-                }
-              }}
-              placeholder="say something…"
-              maxLength={80}
-              rows={2}
-              wrap="soft"
-            />
-            <button className="lobby__chat-send" onClick={handleSend}>→</button>
-          </div>
-        </div>
-
-      </div>
-
-      {countdown !== null && (
-        <div className="lobby__countdown">
-          game starts in <span className="lobby__countdown-num">{countdown}</span>
-        </div>
-      )}
-
-      <div className="lobby__actions">
-        <button
-          className="lobby__btn lobby__btn--leave"
-          onClick={handleLeave}
-        >
-          ✕ leave
-        </button>
-        {isHost ? (
-          <button
-            className="lobby__btn lobby__btn--start"
-            onClick={handleStart}
-            disabled={players.length < 2 || countdown !== null}
-            title={startTitle}
-          >
-            ▶ start game
-          </button>
-        ) : (
-          <p className="lobby__host-hint">waiting for the host to start…</p>
-        )}
-      </div>
-
-      {players.length < 2 && (
-        <p className="lobby__min-hint">⚠ at least 2 players required.</p>
-      )}
-
-    </div>
-  );
+			<div className="lobby__actions">
+				{isHost
+					? <button className="lobby__btn--start" onClick={handleStart} disabled={players.length < 3}>START GAME</button>
+					: <p>Waiting for host...</p>
+				}
+			</div>
+		</div>
+	);
 };
 
 export default Lobby;

@@ -13,121 +13,54 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { roomsApi } from '../../api/rooms';
-import './JoinGame.css';
-
-const DENY_REASONS =
-{
-  invalid:   'invalid room code format.',
-  not_found: 'room not found. check the code and try again.',
-  started:   'this game has already started. you cannot join.',
-  finished:  'this game is already finished.',
-  unknown:   'cannot join this room.',
-};
 
 const JoinGame = () =>
 {
-  const { code } = useParams();
-  const navigate = useNavigate();
+	const { code } = useParams();
+	const navigate = useNavigate();
+	const [error,   setError]   = useState('');
+	const [loading, setLoading] = useState(true);
 
-  const [error,   setError]   = useState('');
-  const [loading, setLoading] = useState(true);
+	useEffect(() =>
+	{
+		const verifyAndRedirect = async () =>
+		{
+			const normalized = code?.toUpperCase();
+			if (!normalized || !/^[A-Z]{6}$/.test(normalized))
+			{
+				setError('Invalid room code format.');
+				setLoading(false);
+				return;
+			}
+			try
+			{
+				const room = await roomsApi.getRoom(normalized);
+				if (room.status !== 'waiting')
+				{
+					setError(`Game is already ${room.status}.`);
+					setLoading(false);
+					return;
+				}
+				navigate(`/game/lobby/${normalized}`, { replace: true });
+			}
+			catch (err)
+			{
+				setError('Room not found. Check the code and try again.');
+				setLoading(false);
+			}
+		};
+		verifyAndRedirect();
+	}, [code, navigate]);
 
-  useEffect(() =>
-  {
-    const check = async () =>
-    {
-      const normalized = code?.toUpperCase();
+	if (loading)
+		return <div className="loader">Checking room...</div>;
 
-      if (!normalized || !/^[A-Z]{6}$/.test(normalized))
-      {
-        setError(DENY_REASONS.invalid);
-        setLoading(false);
-        return;
-      }
-
-      let room;
-      try
-      {
-        room = await roomsApi.getRoom(normalized);
-      }
-      catch
-      {
-        setError(DENY_REASONS.not_found);
-        setLoading(false);
-        return;
-      }
-
-      if (!room || !room.status)
-      {
-        setError(DENY_REASONS.not_found);
-        setLoading(false);
-        return;
-      }
-      if (room.status === 'started')
-      {
-        setError(DENY_REASONS.started);
-        setLoading(false);
-        return;
-      }
-      if (room.status === 'finished')
-      {
-        setError(DENY_REASONS.finished);
-        setLoading(false);
-        return;
-      }
-      if (room.status !== 'waiting')
-      {
-        setError(DENY_REASONS.unknown);
-        setLoading(false);
-        return;
-      }
-
-      navigate(`/game/lobby/${normalized}`, { replace: true });
-    };
-
-    check();
-  }, [code, navigate]);
-
-  if (loading)
-  {
-    return (
-      <div className="joingame">
-        <div className="joingame__checking">
-          <span className="joingame__spinner">⧗</span>
-          checking room <strong>{code?.toUpperCase()}</strong>…
-        </div>
-      </div>
-    );
-  }
-
-  let extraBtn = null;
-  if (error === DENY_REASONS.started)
-    extraBtn = (
-      <button
-        className="joingame__btn joingame__btn--primary"
-        onClick={() => navigate(`/game/play/${code?.toUpperCase()}`)}
-      >
-        → go to game
-      </button>
-    );
-
-  return (
-    <div className="joingame">
-      <div className="joingame__error-card">
-        <div className="joingame__error-icon">✕</div>
-        <p className="joingame__error-msg">⚠ {error}</p>
-        <div className="joingame__error-actions">
-          <button
-            className="joingame__btn"
-            onClick={() => navigate('/game')}
-          >
-            ← back to home
-          </button>
-          {extraBtn}
-        </div>
-      </div>
-    </div>
-  );
+	return (
+		<div className="error-container">
+			<p>⚠ {error}</p>
+			<button onClick={() => navigate('/game')}>Back to Home</button>
+		</div>
+	);
 };
 
 export default JoinGame;

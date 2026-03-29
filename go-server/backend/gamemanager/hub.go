@@ -2,6 +2,7 @@ package gamemanager
 
 import (
 	"fmt"
+	"strings"
 	"math/rand"
 	"sync"
 	"time"
@@ -25,14 +26,22 @@ func (h *Hub) generateRandID(lenght int) (roomId string) {
 	return string(ran_str)
 }
 
-func (h *Hub) GetRoom(id string) (* Room, error) {
+func (h *Hub) DeleteRoom(id string) {
+    h.mu.Lock()
+    defer h.mu.Unlock()
+    delete(h.Rooms, id)
+}
+
+func (h *Hub) GetRoom(id string) (*Room, error) {
+	id = strings.ToUpper(strings.TrimSpace(id))
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
-	ptr, err := h.Rooms[id]
-	if err {
-		return nil, fmt.Errorf("invalid id %d", id)
+	ptr, ok := h.Rooms[id]
+	if !ok {
+		return nil, fmt.Errorf("room with id %s not found", id)
 	}
+	
 	return ptr, nil
 }
 

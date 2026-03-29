@@ -25,7 +25,7 @@
     state: started
     enabled: yes
 
-- name: "Opening Ports..."
+- name: "opening ports"
   firewalld:
     port: "{{ item }}"
     permanent: yes

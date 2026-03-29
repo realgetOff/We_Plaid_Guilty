@@ -1,12 +1,9 @@
-version: '3.8'
-
 services:
   vault-agent:
     image: hashicorp/vault:{{ vault_version }}
     command: agent -config=/vault/config/agent.hcl
     volumes:
       - ./agent.hcl:/vault/config/agent.hcl:ro
-      - ./app.tpl:/vault/templates/app.tpl:ro
       - ./db_user.tpl:/vault/templates/db_user.tpl:ro
       - ./db_password.tpl:/vault/templates/db_password.tpl:ro
       - ./db_name.tpl:/vault/templates/db_name.tpl:ro
@@ -18,7 +15,7 @@ services:
       - "vault:host-gateway"
 
   db:
-  image: postgres:{{ pg_version }}
+    image: postgres:{{ db_version }}
     environment:
       - POSTGRES_USER_FILE=/secrets/db_user
       - POSTGRES_PASSWORD_FILE=/secrets/db_password
@@ -46,4 +43,4 @@ volumes:
 
 networks:
   security_net:
-    external: true
+    driver: bridge

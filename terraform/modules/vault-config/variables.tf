@@ -6,6 +6,7 @@ variable "aws_account_id" {
 variable "iam_role_name" {
   description = "vault-kms-role"
   type = string
+  default = ""
 }
 
 variable "token_ttl" {
@@ -32,4 +33,22 @@ variable "extra_paths" {
   description = "Paths supp fro policy"
   type        = list(string)
   default     = []
+}
+
+variable "auth_type" {
+  description = "aws kubernetes ?"
+  type        = string
+  default     = "aws"
+}
+
+variable "k8s_service_account" {
+  description = "auth_type = kubernetes"
+  type        = string
+  default     = "default"
+}
+
+variable "k8s_namespace" {
+  description = "auth_type = kubernetes"
+  type        = string
+  default     = "default"
 }

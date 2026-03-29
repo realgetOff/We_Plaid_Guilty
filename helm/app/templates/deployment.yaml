@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gartic-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gartic-app
+  template:
+    metadata:
+      labels:
+        app: gartic-app
+      annotations:
+        vault.hashicorp.com/agent-pre-populate-only: "false"
+        vault.hashicorp.com/agent-init-first: "true"
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "{{ .Values.vault.role }}"
+        vault.hashicorp.com/agent-inject-secret-app-secrets: "secret/data/app/config"
+        vault.hashicorp.com/agent-inject-template-app-secrets: |
+          {{`{{ with secret "secret/data/app/config" }}`}}
+          DB_PASSWORD={{`{{ .Data.data.db_password }}`}}
+          DB_USER={{`{{ .Data.data.db_user }}`}}
+          DB_NAME={{`{{ .Data.data.db_name }}`}}
+          JWT_SECRET={{`{{ .Data.data.jwt_secret }}`}}
+          API_KEY={{`{{ .Data.data.api_key }}`}}
+          {{`{{ end }}`}}
+    spec:
+      # hostAliases:
+        # - ip: "10.43.216.181"
+      # hostnames:
+        # - "vault"
+      imagePullSecrets:
+        - name: ecr-secret
+      containers:
+        - name: gartic-app
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 8080
+          env:
+            - name: VAULT_ADDR
+              value: "{{ .Values.vault.addr }}:{{ .Values.vault.port }}"
+            - name: DB_HOST
+              value: "{{ .Values.db.host }}"
+            - name: DB_PORT
+              value: "{{ .Values.db.port }}"
+          # volumeMounts:
+            # - name: secrets
+              # mountPath: /vault/secrets
+              # readOnly: true
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      # volumes:
+        # - name: secrets
+          # emptyDir:
+            # medium: Memory
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}

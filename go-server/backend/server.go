@@ -102,6 +102,7 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 		}
 
 		if msg.Type == "leave_lobby" {
+			fmt.Printf("DEBUG leave_game: code='%s' user='%s'\n", msg.Code, currentUsername)
 			if currentUsername == "" { continue }
 			room, err := hub.GetRoom(msg.Code)
 			if err != nil || room == nil { continue }

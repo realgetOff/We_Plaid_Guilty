@@ -100,7 +100,6 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 
 			room.BroadcastLobbyState()
 		}
-
 		if msg.Type == "leave_lobby" {
 			fmt.Printf("DEBUG leave_game: code='%s' user='%s'\n", msg.Code, currentUsername)
 			if currentUsername == "" { continue }
@@ -141,6 +140,12 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 				"room": room.ID,
 			})
 		}
+		if (msg.Type == "leave_game") {
+			fmt.Printf("DEBUG: leave_game msg %s\n", msg.Code)
+			room, err := hub.GetRoom(msg.Code)
+			if (err != nil) { continue }
+			room.LeaveGame(currentUserID)
+		}
 		if msg.Type == "join_game" {
 			fmt.Printf("DEBUG join_game: code='%s' user='%s'\n", msg.Code, currentUsername)
 
@@ -148,7 +153,8 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 			fmt.Printf("DEBUG join_game GetRoom: room=%v err=%v\n", room != nil, err)
 			if err != nil || room == nil { continue }
 
-			room.UpdatePlayerConn(currentUserID, conn)
+			room.JoinGame(currentUserID, conn)
+			// room.UpdatePlayerConn(currentUserID, conn)
 			currentRoom = room
 
 			task := room.GetPlayerTask(currentUserID)
@@ -162,12 +168,13 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 			room, err := hub.GetRoom(msg.Code)
 			if err != nil || room == nil { continue }
 
-			room.UpdatePlayerConn(currentUserID, conn)
+			room.JoinGame(currentUserID, conn)
 			currentRoom = room
 
 			task := room.GetPlayerTask(currentUserID)
 			conn.WriteJSON(task)
 		}
+
 		if (msg.Type == "prompt_submitted") {
 			fmt.Printf("DEBUG: PROMPT")
 			if (currentRoom == nil) { continue }

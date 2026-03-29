@@ -22,7 +22,7 @@ const COLORS =
 ];
 
 const SIZES   = [2, 5, 10, 18];
-const TIMER_SEC = 80;
+const TIMER_SEC = 89;
 const MAX_UNDO  = 30;
 
 const DrawBoard = ({ prompt, onDone }) =>

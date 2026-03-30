@@ -387,7 +387,18 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 
 			room.SubmitVotes(currentUserID, msg.Votes)
 		}
+		if msg.Type == "leave_ai_game" {
+			if currentUsername == "" { continue }
 
+			room, err := globalAIHub.GetRoom(msg.Code)
+			if err != nil { continue }
+
+			del := room.LeaveGame(currentUserID)
+			if del {
+				globalAIHub.DeleteRoom(room.ID)
+				fmt.Printf("DEBUG: Delete ROOM everybody quit\n")
+			}
+		}
 		if msg.Type == "leave_ai_room" {
 			if currentUsername == "" { continue }
 
@@ -412,8 +423,16 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 				room.TransferHost()
 			}
 
+			// NOTE FOR leave_game
+			// isAllDisconnect := room.LeaveGame(currentUserID)
+			// if isAllDisconnect {
+				// globalAIHub.DeleteRoom(room.ID)
+				// fmt.Printf("DEBUG: Delete ROOM everybody quit\n")
+				// return
+			// }
 			room.SendSystemMsg(fmt.Sprintf("%s leave the lobby !", currentUsername))
 			room.BroadcastLobbyState()
+			
 		}
 	}
 

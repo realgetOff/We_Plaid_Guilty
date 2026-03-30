@@ -276,6 +276,26 @@ func (r *AIRoom) BroadcastChat(playerID string, content string) {
 	}
 }
 
+func (r *AIRoom) LeaveGame(playerID string) (bool){
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if oldPlayer, ok := r.Players[playerID]; ok {
+		oldPlayer.IsReady = true
+		oldPlayer.IsConnected = false
+	}
+	var isAllDisconnect bool
+	for _, p := range r.Players {
+		if !p.IsConnected {
+			isAllDisconnect = true
+		} else {
+			isAllDisconnect = false
+			break
+		}
+	}
+	return isAllDisconnect
+}
+
+
 func (r *AIRoom) RunAIGameLoop(prompt string) {
 	// 1. PHASE DE DESSIN
 	r.mu.Lock()

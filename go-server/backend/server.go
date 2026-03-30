@@ -2,7 +2,7 @@ package main
 
 import (
 	"strings"
-	"time"
+	// "time"
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -315,12 +315,12 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 		}
 
 		if msg.Type == "ai_chat_message" {
+			fmt.Printf("DEGUB: %s\n", msg.Type)
 			if (currentUsername == "") { continue }
 			if (len(strings.TrimSpace(msg.Text)) == 0) { continue }
 			room, err := globalAIHub.GetRoom(msg.Code)
 			if (err != nil) { continue }
 
-			fmt.Printf("DEGUB: %s\n", msg.Type)
 			room.BroadcastChat(currentUserID, msg.Text)
 		}
 
@@ -345,10 +345,7 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 				"code": room.ID,
 			})
 			fmt.Printf("DEBUG: %s\n", msg.Type)
-			go func() {
-				time.Sleep(2 * time.Second)
-				currentAIRoom.RunAIGameLoop(prompt)
-			}()
+			go currentAIRoom.RunAIGameLoop(prompt)
 		}
 
 		if msg.Type == "join_ai_game" {
@@ -366,7 +363,6 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 						"type":   "ai_game_state",
 						"phase":  "draw",
 						"prompt": room.Prompt,
-						"task":   room.Prompt,
 						"room":   room.ID,
 					},
 				}

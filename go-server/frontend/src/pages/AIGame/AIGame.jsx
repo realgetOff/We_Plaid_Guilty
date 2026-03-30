@@ -12,11 +12,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import DrawBoard from '../Game/DrawBoard';
+import DrawBoard from './AIDrawBoard';
 import AIVotePanel from './AIVotePanel';
 import AIGallery from './AIGallery';
 import { connect, send, addListener, removeListener } from '../../socket';
-import './AIGame.css';
+import '../Game/Game.css';
 
 const AIGame = () =>
 {
@@ -55,14 +55,14 @@ const AIGame = () =>
 
 			if (msg.type === 'ai_vote_state')
 			{
-				setPhase('vote');
 				if (Array.isArray(msg.drawings)) setDrawings(msg.drawings);
+				setPhase('vote');
 			}
 
 			if (msg.type === 'ai_results')
 			{
-				setPhase('gallery');
 				if (Array.isArray(msg.results)) setResults(msg.results);
+				setPhase('gallery');
 			}
 		};
 
@@ -77,14 +77,16 @@ const AIGame = () =>
 		};
 	}, [code]);
 
-	const handleDrawDone = (dataURL) =>
+	const handleDrawDone = (dataURL, title, description) =>
 	{
-		send({
-			type: 'ai_drawing_submitted',
-			code: code?.toUpperCase(),
-			drawing: dataURL,
-		});
-		setPhase('waiting');
+    	send({
+    	    type: 'ai_drawing_submitted',
+    		    code: code?.toUpperCase(),
+       		drawing: dataURL,
+        	title: title || '',
+        	description: description || '',
+    	});
+    	setPhase('waiting');
 	};
 
 	const handleVoteDone = (votes) =>
@@ -113,38 +115,40 @@ const AIGame = () =>
 		);
 	}
 
-	return (
-		<div className="aigame">
-			<div className="aigame__header">
-				<span className="aigame__phase-label">{phaseLabel}</span>
-				<span className="aigame__room-code">#{code?.toUpperCase()}</span>
-			</div>
 
-			{phase === 'draw' && (
-				<>
-					<div className="aigame__prompt-banner">
-						<strong>{prompt}</strong>
-					</div>
-					<DrawBoard prompt={prompt} onDone={handleDrawDone} />
-				</>
-			)}
+return (
+    <div className="game">
+        <div className="game__phase-bar">
+            <span className={`game__phase-dot${phase === 'draw' ? ' game__phase-dot--on' : ''}`} />
+            <span className={`game__phase-dot${phase === 'vote' ? ' game__phase-dot--on' : ''}`} />
+            <span className={`game__phase-dot${phase === 'gallery' ? ' game__phase-dot--on' : ''}`} />
+            <span className="game__phase-label">{phaseLabel}</span>
+            <span className="game__room-code">#{code?.toUpperCase()}</span>
+        </div>
 
-			{phase === 'vote' && (
-				<AIVotePanel drawings={drawings} myId={myId} onDone={handleVoteDone} />
-			)}
-
-			{phase === 'waiting' && (
-				<div className="aigame__waiting">
-					<span className="aigame__spinner">⧗</span>
-					<p>Waiting for other players to finish…</p>
-				</div>
-			)}
-
-			{phase === 'gallery' && (
-				<AIGallery results={results} onBack={() => navigate('/game')} />
-			)}
-		</div>
-	);
+        {phase === 'draw' && (
+            <DrawBoard prompt={prompt} onDone={handleDrawDone} />
+        )}
+        {phase === 'vote' && (
+            <AIVotePanel drawings={drawings} myId={myId} onDone={handleVoteDone} />
+        )}
+        {phase === 'waiting' && (
+            <div className="game__waiting">
+                <span className="game__waiting-spinner">⧗</span>
+                <p>Waiting for other players to finish…</p>
+            </div>
+        )}
+        {phase === 'gallery' && (
+            <AIGallery chains={results} onBack={() => navigate('/game')} />
+        )}
+        {!phase && (
+            <div className="game__waiting">
+                <span className="game__waiting-spinner">⧗</span>
+                <p>Connecting…</p>
+            </div>
+        )}
+    </div>
+);
 };
 
 export default AIGame;

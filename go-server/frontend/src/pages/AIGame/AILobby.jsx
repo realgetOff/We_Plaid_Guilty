@@ -9,6 +9,17 @@
 /*   Updated: 2026/03/30 00:06:44 by mforest-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+/* ************************************************************************** */
+/* */
+/* :::      ::::::::   */
+/* AILobby.jsx                                        :+:      :+:    :+:   */
+/* +:+ +:+         +:+     */
+/* By: mforest- <marvin@d42.fr>                   +#+  +:+       +#+        */
+/* +#+#+#+#+#+   +#+           */
+/* Created: 2026/03/30 00:06:44 by mforest-          #+#    #+#             */
+/* Updated: 2026/03/31 00:15:00 by gemini           ###   ########.fr       */
+/* */
+/* ************************************************************************** */
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -26,6 +37,7 @@ const AILobby = () =>
 	const [messages, setMessages] = useState([]);
 	const [input, setInput] = useState('');
 	const [isHost, setIsHost] = useState(false);
+	const [isStarting, setIsStarting] = useState(false);
 	const [myName, setMyName] = useState('');
 	const [deny, setDeny] = useState('');
 
@@ -51,7 +63,10 @@ const AILobby = () =>
 			if (msg.type === 'start_ai_game' && roomMatch)
 				navigate(`/aigame/play/${normalized}`);
 			if (msg.type === 'join_denied')
+			{
 				setDeny(msg.reason);
+				setIsStarting(false);
+			}
 		};
 
 		addListener(handler);
@@ -73,6 +88,16 @@ const AILobby = () =>
 		setInput('');
 	};
 
+	const handleStartGame = () =>
+	{
+		if (isStarting)
+			return;
+		setIsStarting(true);
+		send({ type: 'start_ai_game', code: normalized });
+		
+		setTimeout(() => setIsStarting(false), 10000);
+	};
+
 	if (deny) return (
 		<div className="creategame__guard">
 			<div className="creategame__guard-card">
@@ -87,7 +112,7 @@ const AILobby = () =>
 	return (
 		<div className="creategame">
 			<div className="creategame__card">
-				<div className="creategame__card-header">🤖 AI Lobby — room code</div>
+				<div className="creategame__card-header">🤖 room code</div>
 				<div className="creategame__card-body creategame__card-body--center">
 					<p className="creategame__hint">
 						you have joined this room. waiting for host to start.
@@ -152,10 +177,10 @@ const AILobby = () =>
 				{isHost ? (
 					<button
 						className="creategame__btn creategame__btn--start"
-						onClick={() => send({ type: 'start_ai_game', code: normalized })}
-						disabled={players.length < 3}
+						onClick={handleStartGame}
+						disabled={players.length < 3 || isStarting}
 					>
-						🤖 start AI game
+						{isStarting ? '🤖 starting...' : '🤖 start AI game'}
 					</button>
 				) : (
 					<button

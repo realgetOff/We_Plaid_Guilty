@@ -288,7 +288,7 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 			prompt, err := gamemanager.CallAI("")
 			if err != nil {
 				fmt.Println("callAI error:", err)
-				prompt = "Dessine la meilleure façon de survivre à une réunion de travail"
+				prompt = "Error API : add Credits"
 			}
 
 			room.BroadcastToAll(map[string]interface{}{
@@ -326,12 +326,12 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 		}
 
 		if msg.Type == "ai_drawing_submitted" {
-			if currentUsername == "" { continue }
+    		if currentUsername == "" { continue }
 
-			room, err := globalAIHub.GetRoom(msg.Code)
-			if err != nil || room == nil { continue }
+    		room, err := globalAIHub.GetRoom(msg.Code)
+   			if err != nil || room == nil { continue }
 
-			room.SubmitDrawing(currentUserID, msg.Drawing)
+    		room.SubmitDrawing(currentUserID, msg.Drawing, msg.Title, msg.Description)
 		}
 
 		if msg.Type == "ai_votes_submitted" {

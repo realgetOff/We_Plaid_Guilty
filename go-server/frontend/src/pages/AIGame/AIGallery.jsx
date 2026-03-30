@@ -11,7 +11,7 @@
 /* ************************************************************************** */
 
 import React from 'react';
-import './AIGallery.css';
+import '../Game/Gallery.css';
 
 const AIGallery = ({ results, onBack }) =>
 {

@@ -10,9 +10,11 @@ const (
 )
 
 type AIDrawing struct {
-	PlayerID   string `json:"player_id"`
-	PlayerName string `json:"player_name"`
-	Drawing    string `json:"drawing"`
+	PlayerID    string `json:"player_id"`
+	PlayerName  string `json:"player_name"`
+	Drawing     string `json:"drawing"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
 }
 
 type AIVote struct {

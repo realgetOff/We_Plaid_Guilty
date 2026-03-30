@@ -21,6 +21,11 @@ function Login()
 
 	const handlePlay = async () =>
 	{
+		if (localStorage.getItem("authToken"))
+		{
+			navigate("/");
+			return;
+		}
 		try
 		{
 			const res = await fetch("/api/auth/player", {

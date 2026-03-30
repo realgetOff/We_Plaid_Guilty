@@ -21,13 +21,13 @@ const AICreateGame = () =>
 	const msgEndRef = useRef(null);
 	const roomCodeRef = useRef('');
 
-	const [status,    setStatus]    = useState('checking');
-	const [roomCode,  setRoomCode]  = useState('');
-	const [copied,    setCopied]    = useState(false);
-	const [players,   setPlayers]   = useState([]);
-	const [messages,  setMessages]  = useState([]);
-	const [input,     setInput]     = useState('');
-	const [createErr, setCreateErr] = useState('');
+	const [status, setStatus] = useState('checking');
+	const [roomCode, setRoomCode] = useState('');
+	const [copied, setCopied] = useState(false);
+	const [players, setPlayers] = useState([]);
+	const [messages, setMessages] = useState([]);
+	const [input, setInput] = useState('');
+	const [isStarting, setIsStarting] = useState(false);
 
 	useEffect(() =>
 	{
@@ -47,7 +47,6 @@ const AICreateGame = () =>
 			{
 				setRoomCode(msg.code);
 				roomCodeRef.current = msg.code;
-				setCreateErr('');
 				setStatus('ready');
 			}
 			if (msg.type === 'lobby_state' && isMatch)
@@ -58,15 +57,15 @@ const AICreateGame = () =>
 			if (msg.type === 'ai_chat_message' && isMatch)
 			{
 				setMessages(prev => [...prev, {
-					id:   Date.now(),
+					id: Date.now(),
 					user: msg.user,
 					text: msg.text
 				}]);
 			}
 			if (msg.type === 'start_ai_game' && isMatch)
-			{
 				navigate(`/aigame/play/${msg.code}`);
-			}
+			if (msg.type === 'error' && isMatch)
+				setIsStarting(false);
 		};
 
 		addListener(handler);
@@ -93,6 +92,16 @@ const AICreateGame = () =>
 		setInput('');
 	};
 
+	const handleStartGame = () =>
+	{
+		if (isStarting || players.length < 3)
+			return;
+		setIsStarting(true);
+		send({ type: 'start_ai_game', code: roomCode });
+		
+		setTimeout(() => setIsStarting(false), 10000);
+	};
+
 	const handleCopy = () =>
 	{
 		navigator.clipboard.writeText(roomCode);
@@ -110,85 +119,85 @@ const AICreateGame = () =>
 		);
 	}
 
-return (
-    <div className="creategame">
-        <div className="creategame__card">
-            <div className="creategame__card-header">🤖 AI Game — room code</div>
-            <div className="creategame__card-body creategame__card-body--center">
-                <p className="creategame__hint">
-                    Share this code with your friends. The AI will generate the prompt!
-                </p>
-                <div className="creategame__code-row">
-                    <span className="creategame__code">{roomCode}</span>
-                    <button className="creategame__btn creategame__btn--copy" onClick={handleCopy}>
-                        {copied ? '✓ copied!' : '⎘ copy'}
-                    </button>
-                </div>
-            </div>
-        </div>
+	return (
+		<div className="creategame">
+			<div className="creategame__card">
+				<div className="creategame__card-header">🤖 room code</div>
+				<div className="creategame__card-body creategame__card-body--center">
+					<p className="creategame__hint">
+						Share this code with your friends. The AI will generate the prompt!
+					</p>
+					<div className="creategame__code-row">
+						<span className="creategame__code">{roomCode}</span>
+						<button className="creategame__btn creategame__btn--copy" onClick={handleCopy}>
+							{copied ? '✓ copied!' : '⎘ copy'}
+						</button>
+					</div>
+				</div>
+			</div>
 
-        <div className="creategame__columns">
-            <div className="creategame__card creategame__card--grow">
-                <div className="creategame__card-header">
-                    👥 players
-                    <span className="creategame__card-header-count">
-                        {players.length} / 8
-                    </span>
-                </div>
-                <div className="creategame__card-body creategame__card-body--list">
-                    {players.map((p) => (
-                        <div key={p.id} className="creategame__player-row">
-                            <span className="creategame__player-dot" />
-                            <span className="creategame__player-name">{p.name}</span>
-                            {p.host && <span className="creategame__badge">HOST</span>}
-                        </div>
-                    ))}
-                    {players.length < 3 && (
-                        <p className="creategame__waiting">⧗ waiting for players…</p>
-                    )}
-                </div>
-            </div>
+			<div className="creategame__columns">
+				<div className="creategame__card creategame__card--grow">
+					<div className="creategame__card-header">
+						👥 players
+						<span className="creategame__card-header-count">
+							{players.length} / 8
+						</span>
+					</div>
+					<div className="creategame__card-body creategame__card-body--list">
+						{players.map((p) => (
+							<div key={p.id} className="creategame__player-row">
+								<span className="creategame__player-dot" />
+								<span className="creategame__player-name">{p.name}</span>
+								{p.host && <span className="creategame__badge">HOST</span>}
+							</div>
+						))}
+						{players.length < 3 && (
+							<p className="creategame__waiting">⧗ waiting for players…</p>
+						)}
+					</div>
+				</div>
 
-            <div className="creategame__card creategame__card--chat">
-                <div className="creategame__card-header">💬 chat</div>
-                <div className="creategame__chat-messages">
-                    {messages.map((m) => (
-                        <div key={m.id} className="creategame__msg">
-                            <strong>{m.user}:</strong> {m.text}
-                        </div>
-                    ))}
-                    <div ref={msgEndRef} />
-                </div>
-                <div className="creategame__chat-input-row">
-                    <input
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                    />
-                    <button onClick={handleSend}>→</button>
-                </div>
-            </div>
-        </div>
+				<div className="creategame__card creategame__card--chat">
+					<div className="creategame__card-header">💬 chat</div>
+					<div className="creategame__chat-messages">
+						{messages.map((m) => (
+							<div key={m.id} className="creategame__msg">
+								<strong>{m.user}:</strong> {m.text}
+							</div>
+						))}
+						<div ref={msgEndRef} />
+					</div>
+					<div className="creategame__chat-input-row">
+						<input
+							value={input}
+							onChange={(e) => setInput(e.target.value)}
+							onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+						/>
+						<button onClick={handleSend}>→</button>
+					</div>
+				</div>
+			</div>
 
-        <div className="creategame__actions">
-            <button className="creategame__btn creategame__btn--leave" onClick={() => navigate('/game')}>
-                ✕ leave room
-            </button>
-            <button
-                className="creategame__btn creategame__btn--start"
-                onClick={() => send({ type: 'start_ai_game', code: roomCode })}
-                disabled={players.length < 3}
-            >
-                🤖 start AI game
-            </button>
-        </div>
+			<div className="creategame__actions">
+				<button className="creategame__btn creategame__btn--leave" onClick={() => navigate('/game')}>
+					✕ leave room
+				</button>
+				<button
+					className="creategame__btn creategame__btn--start"
+					onClick={handleStartGame}
+					disabled={players.length < 3 || isStarting}
+				>
+					{isStarting ? '🤖 starting...' : '🤖 start AI game'}
+				</button>
+			</div>
 
-        {players.length < 3 && (
-            <p className="creategame__start-hint">
-                ⚠ need at least 3 players to start.
-            </p>
-        )}
-    </div>
+			{players.length < 3 && (
+				<p className="creategame__start-hint">
+					⚠ need at least 3 players to start.
+				</p>
+			)}
+		</div>
 	);
 };
 

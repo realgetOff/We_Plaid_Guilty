@@ -14,7 +14,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { AuthProvider } from './context/AuthContext';
 import { NotificationProvider } from './components/common/NotificationContext';
 import Navbar from './components/common/Navbar';
 import MacWindow from './components/common/MacWindow';
@@ -44,7 +43,6 @@ const App = () =>
 {
 	return (
 		<Router>
-			<AuthProvider>
 				<NotificationProvider>
 					<Toaster position="top-right" />
 					<ToastContainer />
@@ -79,7 +77,6 @@ const App = () =>
 						</MacWindow>
 					</main>
 				</NotificationProvider>
-			</AuthProvider>
 		</Router>
 	);
 };

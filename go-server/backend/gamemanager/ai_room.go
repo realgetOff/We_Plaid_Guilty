@@ -78,6 +78,7 @@ func (r *AIRoom) BroadcastToAll(data map[string]interface{}) {
             payload[k] = v
         }
         payload["room"] = roomID
+		payload["code"] = roomID
         r.MessageChan <- Notification{
             PlayerID: id,
             Data:     payload,
@@ -158,16 +159,18 @@ func (r *AIRoom) TransferHost() {
 	}
 }
 
-func (r *AIRoom) SubmitDrawing(playerID string, drawing string) {
+func (r *AIRoom) SubmitDrawing(playerID string, drawing string, title string, description string) {
 	r.mu.Lock()
 	name := ""
 	if p, ok := r.Players[playerID]; ok {
 		name = p.Name
 	}
 	r.Drawings[playerID] = &AIDrawing{
-		PlayerID:   playerID,
-		PlayerName: name,
-		Drawing:    drawing,
+		PlayerID:    playerID,
+		PlayerName:  name,
+		Drawing:     drawing,
+		Title:       title,
+		Description: description,
 	}
 	r.DrawingsDone = len(r.Drawings)
 	total := len(r.Players)
@@ -194,42 +197,12 @@ func (r *AIRoom) SubmitVotes(voterID string, votes map[string]int) {
 	total := len(r.Players)
 	r.mu.Unlock()
 
-	// Déclenche dès que tous ont voté
 	if r.VotesDone >= total {
 		select {
 		case r.VoteChan <- true:
 		default:
 		}
 	}
-}
-
-func (r *AIRoom) ComputeResults() []AIResult {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	scores := make(map[string][]int)
-	for _, vote := range r.Votes {
-		scores[vote.TargetID] = append(scores[vote.TargetID], vote.Score)
-	}
-
-	results := []AIResult{}
-	for playerID, drawing := range r.Drawings {
-		avg := 0.0
-		if s, ok := scores[playerID]; ok && len(s) > 0 {
-			sum := 0
-			for _, v := range s {
-				sum += v
-			}
-			avg = float64(sum) / float64(len(s))
-		}
-		results = append(results, AIResult{
-			PlayerID:   playerID,
-			PlayerName: drawing.PlayerName,
-			Drawing:    drawing.Drawing,
-			Score:      avg,
-		})
-	}
-	return results
 }
 
 func (r *AIRoom) SendSystemMsg(content string) {
@@ -297,11 +270,13 @@ func (r *AIRoom) LeaveGame(playerID string) (bool){
 
 
 func (r *AIRoom) RunAIGameLoop(prompt string) {
-	// 1. PHASE DE DESSIN
 	r.mu.Lock()
 	r.Status = StateAIDrawing
 	r.Prompt = prompt
-	r.Drawings = make(map[string]*AIDrawing) // Reset des dessins précédents
+	r.Drawings = make(map[string]*AIDrawing)
+	r.Votes = []AIVote{}
+	r.DrawingsDone = 0
+	r.VotesDone = 0
 	r.mu.Unlock()
 
 	r.BroadcastToAll(map[string]interface{}{
@@ -310,35 +285,52 @@ func (r *AIRoom) RunAIGameLoop(prompt string) {
 		"prompt": prompt,
 	})
 
-	// ATTENTE : On bloque jusqu'à ce que tout le monde ait dessiné
 	<-r.DrawChan
 
-	// 2. PHASE DE VOTE
+	// PHASE DE VOTE : Envoi personnalisé à chaque joueur
 	r.mu.Lock()
 	r.Status = StateAIVoting
-	drawingsList := make([]map[string]interface{}, 0)
-	for id, d := range r.Drawings {
-		drawingsList = append(drawingsList, map[string]interface{}{
-			"playerId": id,
-			"name":     d.PlayerName,
-			"drawing":  d.Drawing,
-		})
+	roomID := r.ID
+	allDrawings := make([]*AIDrawing, 0, len(r.Drawings))
+	for _, d := range r.Drawings {
+		allDrawings = append(allDrawings, d)
+	}
+	playerIDs := make([]string, 0, len(r.Players))
+	for id := range r.Players {
+		playerIDs = append(playerIDs, id)
 	}
 	r.mu.Unlock()
 
-	r.BroadcastToAll(map[string]interface{}{
-		"type":     "ai_vote_state",
-		"phase":    "vote",
-		"drawings": drawingsList,
-	})
+	for _, pID := range playerIDs {
+		filteredList := make([]map[string]interface{}, 0)
+		for _, d := range allDrawings {
+			if d.PlayerID != pID { // EXCLUSION DU DESSIN DU JOUEUR
+				filteredList = append(filteredList, map[string]interface{}{
+					"player_id": d.PlayerID,
+					"name":      d.PlayerName,
+					"drawing":   d.Drawing,
+				})
+			}
+		}
 
-	// ATTENTE : On bloque jusqu'à ce que tout le monde ait voté
+		r.MessageChan <- Notification{
+			PlayerID: pID,
+			Data: map[string]interface{}{
+				"type":     "ai_vote_state",
+				"phase":    "vote",
+				"drawings": filteredList,
+				"room":     roomID,
+			},
+		}
+	}
+
 	<-r.VoteChan
 
-	// 3. PHASE DE RÉSULTATS
+	// PHASE DE RÉSULTATS
 	results := r.ComputeResults()
+
 	r.mu.Lock()
-	r.Status = StateAIGallery
+	r.Status = StateAIFinished
 	r.mu.Unlock()
 
 	r.BroadcastToAll(map[string]interface{}{
@@ -346,4 +338,34 @@ func (r *AIRoom) RunAIGameLoop(prompt string) {
 		"phase":   "gallery",
 		"results": results,
 	})
+}
+
+
+func (r *AIRoom) ComputeResults() []AIResult {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	scoresMap := make(map[string][]int)
+	for _, v := range r.Votes {
+		scoresMap[v.TargetID] = append(scoresMap[v.TargetID], v.Score)
+	}
+
+	results := make([]AIResult, 0)
+	for pID, d := range r.Drawings {
+		avg := 0.0
+		if s, ok := scoresMap[pID]; ok && len(s) > 0 {
+			sum := 0
+			for _, val := range s {
+				sum += val
+			}
+			avg = float64(sum) / float64(len(s))
+		}
+		results = append(results, AIResult{
+			PlayerID:   pID,
+			PlayerName: d.PlayerName,
+			Drawing:    d.Drawing,
+			Score:      avg,
+		})
+	}
+	return results
 }

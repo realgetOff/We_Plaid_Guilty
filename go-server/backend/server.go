@@ -323,7 +323,7 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub, h
 			prompt, err := gamemanager.CallAI("")
 			if err != nil {
 				fmt.Println("callAI error:", err)
-				prompt = "Dessine la meilleure façon de survivre à une réunion de travail"
+				prompt = "Error API : add Credits"
 			}
 
 			currentAIRoom = room
@@ -359,12 +359,17 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub, h
 		}
 
 		if msg.Type == "ai_drawing_submitted" {
-			if currentUsername == "" { continue }
+    		if currentUsername == "" { continue }
 
+<<<<<<< HEAD
 			room, err := hubAI.GetRoom(msg.Code)
 			if err != nil || room == nil { continue }
+=======
+    		room, err := globalAIHub.GetRoom(msg.Code)
+   			if err != nil || room == nil { continue }
+>>>>>>> 10b2a52690a579c8128fd9a99b4e03ece75ff787
 
-			room.SubmitDrawing(currentUserID, msg.Drawing)
+    		room.SubmitDrawing(currentUserID, msg.Drawing, msg.Title, msg.Description)
 		}
 
 		if msg.Type == "ai_votes_submitted" {

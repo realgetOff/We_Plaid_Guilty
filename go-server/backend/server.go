@@ -263,7 +263,7 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 			if (len(strings.TrimSpace(msg.Text)) == 0) { continue }
 			room, err := globalHub.GetRoom(msg.Code)
 			if (err != nil) { continue }
-
+			fmt.Printf("DEBUG: char_message\n")
 			room.BroadcastChat(currentUserID, msg.Text)
 		}
 

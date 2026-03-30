@@ -14,23 +14,23 @@ func (r *Room) BroadcastChat(playerID string, content string) {
 	defer r.mu.Unlock()
 
 	var userName string
-	var messageId string
 	var isSystem bool
 
-	if (playerID == "SYSTEM") {
+	messageId := fmt.Sprintf("%d", time.Now().UnixNano())
+
+	if playerID == "SYSTEM" {
 		userName = "📢 Système"
-		messageId = fmt.Sprintf("%d", time.Now().UnixNano())
 		isSystem = true
 	} else {
 		sender, ok := r.Players[playerID]
-		if !ok { return }
+		if !ok {
+			return
+		}
 		userName = sender.Name
 		isSystem = false
 	}
 
-	messageId = fmt.Sprintf("%d", time.Now().UnixNano())
-
-	for _,p := range r.Players {
+	for _, p := range r.Players {
 		if !p.IsConnected {
 			continue
 		}
@@ -38,11 +38,12 @@ func (r *Room) BroadcastChat(playerID string, content string) {
 		r.MessageChan <- Notification{
 			PlayerID: p.ID,
 			Data: map[string]interface{}{
-				"type": "chat_message",
-				"user": userName,
-				"text": content,
-				"id": messageId,
+				"type":      "chat_message",
+				"user":      userName,
+				"text":      content,
+				"id":        messageId,
 				"is_system": isSystem,
+				"room":      r.ID,
 			},
 		}
 	}

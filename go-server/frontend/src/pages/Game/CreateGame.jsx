@@ -42,7 +42,8 @@ const CreateGame = () =>
 		const handler = (msg) =>
 		{
 			const currentCode = roomCodeRef.current;
-			const isMatch = msg.room === currentCode || msg.code === currentCode;
+			const msgRoom = msg.room || msg.code;
+			const isMatch = msgRoom === currentCode;
 
 			if (msg.type === 'room_created')
 			{

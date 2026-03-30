@@ -19,6 +19,7 @@ const AICreateGame = () =>
 {
 	const navigate = useNavigate();
 	const msgEndRef = useRef(null);
+	const roomCodeRef = useRef('');
 
 	const [status,    setStatus]    = useState('checking');
 	const [roomCode,  setRoomCode]  = useState('');
@@ -27,9 +28,11 @@ const AICreateGame = () =>
 	const [messages,  setMessages]  = useState([]);
 	const [input,     setInput]     = useState('');
 	const [createErr, setCreateErr] = useState('');
-	const roomCodeRef = useRef('');
 
-	useEffect(() => { roomCodeRef.current = roomCode; }, [roomCode]);
+	useEffect(() =>
+	{
+		roomCodeRef.current = roomCode;
+	}, [roomCode]);
 
 	useEffect(() =>
 	{
@@ -42,16 +45,22 @@ const AICreateGame = () =>
 			if (msg.type === 'ai_room_created')
 			{
 				setRoomCode(msg.code);
+				roomCodeRef.current = msg.code;
 				setCreateErr('');
 				setStatus('ready');
 			}
 			if (msg.type === 'lobby_state' && isMine)
 			{
-				if (Array.isArray(msg.players)) setPlayers(msg.players);
+				if (Array.isArray(msg.players))
+					setPlayers(msg.players);
 			}
-			if (msg.type === 'chat_message' && isMine)
+			if (msg.type === 'ai_chat_message' && isMine)
 			{
-				setMessages(prev => [...prev, { id: Date.now(), user: msg.user, text: msg.text }]);
+				setMessages(prev => [...prev, {
+					id:   Date.now(),
+					user: msg.user,
+					text: msg.text
+				}]);
 			}
 			if (msg.type === 'start_ai_game' && isMine)
 			{
@@ -61,38 +70,59 @@ const AICreateGame = () =>
 
 		addListener(handler);
 		send({ type: 'create_ai_room' });
-		return () => {
+
+		return () =>
+		{
 			removeListener(handler);
-			if (roomCodeRef.current) send({ type: 'leave_ai_room', code: roomCodeRef.current });
+			if (roomCodeRef.current)
+				send({ type: 'leave_ai_room', code: roomCodeRef.current });
 		};
 	}, [navigate]);
 
-	useEffect(() => { msgEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
+	useEffect(() =>
+	{
+		msgEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+	}, [messages]);
 
-	const handleSend = () => {
-		if (!input.trim() || !roomCode) return;
-		send({ type: 'chat_message', code: roomCode, text: input.trim() });
+	const handleSend = () =>
+	{
+		if (!input.trim() || !roomCode)
+			return;
+		send({ type: 'ai_chat_message', code: roomCode, text: input.trim() });
 		setInput('');
 	};
 
-	if (status === 'checking') return <div className="lobby__guard">⧗ Creating Neural Room...</div>;
+	const handleCopy = () =>
+	{
+		navigator.clipboard.writeText(roomCode);
+		setCopied(true);
+		setTimeout(() => setCopied(false), 2000);
+	};
+
+	if (status === 'checking')
+	{
+		return (
+			<div className="lobby__guard">
+				<span className="lobby__guard-spinner">⧗</span>
+				Creating Neural Room...
+			</div>
+		);
+	}
 
 	return (
 		<div className="lobby">
 			<div className="lobby__code-band">
 				🤖 AI HOST — CODE: <span className="lobby__code">{roomCode}</span>
-				<button className="lobby__code-copy" onClick={() => {
-					navigator.clipboard.writeText(roomCode);
-					setCopied(true);
-					setTimeout(() => setCopied(false), 2000);
-				}}>
+				<button className="lobby__code-copy" onClick={handleCopy}>
 					{copied ? '✓' : '⎘'}
 				</button>
 			</div>
 
 			<div className="lobby__columns">
 				<div className="lobby__card lobby__card--players">
-					<div className="lobby__card-header">👥 Players ({players.length}/8)</div>
+					<div className="lobby__card-header">
+						👥 Players ({players.length}/8)
+					</div>
 					<div className="lobby__player-list">
 						{players.map(p => (
 							<div key={p.id} className="lobby__player-row">
@@ -102,7 +132,9 @@ const AICreateGame = () =>
 						))}
 					</div>
 					<div className="lobby__actions-sub">
-						<button className="lobby__btn--leave" onClick={() => navigate('/game')}>✕ LEAVE</button>
+						<button className="lobby__btn--leave" onClick={() => navigate('/game')}>
+							✕ LEAVE
+						</button>
 						<button 
 							className="lobby__btn--start" 
 							onClick={() => send({ type: 'start_ai_game', code: roomCode })}
@@ -117,12 +149,19 @@ const AICreateGame = () =>
 					<div className="lobby__card-header">💬 Chat</div>
 					<div className="lobby__chat-messages">
 						{messages.map(m => (
-							<div key={m.id} className="lobby__msg"><strong>{m.user}:</strong> {m.text}</div>
+							<div key={m.id} className="lobby__msg">
+								<strong>{m.user}:</strong> {m.text}
+							</div>
 						))}
 						<div ref={msgEndRef} />
 					</div>
 					<div className="lobby__chat-input-row">
-						<input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSend()} placeholder="Type here..." />
+						<input 
+							value={input} 
+							onChange={e => setInput(e.target.value)} 
+							onKeyDown={e => e.key === 'Enter' && handleSend()} 
+							placeholder="Type here..." 
+						/>
 						<button onClick={handleSend}>→</button>
 					</div>
 				</div>

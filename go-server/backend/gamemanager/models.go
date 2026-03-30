@@ -73,5 +73,6 @@ type Room struct {
 	FinishedChan chan bool
 	Status       GameStates
 	MessageChan  chan Notification
+	
 	mu           sync.Mutex
 }

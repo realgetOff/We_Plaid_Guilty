@@ -96,6 +96,7 @@ const Lobby = () =>
 
 			if (msg.type === 'chat_message' && roomMatch)
 			{
+				console.log("msg.type modal received: ", msg.text);
 				setMessages((prev) => [...prev,
 				{
 					id:   msg.id || Date.now(),

@@ -14,7 +14,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { connect, send, addListener, removeListener } from '../../socket';
 import { roomsApi } from '../../api/rooms';
-import './Lobby.css';
+import '../Game/CreateGame.css';
 
 const DENY_REASONS = {
 	invalid:   'invalid room code format.',
@@ -153,8 +153,8 @@ const Lobby = () =>
 	if (status === 'checking')
 	{
 		return (
-			<div className="lobby__guard">
-				<span className="lobby__guard-spinner">⧗</span>
+			<div className="creategame__guard">
+				<span className="creategame__guard-spinner">⧗</span>
 				checking room…
 			</div>
 		);
@@ -163,10 +163,10 @@ const Lobby = () =>
 	if (status === 'denied')
 	{
 		return (
-			<div className="lobby__guard">
-				<div className="lobby__guard-card">
-					<p className="lobby__guard-msg">⚠ {deny}</p>
-					<button className="lobby__guard-btn" onClick={handleLeave}>
+			<div className="creategame__guard">
+				<div className="creategame__guard-card">
+					<p className="creategame__guard-msg">⚠ {deny}</p>
+					<button className="creategame__guard-btn" onClick={handleLeave}>
 						← back to game
 					</button>
 				</div>
@@ -175,52 +175,52 @@ const Lobby = () =>
 	}
 
 	return (
-		<div className="lobby">
-			<div className="lobby__card">
-				<div className="lobby__card-header">🔑 room code</div>
-				<div className="lobby__card-body lobby__card-body--center">
-					<p className="lobby__hint">
+		<div className="creategame">
+			<div className="creategame__card">
+				<div className="creategame__card-header">🔑 room code</div>
+				<div className="creategame__card-body creategame__card-body--center">
+					<p className="creategame__hint">
 						you have joined this room. waiting for host to start.
 					</p>
-					<div className="lobby__code-row">
-						<span className="lobby__code">{normalized}</span>
+					<div className="creategame__code-row">
+						<span className="creategame__code">{normalized}</span>
 					</div>
 				</div>
 			</div>
 
-			<div className="lobby__columns">
-				<div className="lobby__card lobby__card--grow">
-					<div className="lobby__card-header">
+			<div className="creategame__columns">
+				<div className="creategame__card creategame__card--grow">
+					<div className="creategame__card-header">
 						👥 players
-						<span className="lobby__card-header-count">
+						<span className="creategame__card-header-count">
 							{players.length} / 8
 						</span>
 					</div>
-					<div className="lobby__card-body lobby__card-body--list">
+					<div className="creategame__card-body creategame__card-body--list">
 						{players.map((p) => (
-							<div key={p.id} className="lobby__player-row">
-								<span className="lobby__player-dot" />
-								<span className="lobby__player-name">{p.name}</span>
-								{p.host && <span className="lobby__badge">HOST</span>}
+							<div key={p.id} className="creategame__player-row">
+								<span className="creategame__player-dot" />
+								<span className="creategame__player-name">{p.name}</span>
+								{p.host && <span className="creategame__badge">HOST</span>}
 							</div>
 						))}
 						{players.length < 3 && (
-							<p className="lobby__waiting">⧗ waiting for players…</p>
+							<p className="creategame__waiting">⧗ waiting for players…</p>
 						)}
 					</div>
 				</div>
 
-				<div className="lobby__card lobby__card--chat">
-					<div className="lobby__card-header">💬 chat</div>
-					<div className="lobby__chat-messages">
+				<div className="creategame__card creategame__card--chat">
+					<div className="creategame__card-header">💬 chat</div>
+					<div className="creategame__chat-messages">
 						{messages.map((m) => (
-							<div key={m.id} className={`lobby__msg ${m.user === myName ? 'lobby__msg--me' : ''}`}>
+							<div key={m.id} className={`creategame__msg ${m.user === myName ? 'creategame__msg--me' : ''}`}>
 								<strong>{m.user}:</strong> {m.text}
 							</div>
 						))}
 						<div ref={msgEndRef} />
 					</div>
-					<div className="lobby__chat-input-row">
+					<div className="creategame__chat-input-row">
 						<input
 							value={input}
 							onChange={(e) => setInput(e.target.value)}
@@ -231,13 +231,13 @@ const Lobby = () =>
 				</div>
 			</div>
 
-			<div className="lobby__actions">
-				<button className="lobby__btn lobby__btn--leave" onClick={handleLeave}>
+			<div className="creategame__actions">
+				<button className="creategame__btn creategame__btn--leave" onClick={handleLeave}>
 					✕ leave room
 				</button>
 				{isHost ? (
 					<button
-						className="lobby__btn lobby__btn--start"
+						className="creategame__btn creategame__btn--start"
 						onClick={handleStart}
 						disabled={players.length < 3}
 						title={players.length < 3 ? 'need at least 3 players' : ''}
@@ -246,7 +246,7 @@ const Lobby = () =>
 					</button>
 				) : (
 					<button
-						className="lobby__btn lobby__btn--start"
+						className="creategame__btn creategame__btn--start"
 						disabled={true}
 					>
 						⧗ waiting for host
@@ -255,7 +255,7 @@ const Lobby = () =>
 			</div>
 
 			{players.length < 3 && (
-				<p className="lobby__start-hint">
+				<p className="creategame__start-hint">
 					⚠ settings will be automatically adjusted based on player count.
 				</p>
 			)}

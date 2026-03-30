@@ -2,6 +2,7 @@ package main
 
 import (
 	"strings"
+	// "time"
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -32,6 +33,7 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 	var currentUsername string
 	var currentUserID string
 	var currentRoom *gamemanager.Room
+	var currentAIRoom *gamemanager.AIRoom
 
 	for {
 		var msg Message
@@ -45,7 +47,7 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 			if err != nil {
 				fmt.Println("WS Auth Failed:", err)
 				conn.WriteMessage(websocket.CloseMessage,
-					websocket.FormatCloseMessage(4001, "token expired"))
+				websocket.FormatCloseMessage(4001, "token expired"))
 				return
 			}
 			currentUsername = claims.Username
@@ -88,8 +90,10 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 
 			room, err := hub.GetRoom(msg.Code)
 			if err != nil || room == nil {
-				fmt.Println("Join failed: room is nil or not found")
-				conn.WriteJSON(map[string]string{"type": "error", "message": "room not found"})
+				room.MessageChan <- gamemanager.Notification{
+					PlayerID: currentUserID,
+					Data: map[string]string{"type": "error", "message": "room not found"},
+				}
 				continue
 			}
 
@@ -138,7 +142,7 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 				"type": "prompt",
 				"prompt": msg.Prompt,
 			}
-			fmt.Printf("DEBUG: PROMPT\n")
+			fmt.Printf("DEGUB: %s\n", msg.Type)
 			err := currentRoom.SubmiteAction(currentUserID, data, true);
 			if (err != nil) {
 				fmt.Printf("Error: Submited prompt: %v\n", err);
@@ -150,7 +154,7 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 				"type": "draw",
 				"drawing": msg.Drawing,
 			}
-			fmt.Printf("DEBUG: DRAW")
+			fmt.Printf("DEGUB: %s\n", msg.Type)
 			err := currentRoom.SubmiteAction(currentUserID, data, true);
 			if (err != nil) {
 				fmt.Printf("Error: Submited draw: %v\n", err);
@@ -162,7 +166,7 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 				"type": "guess",
 				"guess": msg.Guess,
 			}
-			fmt.Printf("DEBUG: GUESS\n")
+			fmt.Printf("DEGUB: %s\n", msg.Type)
 			err := currentRoom.SubmiteAction(currentUserID, data, true);
 			if (err != nil) {
 				fmt.Printf("Error: Submited guess: %v\n", err);
@@ -182,14 +186,18 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 			fmt.Printf("DEBUG: start_game\n")
 			room.BroadcastToAll(map[string]interface{}{
 				"type": "start_game",
-				"room": room.ID,
+				"code": room.ID,
 			})
 		}
 		if (msg.Type == "leave_game") {
 			fmt.Printf("DEBUG: leave_game msg %s\n", msg.Code)
 			room, err := hub.GetRoom(msg.Code)
 			if (err != nil) { continue }
-			room.LeaveGame(currentUserID)
+			del := room.LeaveGame(currentUserID)
+			if del {
+				hub.DeleteRoom(msg.Code)
+				fmt.Printf("DEBUG: DELETE ROOM nobody is in")
+			}
 		}
 		if msg.Type == "join_game" {
 
@@ -199,72 +207,110 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 			room.JoinGame(currentUserID, conn)
 			// room.UpdatePlayerConn(currentUserID, conn)
 			fmt.Printf("DEBUG join_game: code='%s' user='%s'\n", msg.Code, currentUsername)
-			// fmt.Printf("DEBUG join_game GetRoom: room=%v err=%v\n", room != nil, err)
 			currentRoom = room
 
 			task := room.GetPlayerTask(currentUserID)
-			// fmt.Printf("DEBUG join_game task: %+v\n", task) Système qui annonce les nou
 			conn.WriteJSON(task)
 		}
-
+		// AI_GAME_GESTION
 		if msg.Type == "create_ai_room" {
 			if currentUsername == "" { continue }
 
 			newRoom := globalAIHub.CreateRoom()
-			newRoom.Players[currentUserID] = &gamemanager.Player{
-				ID:          currentUserID,
-				Name:        currentUsername,
-				Conn:        conn,
-				IsHost:      true,
-				IsConnected: true,
-			}
-
-			newRoom.BroadcastLobbyState()
+			currentAIRoom = newRoom
+			err := newRoom.AddPlayer(currentUserID, currentUsername, conn)
+			if err != nil { continue }
+			fmt.Printf("DEGUB: AI_ROOM created\n")	
 
 			newRoom.MessageChan <- gamemanager.Notification{
 				PlayerID: currentUserID,
 				Data: map[string]interface{}{
 					"type": "ai_room_created",
 					"code": newRoom.ID,
+					"palyers": []map[string]interface{}{
+						{
+							"id": currentUserID,
+							"name": currentUsername,
+							"host": true,
+						},
+					},
 				},
 			}
+			fmt.Printf("DEBUG: %s\n", msg.Type)
+			newRoom.BroadcastLobbyState()
 		}
-
 		if msg.Type == "join_ai_room" {
 			if currentUsername == "" { continue }
 
 			room, err := globalAIHub.GetRoom(msg.Code)
 			if err != nil || room == nil {
-				// Fix : passe par WriteMu pour éviter le concurrent write
-				room2, _ := globalAIHub.GetRoom(msg.Code)
-				if room2 != nil {
-					room2.MessageChan <- gamemanager.Notification{
-						PlayerID: currentUserID,
-						Data:     map[string]string{"type": "error", "message": "ai room not found"},
-					}
-				}
+				conn.WriteJSON(map[string]interface{}{
+					"type":    "error",
+					"message": "AI room not found",
+				})
 				continue
 			}
 
 			_, err = globalAIHub.AddPlayerToRoom(msg.Code, currentUserID, currentUsername, conn)
 			if err != nil {
-				room.MessageChan <- gamemanager.Notification{
-					PlayerID: currentUserID,
-					Data:     map[string]string{"type": "error", "message": err.Error()},
-				}
+				conn.WriteJSON(map[string]interface{}{
+					"type":    "error",
+					"message": err.Error(),
+				})
 				continue
 			}
+
+			currentAIRoom = room
+
+			room.MessageChan <- gamemanager.Notification{
+				PlayerID: currentUserID,
+				Data: map[string]interface{}{
+					"type":  "ai_room_joined",
+					"code":  room.ID,
+					"my_id": currentUserID,
+				},
+			}
+			fmt.Printf("DEBUG: %s rejoint par %s\n", msg.Code, currentUsername)
 
 			room.SendSystemMsg(fmt.Sprintf("%s join the lobby !", currentUsername))
 			room.BroadcastLobbyState()
 		}
+
+		// if msg.Type == "join_ai_room" {
+			// if currentUsername == "" { continue }
+// 
+			// room, err := globalAIHub.GetRoom(msg.Code)
+			// if err != nil || room == nil {
+				// room2, _ := globalAIHub.GetRoom(msg.Code)
+				// if room2 != nil {
+					// room2.MessageChan <- gamemanager.Notification{
+						// PlayerID: currentUserID,
+						// Data:     map[string]string{"type": "error", "message": "ai room not found"},
+					// }
+				// }
+				// continue
+			// }
+// 
+			// _, err = globalAIHub.AddPlayerToRoom(msg.Code, currentUserID, currentUsername, conn)
+			// if err != nil {
+				// room.MessageChan <- gamemanager.Notification{
+					// PlayerID: currentUserID,
+					// Data:     map[string]string{"type": "error", "message": err.Error()},
+				// }
+				// continue
+			// }
+// 
+			// fmt.Printf("DEGUB: %s\n", msg.Type)
+			// room.SendSystemMsg(fmt.Sprintf("%s join the lobby !", currentUsername))
+			// room.BroadcastLobbyState()
+		// }
 
 		if msg.Type == "chat_message" {
 			if (currentUsername == "") { continue }
 			if (len(strings.TrimSpace(msg.Text)) == 0) { continue }
 			room, err := globalHub.GetRoom(msg.Code)
 			if (err != nil) { continue }
-			fmt.Printf("DEBUG: char_message\n")
+			fmt.Printf("DEBUG: chat_message\n")
 			room.BroadcastChat(currentUserID, msg.Text)
 		}
 
@@ -273,6 +319,7 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 			if (len(strings.TrimSpace(msg.Text)) == 0) { continue }
 			room, err := globalAIHub.GetRoom(msg.Code)
 			if (err != nil) { continue }
+			fmt.Printf("DEGUB: %s\n", msg.Type)
 
 			room.BroadcastChat(currentUserID, msg.Text)
 		}
@@ -291,12 +338,14 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 				prompt = "Error API : add Credits"
 			}
 
-			room.BroadcastToAll(map[string]interface{}{
-				"type": "start_ai_game",
-				"room": room.ID,
-			})
+			currentAIRoom = room
 
-			go room.RunAIGameLoop(prompt)
+			currentAIRoom.BroadcastToAll(map[string]interface{}{
+				"type": "start_ai_game",
+				"code": room.ID,
+			})
+			fmt.Printf("DEBUG: %s\n", msg.Type)
+			go currentAIRoom.RunAIGameLoop(prompt)
 		}
 
 		if msg.Type == "join_ai_game" {
@@ -306,23 +355,19 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 			if err != nil || room == nil { continue }
 
 			globalAIHub.UpdatePlayerConn(msg.Code, currentUserID, conn)
-
-			prompt := room.Prompt
-			status := room.Status
-
-			if status == gamemanager.StateAIDrawing {
-				// Fix : passe par MessageChan au lieu de conn.WriteJSON direct
+			currentAIRoom = room
+			if (room.Status == gamemanager.StateAIDrawing) {
 				room.MessageChan <- gamemanager.Notification{
 					PlayerID: currentUserID,
 					Data: map[string]interface{}{
 						"type":   "ai_game_state",
 						"phase":  "draw",
-						"room":   msg.Code,
-						"prompt": prompt,
-						"my_id":  currentUserID,
+						"prompt": room.Prompt,
+						"room":   room.ID,
 					},
 				}
 			}
+			fmt.Printf("DEGUB: %s\n", msg.Type)
 		}
 
 		if msg.Type == "ai_drawing_submitted" {
@@ -342,7 +387,18 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 
 			room.SubmitVotes(currentUserID, msg.Votes)
 		}
+		if msg.Type == "leave_ai_game" {
+			if currentUsername == "" { continue }
 
+			room, err := globalAIHub.GetRoom(msg.Code)
+			if err != nil { continue }
+
+			del := room.LeaveGame(currentUserID)
+			if del {
+				globalAIHub.DeleteRoom(room.ID)
+				fmt.Printf("DEBUG: Delete ROOM everybody quit\n")
+			}
+		}
 		if msg.Type == "leave_ai_room" {
 			if currentUsername == "" { continue }
 
@@ -367,8 +423,16 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 				room.TransferHost()
 			}
 
+			// NOTE FOR leave_game
+			// isAllDisconnect := room.LeaveGame(currentUserID)
+			// if isAllDisconnect {
+				// globalAIHub.DeleteRoom(room.ID)
+				// fmt.Printf("DEBUG: Delete ROOM everybody quit\n")
+				// return
+			// }
 			room.SendSystemMsg(fmt.Sprintf("%s leave the lobby !", currentUsername))
 			room.BroadcastLobbyState()
+			
 		}
 	}
 

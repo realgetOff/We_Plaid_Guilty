@@ -3,6 +3,8 @@ package gamemanager
 import (
 	"fmt"
 	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 func NewAIRoom(id string) *AIRoom {
@@ -18,22 +20,22 @@ func NewAIRoom(id string) *AIRoom {
 	}
 }
 
-func (r *AIRoom) AddPlayer(playerID string, name string, conn interface{}) error {
+func (r *AIRoom) AddPlayer(playerID string, name string, conn *websocket.Conn) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	if len(r.Players) >= 8 {
-		return fmt.Errorf("room is full")
+		return fmt.Errorf("Room is full")
 	}
-
-	wsConn := conn.(interface{ WriteJSON(interface{}) error })
-	_ = wsConn
 
 	newPlayer := &Player{
 		ID:          playerID,
 		Name:        name,
+		Conn:        conn,
 		IsHost:      len(r.Players) == 0,
 		IsConnected: true,
+		IsReady:     false,
+		Score:       0,
 	}
 
 	r.Players[playerID] = newPlayer
@@ -41,42 +43,48 @@ func (r *AIRoom) AddPlayer(playerID string, name string, conn interface{}) error
 }
 
 func (r *AIRoom) listenForNotification() {
-	for notification := range r.MessageChan {
-		r.mu.Lock()
-		player, ok := r.Players[notification.PlayerID]
-		r.mu.Unlock()
+    for notification := range r.MessageChan {
+        r.mu.Lock()
+        player, ok := r.Players[notification.PlayerID]
+        if !ok {
+            r.mu.Unlock()
+            continue
+        }
+        conn := player.Conn
+        writeMu := &player.WriteMu
+        r.mu.Unlock()
 
-		if !ok {
-			continue
-		}
-		player.WriteMu.Lock()
-		err := player.Conn.WriteJSON(notification.Data)
-		player.WriteMu.Unlock()
-		if err != nil {
-			fmt.Printf("AIRoom WriteJSON error: %v\n", err)
-		}
-	}
+        writeMu.Lock()
+        err := conn.WriteJSON(notification.Data)
+        writeMu.Unlock()
+        if err != nil {
+            fmt.Printf("AIRoom WriteJSON error: %v\n", err)
+        }
+    }
 }
 
 func (r *AIRoom) BroadcastToAll(data map[string]interface{}) {
-	r.mu.Lock()
-	ids := make([]string, 0, len(r.Players))
-	for id := range r.Players {
-		ids = append(ids, id)
-	}
-	roomID := r.ID
-	r.mu.Unlock()
+    r.mu.Lock()
+    ids := make([]string, 0, len(r.Players))
+    for id := range r.Players {
+        ids = append(ids, id)
+    }
+    roomID := r.ID
+    r.mu.Unlock()
 
-	data["room"] = roomID
-	data["code"] = roomID
-	for _, id := range ids {
-		r.MessageChan <- Notification{
-			PlayerID: id,
-			Data:     data,
-		}
-	}
+    for _, id := range ids {
+        payload := make(map[string]interface{}, len(data)+1)
+        for k, v := range data {
+            payload[k] = v
+        }
+        payload["room"] = roomID
+		payload["code"] = roomID
+        r.MessageChan <- Notification{
+            PlayerID: id,
+            Data:     payload,
+        }
+    }
 }
-
 func (r *AIRoom) BroadcastLobbyState() {
 	r.mu.Lock()
 	type toNotify struct {
@@ -230,7 +238,7 @@ func (r *AIRoom) BroadcastChat(playerID string, content string) {
 		r.MessageChan <- Notification{
 			PlayerID: p.ID,
 			Data: map[string]interface{}{
-				"type": "chat_message",
+				"type": "ai_chat_message",
 				"user": userName,
 				"text": content,
 				"id": messageId,
@@ -240,6 +248,26 @@ func (r *AIRoom) BroadcastChat(playerID string, content string) {
 		}
 	}
 }
+
+func (r *AIRoom) LeaveGame(playerID string) (bool){
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if oldPlayer, ok := r.Players[playerID]; ok {
+		oldPlayer.IsReady = true
+		oldPlayer.IsConnected = false
+	}
+	var isAllDisconnect bool
+	for _, p := range r.Players {
+		if !p.IsConnected {
+			isAllDisconnect = true
+		} else {
+			isAllDisconnect = false
+			break
+		}
+	}
+	return isAllDisconnect
+}
+
 
 func (r *AIRoom) RunAIGameLoop(prompt string) {
 	r.mu.Lock()

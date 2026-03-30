@@ -91,13 +91,23 @@ func (r *Room) AddPlayer(playerID string, name string, conn *websocket.Conn) err
 	return nil
 }
 
-func (r *Room) LeaveGame(playerID string) {
+func (r *Room) LeaveGame(playerID string) (bool){
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if oldPlayer, ok := r.Players[playerID]; ok {
 		oldPlayer.IsReady = true
 		oldPlayer.IsConnected = false
 	}
+	var isAllDisconnect bool
+	for _, p := range r.Players {
+		if !p.IsConnected {
+			isAllDisconnect = true
+		} else {
+			isAllDisconnect = false
+			break
+		}
+	}
+	return isAllDisconnect
 }
 
 func (r *Room) JoinGame(playerID string, newConn *websocket.Conn) {

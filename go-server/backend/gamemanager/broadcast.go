@@ -1,6 +1,52 @@
 package gamemanager
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
+
+func (r *Room) SendSystemMsg(content string) {
+	r.BroadcastChat("SYSTEM", content)
+}
+
+func (r *Room) BroadcastChat(playerID string, content string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	var userName string
+	var messageId string
+	var isSystem bool
+
+	if (playerID == "SYSTEM") {
+		userName = "📢 Système"
+		messageId = fmt.Sprintf("%d", time.Now().UnixNano())
+		isSystem = true
+	} else {
+		sender, ok := r.Players[playerID]
+		if !ok { return }
+		userName = sender.Name
+		isSystem = false
+	}
+
+	messageId = fmt.Sprintf("%d", time.Now().UnixNano())
+
+	for _,p := range r.Players {
+		if !p.IsConnected {
+			continue
+		}
+
+		r.MessageChan <- Notification{
+			PlayerID: p.ID,
+			Data: map[string]interface{}{
+				"type": "chat_message",
+				"user": userName,
+				"text": content,
+				"id": messageId,
+				"is_system": isSystem,
+			},
+		}
+	}
+}
 
 func (r *Room) BroadcastLobbyState() {
 	r.mu.Lock()

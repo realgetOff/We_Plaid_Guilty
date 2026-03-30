@@ -32,6 +32,7 @@ type CreateLobbyResponse struct {
 
 type Message struct {
     Type    string         `json:"type"`
+	Text    string         `json:"text,omitempty"`
     Token   string         `json:"token,omitempty"`
     Code    string         `json:"code,omitempty"`
     Reason  string         `json:"reason,omitempty"`

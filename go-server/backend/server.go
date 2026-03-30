@@ -203,7 +203,7 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 			currentRoom = room
 
 			task := room.GetPlayerTask(currentUserID)
-			// fmt.Printf("DEBUG join_game task: %+v\n", task)
+			// fmt.Printf("DEBUG join_game task: %+v\n", task) Système qui annonce les nou
 			conn.WriteJSON(task)
 		}
 
@@ -255,6 +255,7 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 				continue
 			}
 
+			room.SendSystemMsg(fmt.Sprintf("%s join the lobby !", currentUsername))
 			room.BroadcastLobbyState()
 		}
 
@@ -264,6 +265,15 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 			room, err := globalHub.GetRoom(msg.Code)
 			if (err != nil) { continue }
 			fmt.Printf("DEBUG: char_message\n")
+			room.BroadcastChat(currentUserID, msg.Text)
+		}
+
+		if msg.Type == "ai_chat_message" {
+			if (currentUsername == "") { continue }
+			if (len(strings.TrimSpace(msg.Text)) == 0) { continue }
+			room, err := globalAIHub.GetRoom(msg.Code)
+			if (err != nil) { continue }
+
 			room.BroadcastChat(currentUserID, msg.Text)
 		}
 
@@ -357,6 +367,7 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 				room.TransferHost()
 			}
 
+			room.SendSystemMsg(fmt.Sprintf("%s leave the lobby !", currentUsername))
 			room.BroadcastLobbyState()
 		}
 	}

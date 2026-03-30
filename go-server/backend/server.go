@@ -315,11 +315,11 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 		}
 
 		if msg.Type == "ai_chat_message" {
-			fmt.Printf("DEGUB: %s\n", msg.Type)
 			if (currentUsername == "") { continue }
 			if (len(strings.TrimSpace(msg.Text)) == 0) { continue }
 			room, err := globalAIHub.GetRoom(msg.Code)
 			if (err != nil) { continue }
+			fmt.Printf("DEGUB: %s\n", msg.Type)
 
 			room.BroadcastChat(currentUserID, msg.Text)
 		}

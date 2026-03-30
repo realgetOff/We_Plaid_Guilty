@@ -258,14 +258,14 @@ func (r *AIRoom) BroadcastChat(playerID string, content string) {
 	messageId = fmt.Sprintf("%d", time.Now().UnixNano())
 
 	for _,p := range r.Players {
-		// if !p.IsConnected {
-			// continue
-		// }
+		if !p.IsConnected {
+			continue
+		}
 
 		r.MessageChan <- Notification{
 			PlayerID: p.ID,
 			Data: map[string]interface{}{
-				"type": "chat_message",
+				"type": "ai_chat_message",
 				"user": userName,
 				"text": content,
 				"id": messageId,

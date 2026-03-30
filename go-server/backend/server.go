@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strings"
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -97,6 +98,7 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 				fmt.Println("AddPlayer error:", err)
 				continue
 			}
+			room.SendSystemMsg(fmt.Sprintf("%s join the lobby !", currentUsername))
 
 			currentRoom = room
 
@@ -118,6 +120,7 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 				isHost = p.IsHost
 			}
 			room.RemovePlayer(currentUserID)
+			room.SendSystemMsg(fmt.Sprintf("%s leave the lobby !", currentUsername))
 			currentRoom = nil
 			if len(room.Players) == 0 {
 				hub.DeleteRoom(room.ID)
@@ -203,46 +206,6 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 			// fmt.Printf("DEBUG join_game task: %+v\n", task)
 			conn.WriteJSON(task)
 		}
-		// if msg.Type == "join_game" {
-			// fmt.Printf("DEBUG join_game: code='%s' user='%s'\n", msg.Code, currentUsername)
-			// if currentUsername == "" { continue }
-// 
-			// room, err := hub.GetRoom(msg.Code)
-			// if err != nil || room == nil { continue }
-// 
-			// room.JoinGame(currentUserID, conn)
-			// currentRoom = room
-// 
-			// task := room.GetPlayerTask(currentUserID)
-			// conn.WriteJSON(task)
-		// }
-
-
-		if msg.Type == "drawing_submitted" {
-			fmt.Printf("DEBUG: DRAW")
-			if currentRoom == nil { continue }
-			data := map[string]interface{}{
-				"type":    "draw",
-				"drawing": msg.Drawing,
-			}
-			err := currentRoom.SubmiteAction(currentUserID, data, true)
-			if err != nil {
-				fmt.Printf("Error: Submited draw: %v\n", err)
-			}
-		}
-
-		if msg.Type == "guess_submitted" {
-			fmt.Printf("DEBUG: GUESS")
-			if currentRoom == nil { continue }
-			data := map[string]interface{}{
-				"type":  "guess",
-				"guess": msg.Guess,
-			}
-			err := currentRoom.SubmiteAction(currentUserID, data, true)
-			if err != nil {
-				fmt.Printf("Error: Submited guess: %v\n", err)
-			}
-		}
 
 		if msg.Type == "create_ai_room" {
 			if currentUsername == "" { continue }
@@ -293,6 +256,15 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 			}
 
 			room.BroadcastLobbyState()
+		}
+
+		if msg.Type == "chat_message" {
+			if (currentUsername == "") { continue }
+			if (len(strings.TrimSpace(msg.Text)) == 0) { continue }
+			room, err := globalHub.GetRoom(msg.Code)
+			if (err != nil) { continue }
+
+			room.BroadcastChat(currentUserID, msg.Text)
 		}
 
 		if msg.Type == "start_ai_game" {

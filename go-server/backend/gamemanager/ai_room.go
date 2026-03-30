@@ -35,8 +35,6 @@ func (r *AIRoom) AddPlayer(playerID string, name string, conn interface{}) error
 		IsConnected: true,
 	}
 
-	// On doit stocker la conn — on réutilise Player qui a déjà Conn
-	// mais Player.Conn est *websocket.Conn donc on cast proprement dans ai_hub
 	r.Players[playerID] = newPlayer
 	return nil
 }

@@ -118,7 +118,7 @@ func main() {
 	router.GET("/health", health)
 	router.GET("/api/config", vaultstatus)
 	router.GET("/ws", func (c *gin.Context){
-		handleWebsocket(c, db, globalHub)
+		handleWebsocket(c, db, globalHub, globalAIHub)
 	})
 	router.POST("/api/auth/player", func (c *gin.Context){
 		handleGuestAuth(c, db)

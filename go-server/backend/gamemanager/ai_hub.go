@@ -1,4 +1,4 @@
-package gamemanager
+	package gamemanager
 
 import (
 	"fmt"
@@ -88,13 +88,12 @@ func (h *AIHub) AddPlayerToRoom(roomID string, playerID string, name string, con
 }
 
 func (h *AIHub) UpdatePlayerConn(roomID string, playerID string, conn *websocket.Conn) {
-	room, err := h.GetRoom(roomID)
-	if err != nil {
-		return
-	}
-	room.mu.Lock()
-	if p, ok := room.Players[playerID]; ok {
-		p.Conn = conn
-	}
-	room.mu.Unlock()
+    room, err := h.GetRoom(roomID)
+    if err != nil { return }
+    room.mu.Lock()
+    if p, ok := room.Players[playerID]; ok {
+        p.IsConnected = true
+        p.Conn = conn
+    }
+    room.mu.Unlock()
 }

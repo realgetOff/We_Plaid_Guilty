@@ -6,7 +6,7 @@
 /*   By: mforest- <marvin@d42.fr>                   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/29 23:34:36 by mforest-          #+#    #+#             */
-/*   Updated: 2026/03/29 23:34:36 by mforest-         ###   ########.fr       */
+/*   Updated: 2026/03/30 00:00:00 by mforest-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,7 @@ const AIGame = () =>
 {
 	const { code } = useParams();
 	const navigate = useNavigate();
+	const normalized = code?.toUpperCase();
 
 	const [status, setStatus] = useState('waiting');
 	const [phase, setPhase] = useState(null);
@@ -32,12 +33,12 @@ const AIGame = () =>
 
 	useEffect(() =>
 	{
-		const normalized = code?.toUpperCase();
+		if (!normalized) return;
+
 		connect();
 
 		const handler = (msg) =>
 		{
-
 			if (!msg || msg.room?.toUpperCase() !== normalized) return;
 
 			if (msg.type === 'ai_game_state')
@@ -66,7 +67,7 @@ const AIGame = () =>
 		};
 
 		addListener(handler);
-		
+
 		send({ type: 'join_ai_game', code: normalized });
 
 		return () =>
@@ -74,13 +75,13 @@ const AIGame = () =>
 			removeListener(handler);
 			send({ type: 'leave_ai_game', code: normalized });
 		};
-	}, [code]);
+	}, [normalized]);
 
 	const handleDrawDone = (dataURL) =>
 	{
 		send({
 			type: 'ai_drawing_submitted',
-			code: code?.toUpperCase(),
+			code: normalized,
 			drawing: dataURL,
 		});
 		setPhase('waiting');
@@ -90,7 +91,7 @@ const AIGame = () =>
 	{
 		send({
 			type: 'ai_votes_submitted',
-			code: code?.toUpperCase(),
+			code: normalized,
 			votes: votes,
 		});
 		setPhase('waiting');
@@ -107,7 +108,7 @@ const AIGame = () =>
 		return (
 			<div className="aigame__guard">
 				<span className="aigame__spinner">⧗</span>
-				<p>Connecting to room <strong>{code?.toUpperCase()}</strong>…</p>
+				<p>Connecting to room <strong>{normalized}</strong>…</p>
 			</div>
 		);
 	}
@@ -116,7 +117,7 @@ const AIGame = () =>
 		<div className="aigame">
 			<div className="aigame__header">
 				<span className="aigame__phase-label">{phaseLabel}</span>
-				<span className="aigame__room-code">#{code?.toUpperCase()}</span>
+				<span className="aigame__room-code">#{normalized}</span>
 			</div>
 
 			{phase === 'draw' && (

@@ -1,6 +1,7 @@
 variable "aws_account_id" {
   description = "for ARN IAM"
   type = string
+  default = ""
 }
 
 variable "iam_role_name" {
@@ -51,4 +52,28 @@ variable "k8s_namespace" {
   description = "auth_type = kubernetes"
   type        = string
   default     = "default"
+}
+
+variable "enable_pki" {
+  description = "Enable PKI cert injection service"
+  type        = bool
+  default     = false
+}
+
+variable "pki_backend" {
+  description = "PKI backend path"
+  type        = string
+  default     = "pki"
+}
+
+variable "pki_role" {
+  description = "PKI role name"
+  type        = string
+  default     = ""
+}
+
+variable "allowed_domains" {
+  description = "allowed domains PKI certs"
+  type        = list(string)
+  default     = []
 }

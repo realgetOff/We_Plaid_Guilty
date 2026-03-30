@@ -1,12 +1,12 @@
 variable "aws_region" {
   description = "Region AWS"
-  type = string
-  default = "eu-north-1"
+  type        = string
+  default     = "eu-north-1"
 }
 
 variable "project_name" {
   description = "Nom du projet"
-  type = string
+  type        = string
 }
 
 variable "admin_public_key" {

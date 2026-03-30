@@ -36,7 +36,7 @@ func vaultstatus(c *gin.Context) {
 // loadSecrets reads secrets injected by Vault Agent Injector
 // into /vault/secrets/app-secrets and sources them as env vars.
 func loadSecrets() error {
-	secretsFile := "/vault/secrets/app-secrets"
+	secretsFile := "/vault/secrets/app/config"
 
 	maxRetries := 10
 	for i := 0; i < maxRetries; i++ {

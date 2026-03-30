@@ -11,6 +11,27 @@ resource "vault_kubernetes_auth_backend_config" "config" {
   kubernetes_host = "https://${data.terraform_remote_state.infra.outputs.master_ip}:6443"
 }
 
+resource "vault_mount" "pki" {
+  path                      = "pki"
+  type                      = "pki"
+  default_lease_ttl_seconds = 86400
+  max_lease_ttl_seconds     = 315360000
+}
+
+resource "vault_pki_secret_backend_root_cert" "root" {
+  backend     = vault_mount.pki.path
+  type        = "internal"
+  common_name = "trans-ca"
+  ttl         = "315360000"
+  issuer_name = "trans-root"
+}
+
+resource "vault_pki_secret_backend_config_urls" "config" {
+  backend                 = vault_mount.pki.path
+  issuing_certificates    = ["http://vault.vault.svc.cluster.local:8200/v1/pki/ca"]
+  crl_distribution_points = ["http://vault.vault.svc.cluster.local:8200/v1/pki/crl"]
+}
+
 module "vault_app" {
   source              = "../modules/vault-config"
   service_name        = "app"
@@ -20,8 +41,10 @@ module "vault_app" {
   k8s_namespace       = "default"
   token_ttl           = 3600
   token_max_ttl       = 86400
-  aws_account_id      = data.terraform_remote_state.infra.outputs.aws_account_id
   extra_paths         = ["secret/data/db/*"]
+  enable_pki          = true
+  pki_backend         = vault_mount.pki.path
+  allowed_domains     = ["transcendance.local", "svc.cluster.local", "default.svc.cluster.local"]
 }
 
 module "vault_db" {

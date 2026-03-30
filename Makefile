@@ -1,4 +1,4 @@
-.PHONY: help bootstrap init init-upgrade fmt validate plan show output packer deploy deploy-ci deploy-debug ansible kubectl destroy destroy-full clean
+.PHONY: help bootstrap init init-upgrade fmt validate plan show output packer deploy deploy-ci deploy-debug ansible kubectl destroy destroy-full clean plan-all
 
 # ─── Colors ──────────────────────────────────────────────────────────────────
 GREEN  := \033[0;32m
@@ -273,3 +273,9 @@ clean: ## Remove local temporary files
 	@echo "$(YELLOW)Cleaning up temporary files...$(RESET)"
 	@rm -f $(VAULT_FILE) $(ANSIBLE_DIR)/secrets.yml
 	@echo "$(GREEN)Cleanup done.$(RESET)"
+
+plan-all:
+	@echo "--- Planning Infra ---"
+	cd $(TF_INFRA_DIR) && terraform plan -out=infra.tfplan
+	@echo "--- Planning Vault (using remote state) ---"
+	cd $(TF_VAULT_DIR) && terraform plan

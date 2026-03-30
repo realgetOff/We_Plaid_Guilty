@@ -1,7 +1,7 @@
 terraform {
   required_providers {
     vault = {
-      source = "hashicorp/vault"
+      source  = "hashicorp/vault"
       version = "~> 4.0"
     }
   }
@@ -18,5 +18,5 @@ data "terraform_remote_state" "infra" {
 
 provider "vault" {
   address = "http://${data.terraform_remote_state.infra.outputs.master_ip}:30820"
-  token = var.vault_root_token
+  token   = var.vault_root_token
 }

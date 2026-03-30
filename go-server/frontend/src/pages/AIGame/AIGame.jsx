@@ -38,7 +38,8 @@ const AIGame = () =>
 		const handler = (msg) =>
 		{
 
-			if (!msg || msg.room?.toUpperCase() !== normalized) return;
+			if (!msg || msg.room?.toUpperCase() !== normalized)
+				return;
 
 			if (msg.type === 'ai_game_state')
 			{

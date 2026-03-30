@@ -13,7 +13,8 @@
 import React, { useState } from 'react';
 import './AIVotePanel.css';
 
-const AIVotePanel = ({ drawings, myId, onDone }) => {
+const AIVotePanel = ({ drawings, myId, onDone }) =>
+{
 	const [votes, setVotes] = useState({});
 
 	const votableDrawings = (drawings || [])
@@ -23,7 +24,8 @@ const AIVotePanel = ({ drawings, myId, onDone }) => {
 		}))
 		.filter(d => d.uniqueId !== myId);
 
-	const handleScoreClick = (targetId, score) => {
+	const handleScoreClick = (targetId, score) =>
+	{
 		setVotes(prev => ({
 			...prev,
 			[targetId]: score
@@ -67,7 +69,7 @@ const AIVotePanel = ({ drawings, myId, onDone }) => {
 				disabled={!isComplete}
 				onClick={() => onDone(votes)}
 			>
-				{isComplete ? "Confirmer les votes" : "Sélectionnez une note pour chaque dessin"}
+				{isComplete ? "Confirm my votes!" : "Choose one vote for each draw"}
 			</button>
 		</div>
 	);

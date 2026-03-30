@@ -65,8 +65,10 @@ const AILobby = () =>
 
 	useEffect(() => { msgEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
-	const handleSend = () => {
-		if (!input.trim()) return;
+	const handleSend = () =>
+	{
+		if (!input.trim())
+			return;
 		send({ type: 'ai_chat_message', code: normalized, text: input.trim() });
 		setInput('');
 	};

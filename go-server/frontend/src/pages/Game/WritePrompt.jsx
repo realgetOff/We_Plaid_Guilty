@@ -28,7 +28,7 @@ const WritePrompt = ({ onDone }) =>
 	{
 		if (seconds <= 0)
 		{
-			onDoneRef.current(text.trim() || '');
+			onDoneRef.current(text.trim());
 			return;
 		}
 		const id = setTimeout(() => setSeconds((s) => s - 1), 1000);

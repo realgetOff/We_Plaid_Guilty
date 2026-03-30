@@ -31,14 +31,14 @@ type CreateLobbyResponse struct {
 
 
 type Message struct {
-	Type	string `json:"type"`
-	Token	string `json:"token,omitempty"`
-	Code	string `json:"code,omitempty"`
-	Reason	string `json:"reason,omitempty"`
-
-	Prompt   string `json:"prompt,omitempty"` 
-    Drawing  string `json:"drawing,omitempty"`
-    Guess    string `json:"guess,omitempty"`
+    Type    string         `json:"type"`
+    Token   string         `json:"token,omitempty"`
+    Code    string         `json:"code,omitempty"`
+    Reason  string         `json:"reason,omitempty"`
+    Prompt  string         `json:"prompt,omitempty"`
+    Drawing string         `json:"drawing,omitempty"`
+    Guess   string         `json:"guess,omitempty"`
+    Votes   map[string]int `json:"votes,omitempty"`
 }
 
 type AuthResponse struct {

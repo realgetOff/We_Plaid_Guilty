@@ -1,36 +1,35 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Lobby.jsx                                          :+:      :+:    :+:   */
+/*   AILobby.jsx                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: mforest- <marvin@d42.fr>                   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/03/28 19:52:46 by mforest-          #+#    #+#             */
-/*   Updated: 2026/03/28 19:52:46 by mforest-         ###   ########.fr       */
+/*   Created: 2026/03/30 00:06:44 by mforest-          #+#    #+#             */
+/*   Updated: 2026/03/30 00:06:44 by mforest-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { connect, send, addListener, removeListener } from '../../socket';
-import { roomsApi } from '../../api/rooms';
-import './Lobby.css';
+import '../Game/Lobby.css';
 
-const DENY_REASONS = {
+const DENY_REASONS =
+{
 	invalid:   'invalid room code format.',
 	not_found: 'room not found.',
 	started:   'this game has already started.',
-	finished:  'this game is already finished.',
 	unknown:   'cannot access this room.',
 };
 
-const Lobby = () =>
+const AILobby = () =>
 {
 	const { code } = useParams();
 	const navigate  = useNavigate();
 	const msgEndRef = useRef(null);
 
-	const [status,   setStatus]   = useState('checking');
+	const [status,   setStatus]   = useState('ready');
 	const [deny,     setDeny]     = useState('');
 	const [players,  setPlayers]  = useState([]);
 	const [messages, setMessages] = useState([]);
@@ -42,44 +41,14 @@ const Lobby = () =>
 
 	useEffect(() =>
 	{
-		const checkRoom = async () =>
-		{
-			if (!normalized || !/^[A-Z]{6}$/.test(normalized))
-			{
-				setDeny(DENY_REASONS.invalid);
-				setStatus('denied');
-				return;
-			}
-			try
-			{
-				const room = await roomsApi.getRoom(normalized);
-				if (!room || room.status === 'started')
-				{
-					setDeny(room?.status === 'started' ? DENY_REASONS.started : DENY_REASONS.not_found);
-					setStatus('denied');
-					return;
-				}
-				setStatus('ready');
-			}
-			catch (err)
-			{
-				setDeny(DENY_REASONS.not_found);
-				setStatus('denied');
-			}
-		};
-		checkRoom();
-	}, [normalized]);
-
-	useEffect(() =>
-	{
-		if (status !== 'ready')
-			return;
+		if (status !== 'ready') return;
 
 		connect();
 
 		const handler = (msg) =>
 		{
 			if (!msg) return;
+
 			const roomMatch = msg.room === normalized || msg.code === normalized;
 
 			if (msg.type === 'lobby_state' && roomMatch)
@@ -94,15 +63,18 @@ const Lobby = () =>
 
 			if (msg.type === 'chat_message' && roomMatch)
 			{
-				setMessages((prev) => [...prev, {
+				setMessages((prev) => [...prev,
+				{
 					id:   msg.id || Date.now(),
 					user: msg.user,
 					text: msg.text,
 				}]);
 			}
 
-			if (msg.type === 'start_game' && roomMatch)
-				navigate(`/game/play/${normalized}`);
+			if (msg.type === 'start_ai_game' && roomMatch)
+			{
+				navigate(`/aigame/play/${normalized}`);
+			}
 
 			if (msg.type === 'join_denied')
 			{
@@ -112,12 +84,12 @@ const Lobby = () =>
 		};
 
 		addListener(handler);
-		send({ type: 'join_room', code: normalized });
+		send({ type: 'join_ai_room', code: normalized });
 
 		return () =>
 		{
 			removeListener(handler);
-			send({ type: 'leave_lobby', code: normalized });
+			send({ type: 'leave_ai_room', code: normalized });
 		};
 	}, [status, normalized, navigate]);
 
@@ -133,40 +105,39 @@ const Lobby = () =>
 		setInput('');
 	};
 
-	if (status === 'checking')
-		return <div className="lobby__guard">Verifying {normalized}...</div>;
+	const handleStart = () =>
+	{
+		if (players.length < 3) return;
+		send({ type: 'start_ai_game', code: normalized });
+	};
+
 	if (status === 'denied')
 		return <div className="lobby__guard">⚠ {deny}</div>;
 
 	return (
 		<div className="lobby">
-			<div className="lobby__code-band">ROOM: <span className="lobby__code">{normalized}</span></div>
+			<div className="lobby__code-band">
+				🤖 AI GAME — ROOM: <span className="lobby__code">{normalized}</span>
+			</div>
 
 			<div className="lobby__columns">
-				<div className="lobby__card lobby__card--grow">
-					<div className="lobby__card-header">
-						👥 players
-						<span className="lobby__card-header-count">{players.length}/8</span>
-					</div>
-					<div className="lobby__card-body lobby__card-body--list">
+				<div className="lobby__card lobby__card--players">
+					<div className="lobby__card-header">👥 Players ({players.length}/8)</div>
+					<div className="lobby__player-list">
 						{players.map((p) => (
 							<div key={p.id} className="lobby__player-row">
-								<span className="lobby__player-dot" />
 								<span className="lobby__player-name">{p.name}</span>
 								{p.host && <span className="lobby__badge">HOST</span>}
 							</div>
 						))}
-						{players.length < 3 && (
-							<p className="lobby__waiting">⧗ waiting for players…</p>
-						)}
 					</div>
 				</div>
 
 				<div className="lobby__card lobby__card--chat">
-					<div className="lobby__card-header">💬 chat</div>
+					<div className="lobby__card-header">💬 Chat</div>
 					<div className="lobby__chat-messages">
 						{messages.map((m) => (
-							<div key={m.id} className={`lobby__msg ${m.user === myName ? 'lobby__msg--me' : ''}`}>
+							<div key={m.id} className={`lobby__msg${m.user === myName ? ' lobby__msg--me' : ''}`}>
 								<strong>{m.user}:</strong> {m.text}
 							</div>
 						))}
@@ -184,23 +155,21 @@ const Lobby = () =>
 			</div>
 
 			<div className="lobby__actions">
-				<button className="lobby__btn lobby__btn--leave" onClick={() => navigate('/game')}>
-					✕ leave room
-				</button>
-				{isHost ? (
-					<button
-						className="lobby__btn lobby__btn--start"
-						onClick={() => send({ type: 'start_game', code: normalized })}
-						disabled={players.length < 3}
-					>
-						▶ start game
-					</button>
-				) : (
-					<p className="lobby__start-hint">Waiting for host...</p>
-				)}
+				{isHost
+					? <button className="lobby__btn--start" onClick={handleStart} disabled={players.length < 3}>
+						🤖 START AI GAME
+					  </button>
+					: <p>Waiting for host to start…</p>
+				}
 			</div>
+
+			{isHost && players.length < 3 &&
+				<p style={{ textAlign: 'center', color: '#888', marginTop: '.5rem' }}>
+					⚠ need at least 3 players
+				</p>
+			}
 		</div>
 	);
 };
 
-export default Lobby;
+export default AILobby;

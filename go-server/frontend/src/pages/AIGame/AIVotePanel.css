@@ -1,0 +1,111 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   AIVotePanel.css                                    :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mforest- <marvin@d42.fr>                   +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/03/30 01:56:31 by mforest-          #+#    #+#             */
+/*   Updated: 2026/03/30 01:56:31 by mforest-         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+.aivote {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 1.5rem;
+	width: 100%;
+	max-width: 900px;
+	margin: 0 auto;
+	padding: 1rem;
+}
+
+.aivote__hint {
+	color: #666;
+	font-size: .95rem;
+	background: #f8f8f8;
+	padding: 0.5rem 1rem;
+	border-radius: 20px;
+}
+
+.aivote__grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+	gap: 1.5rem;
+	width: 100%;
+}
+
+.aivote__card {
+	background: #fff;
+	border: 2px solid #eee;
+	border-radius: 12px;
+	padding: 1.25rem;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 1rem;
+	transition: border-color 0.2s;
+}
+
+.aivote__card-label {
+	font-weight: 600;
+	color: #333;
+	text-transform: capitalize;
+}
+
+.aivote__img {
+	width: 100%;
+	aspect-ratio: 1 / 1;
+	object-fit: contain;
+	border-radius: 8px;
+	background: #fafafa;
+	border: 1px solid #eee;
+}
+
+/* Style des boutons de score */
+.aivote__score-row {
+	display: flex;
+	gap: 0.5rem;
+}
+
+.aivote__score-btn {
+	width: 35px;
+	height: 35px;
+	border-radius: 50%;
+	border: 1px solid #ddd;
+	background: #fff;
+	color: #333;
+	font-weight: bold;
+	cursor: pointer;
+	transition: all 0.2s;
+}
+
+.aivote__score-btn:hover {
+	border-color: #111;
+	background: #f0f0f0;
+}
+
+.aivote__score-btn--active {
+	background: #111 !important;
+	color: #fff !important;
+	border-color: #111 !important;
+	transform: scale(1.1);
+}
+
+.aivote__submit {
+	padding: 0.85rem 2.5rem;
+	background: #111;
+	color: #fff;
+	border: none;
+	border-radius: 50px;
+	font-size: 1rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition: opacity 0.2s;
+}
+
+.aivote__submit:disabled {
+	background: #ccc;
+	cursor: not-allowed;
+}

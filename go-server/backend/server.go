@@ -40,17 +40,17 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 		}
 
 		if msg.Type == "authenticate" {
-    	claims, err := validateAndGetClaims(msg.Token)
-    	if err != nil {
-    	    fmt.Println("WS Auth Failed:", err)
-    	    conn.WriteMessage(websocket.CloseMessage,
-    	   	websocket.FormatCloseMessage(4001, "token expired"))
-    		return
-    	}
-		currentUsername = claims.Username
-		currentUserID = claims.UserID
-		fmt.Printf("WS Authenticated: %s (ID: %s)\n", currentUsername, currentUserID)
-		continue
+			claims, err := validateAndGetClaims(msg.Token)
+			if err != nil {
+				fmt.Println("WS Auth Failed:", err)
+				conn.WriteMessage(websocket.CloseMessage,
+					websocket.FormatCloseMessage(4001, "token expired"))
+				return
+			}
+			currentUsername = claims.Username
+			currentUserID = claims.UserID
+			fmt.Printf("WS Authenticated: %s (ID: %s)\n", currentUsername, currentUserID)
+			continue
 		}
 
 		if msg.Type == "create_room" {
@@ -143,6 +143,7 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 				"room": room.ID,
 			})
 		}
+
 		if msg.Type == "join_game" {
 			fmt.Printf("DEBUG join_game: code='%s' user='%s'\n", msg.Code, currentUsername)
 
@@ -155,61 +156,198 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 
 			task := room.GetPlayerTask(currentUserID)
 			fmt.Printf("DEBUG join_game task: %+v\n", task)
-			conn.WriteJSON(task)
+
+			// Fix : passe par MessageChan au lieu de conn.WriteJSON direct
+			room.MessageChan <- gamemanager.Notification{
+				PlayerID: currentUserID,
+				Data:     task,
+			}
 		}
-		if msg.Type == "join_game" {
-			fmt.Printf("DEBUG join_game: code='%s' user='%s'\n", msg.Code, currentUsername)
-			if currentUsername == "" { continue }
 
-			room, err := hub.GetRoom(msg.Code)
-			if err != nil || room == nil { continue }
-
-			room.UpdatePlayerConn(currentUserID, conn)
-			currentRoom = room
-
-			task := room.GetPlayerTask(currentUserID)
-			conn.WriteJSON(task)
-		}
-		if (msg.Type == "prompt_submitted") {
+		if msg.Type == "prompt_submitted" {
 			fmt.Printf("DEBUG: PROMPT")
-			if (currentRoom == nil) { continue }
+			if currentRoom == nil { continue }
 			data := map[string]interface{}{
-				"type": "prompt",
+				"type":   "prompt",
 				"prompt": msg.Prompt,
 			}
-			err := currentRoom.SubmiteAction(currentUserID, data, true);
-			if (err != nil) {
-				fmt.Printf("Error: Submited prompt: %v\n", err);
-			}
-		}
-		if (msg.Type == "drawing_submitted") {
-			fmt.Printf("DEBUG: DRAW")
-			if (currentRoom == nil) { continue }
-			data := map[string]interface{}{
-				"type": "draw",
-				"drawing": msg.Drawing,
-			}
-			err := currentRoom.SubmiteAction(currentUserID, data, true);
-			if (err != nil) {
-				fmt.Printf("Error: Submited draw: %v\n", err);
-			}
-		}
-		if (msg.Type == "guess_submitted") {
-			fmt.Printf("DEBUG: GUESS")
-			if (currentRoom == nil) { continue }
-			data := map[string]interface{}{
-				"type": "guess",
-				"guess": msg.Guess,
-			}
-			err := currentRoom.SubmiteAction(currentUserID, data, true);
-			if (err != nil) {
-				fmt.Printf("Error: Submited guess: %v\n", err);
+			err := currentRoom.SubmiteAction(currentUserID, data, true)
+			if err != nil {
+				fmt.Printf("Error: Submited prompt: %v\n", err)
 			}
 		}
 
-		// if (msg.Type == )
+		if msg.Type == "drawing_submitted" {
+			fmt.Printf("DEBUG: DRAW")
+			if currentRoom == nil { continue }
+			data := map[string]interface{}{
+				"type":    "draw",
+				"drawing": msg.Drawing,
+			}
+			err := currentRoom.SubmiteAction(currentUserID, data, true)
+			if err != nil {
+				fmt.Printf("Error: Submited draw: %v\n", err)
+			}
+		}
+
+		if msg.Type == "guess_submitted" {
+			fmt.Printf("DEBUG: GUESS")
+			if currentRoom == nil { continue }
+			data := map[string]interface{}{
+				"type":  "guess",
+				"guess": msg.Guess,
+			}
+			err := currentRoom.SubmiteAction(currentUserID, data, true)
+			if err != nil {
+				fmt.Printf("Error: Submited guess: %v\n", err)
+			}
+		}
+
+		if msg.Type == "create_ai_room" {
+			if currentUsername == "" { continue }
+
+			newRoom := globalAIHub.CreateRoom()
+			newRoom.Players[currentUserID] = &gamemanager.Player{
+				ID:          currentUserID,
+				Name:        currentUsername,
+				Conn:        conn,
+				IsHost:      true,
+				IsConnected: true,
+			}
+
+			newRoom.BroadcastLobbyState()
+
+			newRoom.MessageChan <- gamemanager.Notification{
+				PlayerID: currentUserID,
+				Data: map[string]interface{}{
+					"type": "ai_room_created",
+					"code": newRoom.ID,
+				},
+			}
+		}
+
+		if msg.Type == "join_ai_room" {
+			if currentUsername == "" { continue }
+
+			room, err := globalAIHub.GetRoom(msg.Code)
+			if err != nil || room == nil {
+				// Fix : passe par WriteMu pour éviter le concurrent write
+				room2, _ := globalAIHub.GetRoom(msg.Code)
+				if room2 != nil {
+					room2.MessageChan <- gamemanager.Notification{
+						PlayerID: currentUserID,
+						Data:     map[string]string{"type": "error", "message": "ai room not found"},
+					}
+				}
+				continue
+			}
+
+			_, err = globalAIHub.AddPlayerToRoom(msg.Code, currentUserID, currentUsername, conn)
+			if err != nil {
+				room.MessageChan <- gamemanager.Notification{
+					PlayerID: currentUserID,
+					Data:     map[string]string{"type": "error", "message": err.Error()},
+				}
+				continue
+			}
+
+			room.BroadcastLobbyState()
+		}
+
+		if msg.Type == "start_ai_game" {
+			if currentUsername == "" { continue }
+
+			room, err := globalAIHub.GetRoom(msg.Code)
+			if err != nil || room == nil { continue }
+
+			if room.Status != gamemanager.StateAIWaiting { continue }
+
+			prompt, err := gamemanager.CallAI("")
+			if err != nil {
+				fmt.Println("callAI error:", err)
+				prompt = "Dessine la meilleure façon de survivre à une réunion de travail"
+			}
+
+			room.BroadcastToAll(map[string]interface{}{
+				"type": "start_ai_game",
+				"room": room.ID,
+			})
+
+			go room.RunAIGameLoop(prompt)
+		}
+
+		if msg.Type == "join_ai_game" {
+			if currentUsername == "" { continue }
+
+			room, err := globalAIHub.GetRoom(msg.Code)
+			if err != nil || room == nil { continue }
+
+			globalAIHub.UpdatePlayerConn(msg.Code, currentUserID, conn)
+
+			prompt := room.Prompt
+			status := room.Status
+
+			if status == gamemanager.StateAIDrawing {
+				// Fix : passe par MessageChan au lieu de conn.WriteJSON direct
+				room.MessageChan <- gamemanager.Notification{
+					PlayerID: currentUserID,
+					Data: map[string]interface{}{
+						"type":   "ai_game_state",
+						"phase":  "draw",
+						"room":   msg.Code,
+						"prompt": prompt,
+						"my_id":  currentUserID,
+					},
+				}
+			}
+		}
+
+		if msg.Type == "ai_drawing_submitted" {
+			if currentUsername == "" { continue }
+
+			room, err := globalAIHub.GetRoom(msg.Code)
+			if err != nil || room == nil { continue }
+
+			room.SubmitDrawing(currentUserID, msg.Drawing)
+		}
+
+		if msg.Type == "ai_votes_submitted" {
+			if currentUsername == "" { continue }
+
+			room, err := globalAIHub.GetRoom(msg.Code)
+			if err != nil || room == nil { continue }
+
+			room.SubmitVotes(currentUserID, msg.Votes)
+		}
+
+		if msg.Type == "leave_ai_room" {
+			if currentUsername == "" { continue }
+
+			room, err := globalAIHub.GetRoom(msg.Code)
+			if err != nil || room == nil { continue }
+
+			if room.Status != gamemanager.StateAIWaiting { continue }
+
+			isHost := false
+			if p, ok := room.GetPlayer(currentUserID); ok {
+				isHost = p.IsHost
+			}
+
+			room.RemovePlayer(currentUserID)
+
+			if len(room.Players) == 0 {
+				globalAIHub.DeleteRoom(room.ID)
+				continue
+			}
+
+			if isHost {
+				room.TransferHost()
+			}
+
+			room.BroadcastLobbyState()
+		}
 	}
-	
+
 	if currentRoom != nil && currentUserID != "" {
 		isHost := false
 		if p, err := currentRoom.GetPlayer(currentUserID); err == nil {

@@ -1,0 +1,12 @@
+.aigallery { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; padding: 2rem; }
+.aigallery__title { font-size: 1.8rem; font-weight: 700; }
+.aigallery__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.5rem; width: 100%; max-width: 900px; }
+.aigallery__card { background: #fff; border: 2px solid #eee; border-radius: 10px; padding: 1rem; display: flex; flex-direction: column; align-items: center; gap: .75rem; transition: transform .2s; }
+.aigallery__card--winner { border-color: #ffcc00; box-shadow: 0 0 20px rgba(255,204,0,.4); transform: scale(1.03); }
+.aigallery__rank { font-size: 2rem; }
+.aigallery__player { font-weight: 600; font-size: 1rem; }
+.aigallery__img { width: 100%; border-radius: 6px; border: 1px solid #ddd; }
+.aigallery__score { display: flex; flex-direction: column; align-items: center; gap: .25rem; color: #ffcc00; font-size: 1.3rem; }
+.aigallery__score-num { font-size: .85rem; color: #666; }
+.aigallery__btn { padding: .75rem 2rem; background: #111; color: #fff; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; }
+.aigallery__empty { color: #999; }

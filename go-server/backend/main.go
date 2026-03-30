@@ -27,6 +27,7 @@ omitempty: omits empty strings, lowering network traffic
 */
 
 var globalHub *gamemanager.Hub
+var globalAIHub *gamemanager.AIHub
 
 func connectToDatabase () (*pgxpool.Pool, error) {
 
@@ -50,6 +51,7 @@ func connectToDatabase () (*pgxpool.Pool, error) {
 	return db, nil
 }
 
+
 func main() {
 	fmt.Println("~o~ This project was brought to you with hate by pmilner- mforest- namichel & lviravon! ~o~")
 	fmt.Println(" ~~ Starting transcendence backend... ~~")
@@ -63,6 +65,10 @@ func main() {
 
 	globalHub = &gamemanager.Hub{
 		Rooms: make(map[string]*gamemanager.Room),
+	}
+
+	globalAIHub = &gamemanager.AIHub{
+    	Rooms: make(map[string]*gamemanager.AIRoom),
 	}
 
 	// if err := loadSecretsFromVault(); err != nil {
@@ -80,6 +86,19 @@ func main() {
 	})
 
 
+	router.GET("/api/ai-rooms/:code", func(c *gin.Context) {
+    code := strings.ToUpper(c.Param("code"))
+    room, err := globalAIHub.GetRoom(code)
+    if err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "ai room not found"})
+        return
+    }
+    c.JSON(http.StatusOK, gin.H{
+        "code":    room.ID,
+        "status":  room.Status,
+        "players": len(room.Players),
+    })
+})
 	router.GET("/api/rooms/:code", func(c *gin.Context) {
 		code := strings.ToUpper(c.Param("code"))
 		room, err := globalHub.GetRoom(code)

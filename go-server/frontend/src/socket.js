@@ -98,11 +98,11 @@ const setupSocketHandlers = (token) =>
     	console.log("[onClose] closed for:", event.reason, "code:", event.code);
     	socket = null;
 
-    	if (event.code !== 1000 && event.code !== 1001)
-    	{
-        	localStorage.removeItem("authToken");
-        	window.location.href = "/login";
-    	}
+    	// if (event.code !== 1000 && event.code !== 1001)
+    	// {
+        	// localStorage.removeItem("authToken");
+        	// window.location.href = "/login";
+    	// }
 	};
 	socket.onerror = (err) =>
 	{

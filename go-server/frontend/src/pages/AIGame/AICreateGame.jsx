@@ -1,34 +1,29 @@
 /* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   CreateGame.jsx                                     :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: pmilner- <pmilner-@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/02/23 21:11:46 by mforest-          #+#    #+#             */
-/*   Updated: 2026/03/04 22:12:01 by pmilner-         ###   ########.fr       */
-/*                                                                            */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   AICreateGame.jsx                                   :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mforest- <marvin@d42.fr>                   +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/03/30 00:06:16 by mforest-          #+#    #+#             */
+/*   Updated: 2026/03/30 00:06:16 by mforest-         ###   ########.fr       */
+/*                                                                            */
 /* ************************************************************************** */
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { connect, send, addListener, removeListener } from '../../socket';
-import './CreateGame.css';
 
-const CreateGame = () =>
+const AICreateGame = () =>
 {
 	const navigate = useNavigate();
-	const msgEndRef = useRef(null);
-	const roomCodeRef = useRef('');
 
 	const [status,    setStatus]    = useState('checking');
 	const [roomCode,  setRoomCode]  = useState('');
 	const [copied,    setCopied]    = useState(false);
 	const [players,   setPlayers]   = useState([]);
-	const [messages,  setMessages]  = useState([]);
-	const [input,     setInput]     = useState('');
-	const [myName,    setMyName]    = useState('');
 	const [createErr, setCreateErr] = useState('');
+	const roomCodeRef = useRef('');
 
 	useEffect(() =>
 	{
@@ -41,40 +36,26 @@ const CreateGame = () =>
 
 		const handler = (msg) =>
 		{
-			const currentCode = roomCodeRef.current;
-			const isMatch = msg.room === currentCode || msg.code === currentCode;
-
-			if (msg.type === 'room_created')
+			if (msg.type === 'ai_room_created')
 			{
 				if (msg.code)
 				{
 					setRoomCode(msg.code);
 					roomCodeRef.current = msg.code;
 				}
-				if (Array.isArray(msg.players))
-					setPlayers(msg.players);
-				if (msg.me)
-					setMyName(msg.me.name || '');
 				setCreateErr('');
 				setStatus('ready');
 			}
 
-			if (msg.type === 'lobby_state' && isMatch)
+			if (msg.type === 'lobby_state')
 			{
 				if (Array.isArray(msg.players))
 					setPlayers(msg.players);
-				if (msg.me)
-					setMyName(msg.me.name || '');
 			}
 
-			if (msg.type === 'chat_message' && isMatch)
+			if (msg.type === 'start_ai_game')
 			{
-				setMessages((prev) => [...prev,
-				{
-					id:   msg.id || Date.now(),
-					user: msg.user,
-					text: msg.text,
-				}]);
+				navigate(`/aigame/play/${msg.room || msg.code}`);
 			}
 
 			if (msg.type === 'create_denied')
@@ -82,35 +63,19 @@ const CreateGame = () =>
 				setCreateErr(msg.reason || 'Could not create room.');
 				setStatus('ready');
 			}
-
-			if (msg.type === 'start_game' && isMatch)
-				navigate(`/game/play/${msg.code || msg.room}`);
 		};
 
 		addListener(handler);
-		send({ type: 'create_room' });
+		send({ type: 'create_ai_room' });
 
 		return () =>
 		{
 			removeListener(handler);
 			const code = roomCodeRef.current;
 			if (code)
-				send({ type: 'leave_lobby', code: code });
+				send({ type: 'leave_ai_room', code: code });
 		};
-	}, [navigate]);
-
-	useEffect(() =>
-	{
-		msgEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-	}, [messages]);
-
-	const handleSend = () =>
-	{
-		if (!input.trim() || !roomCode)
-			return;
-		send({ type: 'chat_message', code: roomCode, text: input.trim() });
-		setInput('');
-	};
+	}, []);
 
 	const handleCopy = () =>
 	{
@@ -121,9 +86,8 @@ const CreateGame = () =>
 
 	const handleStart = () =>
 	{
-		if (players.length < 3 || !roomCode)
-			return;
-		send({ type: 'start_game', code: roomCode });
+		if (players.length < 3 || !roomCode) return;
+		send({ type: 'start_ai_game', code: roomCode });
 	};
 
 	const handleLeave = () =>
@@ -158,10 +122,10 @@ const CreateGame = () =>
 	return (
 		<div className="creategame">
 			<div className="creategame__card">
-				<div className="creategame__card-header">🔑 room code</div>
+				<div className="creategame__card-header">🤖 AI Game — room code</div>
 				<div className="creategame__card-body creategame__card-body--center">
 					<p className="creategame__hint">
-						share this code with your friends so they can join.
+						Share this code with your friends. The AI will generate the prompt!
 					</p>
 					<div className="creategame__code-row">
 						<span className="creategame__code">{roomCode}</span>
@@ -188,29 +152,9 @@ const CreateGame = () =>
 								{p.host && <span className="creategame__badge">HOST</span>}
 							</div>
 						))}
-						{players.length < 3 && (
+						{players.length < 3 &&
 							<p className="creategame__waiting">⧗ waiting for players…</p>
-						)}
-					</div>
-				</div>
-
-				<div className="creategame__card creategame__card--chat">
-					<div className="creategame__card-header">💬 chat</div>
-					<div className="creategame__chat-messages">
-						{messages.map((m) => (
-							<div key={m.id} className={`creategame__msg ${m.user === myName ? 'creategame__msg--me' : ''}`}>
-								<strong>{m.user}:</strong> {m.text}
-							</div>
-						))}
-						<div ref={msgEndRef} />
-					</div>
-					<div className="creategame__chat-input-row">
-						<input
-							value={input}
-							onChange={(e) => setInput(e.target.value)}
-							onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-						/>
-						<button onClick={handleSend}>→</button>
+						}
 					</div>
 				</div>
 			</div>
@@ -229,13 +173,13 @@ const CreateGame = () =>
 				</button>
 			</div>
 
-			{players.length < 3 && (
+			{players.length < 3 &&
 				<p className="creategame__start-hint">
-					⚠ settings will be automatically adjusted based on player count.
+					⚠ need at least 3 players to start.
 				</p>
-			)}
+			}
 		</div>
 	);
 };
 
-export default CreateGame;
+export default AICreateGame;

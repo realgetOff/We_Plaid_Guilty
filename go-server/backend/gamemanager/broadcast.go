@@ -43,6 +43,7 @@ func (r *Room) BroadcastChat(playerID string, content string) {
 				"text": content,
 				"id": messageId,
 				"is_system": isSystem,
+				"room": r.ID,
 			},
 		}
 	}

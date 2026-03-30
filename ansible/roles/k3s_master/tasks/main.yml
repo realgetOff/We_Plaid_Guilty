@@ -1,4 +1,17 @@
 ---
+
+# a voir si on move ca dans secu os on garde pour test
+- name: "Trust K3s network interfaces"
+  firewalld:
+    zone: trusted
+    interface: "{{ item }}"
+    permanent: yes
+    immediate: yes
+    state: enabled
+  loop:
+    - cni0
+    - flannel-wg
+
 - name: "Create K3s directory"
   file:
     path: "{{ config_dir }}"

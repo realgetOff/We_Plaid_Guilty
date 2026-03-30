@@ -13,7 +13,7 @@ ingress:
   host: "app.transcendance.local"
 
 vault:
-  role: "app"
+  role: "app-role"
   addr: "http://vault.vault.svc.cluster.local"
   port: "8200"
 

@@ -65,6 +65,20 @@ resource "aws_security_group" "master_sg" {
     to_port = 32767
   }
   ingress {
+    description = "HTTP ingress"
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port = 30080
+    protocol = "tcp"
+    to_port = 30080
+  }
+  ingress {
+    description = "HTTPS ingress"
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port = 30443
+    protocol = "tcp"
+    to_port = 30443
+  }
+  ingress {
     description = "Vault"
     cidr_blocks = ["0.0.0.0/0"]
     from_port = 8200

@@ -6,9 +6,7 @@ import (
 	"log"
 	"os"
 	"fmt"
-	"strings"
 	"main.go/gamemanager"
-	"net/http"
 	// following two are for lobby generation
 	//"math/rand/v2"
 	// "sync"
@@ -73,33 +71,6 @@ func NewServerStructure () *serverVarsStruct {
 	}
 }
 
-func findRoom(c *gin.Context, serverVars *serverVarsStruct, roomtype int){
-    code := strings.ToUpper(c.Param("code"))
-
-	if roomtype == 1 {
-    	room, err := globalAIHub.GetRoom(code)
-    	if err != nil {
-    	    c.JSON(http.StatusNotFound, gin.H{"error": "ai room not found"})
-    	    return
-		}
-		c.JSON(http.StatusOK, gin.H{
-        "code":    room.ID,
-        "status":  room.Status,
-        "players": len(room.Players),
-		})
-	} else {
-		room, err := serverVars.globalHub.GetRoom(code)
-		if err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "room not found"})
-			return
-		}
-		c.JSON(http.StatusOK, gin.H{
-        "code":    room.ID,
-        "status":  room.Status,
-        "players": len(room.Players),
-		})
-	}
-}
 
 func main() {
 	fmt.Println("~o~ This project was brought to you with hate by pmilner- mforest- namichel & lviravon! ~o~")

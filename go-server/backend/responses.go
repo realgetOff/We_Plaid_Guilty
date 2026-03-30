@@ -6,6 +6,8 @@ import (
 	"time"
 	"context"
 	"net/http"
+	"strings"
+
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/golang-jwt/jwt/v5"
@@ -138,13 +140,41 @@ func handleGuestAuth(c *gin.Context, db *pgxpool.Pool){
 	if (err != nil) {
 		// fmt.Println("Guest creation failed")
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Server sign the JWT."})
+			"error": "Couldn't sign / generate JWT for guest."})
 		return 
 	}
 
 	c.JSON(http.StatusOK, AuthResponse{
 		Token: SignedString,
 		})
+}
+
+func findRoom(c *gin.Context, serverVars *serverVarsStruct, roomtype int){
+    code := strings.ToUpper(c.Param("code"))
+
+	if roomtype == 1 {
+    	room, err := globalAIHub.GetRoom(code)
+    	if err != nil {
+    	    c.JSON(http.StatusNotFound, gin.H{"error": "Couldn't find the AI room"})
+    	    return
+		}
+		c.JSON(http.StatusOK, gin.H{
+        "code":    room.ID,
+        "status":  room.Status,
+        "players": len(room.Players),
+		})
+	} else {
+		room, err := serverVars.globalHub.GetRoom(code)
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Couldn't find the room"})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+        "code":    room.ID,
+        "status":  room.Status,
+        "players": len(room.Players),
+		})
+	}
 }
 
 // func handleLogin(c *gin.Context) {

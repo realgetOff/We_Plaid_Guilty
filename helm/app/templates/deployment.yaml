@@ -16,8 +16,9 @@ spec:
         vault.hashicorp.com/agent-init-first: "true"
         vault.hashicorp.com/agent-inject: "true"
         vault.hashicorp.com/role: "{{ .Values.vault.role }}"
-        vault.hashicorp.com/agent-inject-secret-app-secrets: "secret/data/app/config"
-        vault.hashicorp.com/agent-inject-template-app-secrets: |
+        vault.hashicorp.com/agent-inject-secret-appconfig: "secret/data/app/config"
+        vault.hashicorp.com/agent-inject-file-appconfig: "app/config"
+        vault.hashicorp.com/agent-inject-template-appconfig: |
           {{`{{ with secret "secret/data/app/config" }}`}}
           DB_PASSWORD={{`{{ .Data.data.db_password }}`}}
           DB_USER={{`{{ .Data.data.db_user }}`}}

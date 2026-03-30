@@ -38,7 +38,7 @@ module "vault_app" {
   auth_type           = "kubernetes"
   auth_backend_path   = vault_auth_backend.kubernetes.path
   k8s_service_account = "default"
-  k8s_namespace       = "default"
+  k8s_namespace       = "vault"
   token_ttl           = 3600
   token_max_ttl       = 86400
   extra_paths         = ["secret/data/db/*"]

@@ -38,7 +38,6 @@ const HomeGame = () =>
 	const [aiJoinError,   setAiJoinError]   = useState('');
 	const [aiIsChecking,  setAiIsChecking]  = useState(false);
 
-	// Gartic Phone join
 	const handleJoin = async () =>
 	{
 		const code = joinCode.trim().toUpperCase();
@@ -79,7 +78,6 @@ const HomeGame = () =>
 		navigate('/game/join/' + code);
 	};
 
-	// AI Game join
 	const handleAiJoin = async () =>
 	{
 		const code = aiJoinCode.trim().toUpperCase();
@@ -148,7 +146,6 @@ const HomeGame = () =>
 	return (
 		<div className="homegame">
 
-			{/* ── Gartic Phone ── */}
 			<div className="homegame__section-title">🎨 Gartic Phone</div>
 
 			<div className="homegame__card">
@@ -197,7 +194,6 @@ const HomeGame = () =>
 				</div>
 			</div>
 
-			{/* ── AI Game ── */}
 			<div className="homegame__section-title" style={{ marginTop: '2rem' }}>🤖 AI Game</div>
 
 			<div className="homegame__card">
@@ -221,7 +217,7 @@ const HomeGame = () =>
 				<div className="homegame__card-header">🔑 Join an AI Game</div>
 				<div className="homegame__card-body">
 					<p className="homegame__card-desc">
-						Enter the 6-letter code shared by the host.
+						Enter the 6-letter room code shared by the host.
 					</p>
 					<div className="homegame__join-row">
 						<input

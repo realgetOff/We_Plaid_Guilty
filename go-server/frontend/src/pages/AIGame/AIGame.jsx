@@ -18,7 +18,8 @@ import AIGallery from './AIGallery';
 import { connect, send, addListener, removeListener } from '../../socket';
 import './AIGame.css';
 
-const AIGame = () => {
+const AIGame = () =>
+{
 	const { code } = useParams();
 	const navigate = useNavigate();
 
@@ -29,35 +30,36 @@ const AIGame = () => {
 	const [results, setResults] = useState([]);
 	const [myId, setMyId] = useState('');
 
-	useEffect(() => {
+	useEffect(() =>
+	{
 		const normalized = code?.toUpperCase();
 		connect();
 
-		const handler = (msg) => {
-			console.log("DEBUG WS RECEIVE:", msg); // Vérifie ici ce que le serveur envoie
+		const handler = (msg) =>
+		{
 
-			// Vérification du code de la room (insensible à la casse)
 			if (!msg || msg.room?.toUpperCase() !== normalized) return;
 
-			// État de jeu global (utilisé pour la transition DRAW -> VOTE)
-			if (msg.type === 'ai_game_state') {
+			if (msg.type === 'ai_game_state')
+			{
 				setStatus('playing');
 				setPhase(msg.phase);
-				if (msg.prompt) setPrompt(msg.prompt);
-				if (msg.my_id) setMyId(msg.my_id);
-				// Si on reçoit des dessins dans ce message, on les met à jour
-				if (Array.isArray(msg.drawings)) setDrawings(msg.drawings);
+				if (msg.prompt)
+					setPrompt(msg.prompt);
+				if (msg.my_id)
+					setMyId(msg.my_id);
+				if (Array.isArray(msg.drawings))
+					setDrawings(msg.drawings);
 			}
 
-			// Message spécifique pour le vote
-			if (msg.type === 'ai_vote_state') {
-				console.log("SWITCHING TO VOTE PHASE");
+			if (msg.type === 'ai_vote_state')
+			{
 				setPhase('vote');
 				if (Array.isArray(msg.drawings)) setDrawings(msg.drawings);
 			}
 
-			// Message spécifique pour les résultats
-			if (msg.type === 'ai_results') {
+			if (msg.type === 'ai_results')
+			{
 				setPhase('gallery');
 				if (Array.isArray(msg.results)) setResults(msg.results);
 			}
@@ -65,27 +67,27 @@ const AIGame = () => {
 
 		addListener(handler);
 		
-		// On demande l'état actuel de la partie au join
 		send({ type: 'join_ai_game', code: normalized });
 
-		return () => {
+		return () =>
+		{
 			removeListener(handler);
 			send({ type: 'leave_ai_game', code: normalized });
 		};
 	}, [code]);
 
-	const handleDrawDone = (dataURL) => {
-		console.log("SENDING DRAWING...");
+	const handleDrawDone = (dataURL) =>
+	{
 		send({
 			type: 'ai_drawing_submitted',
 			code: code?.toUpperCase(),
 			drawing: dataURL,
 		});
-		setPhase('waiting'); // On passe en attente locale
+		setPhase('waiting');
 	};
 
-	const handleVoteDone = (votes) => {
-		console.log("SENDING VOTES:", votes);
+	const handleVoteDone = (votes) =>
+	{
 		send({
 			type: 'ai_votes_submitted',
 			code: code?.toUpperCase(),
@@ -100,7 +102,8 @@ const AIGame = () => {
 	if (phase === 'waiting') phaseLabel = '⧗ Waiting for others…';
 	if (phase === 'gallery') phaseLabel = '🏆 Results';
 
-	if (status === 'waiting') {
+	if (status === 'waiting')
+	{
 		return (
 			<div className="aigame__guard">
 				<span className="aigame__spinner">⧗</span>
@@ -119,7 +122,7 @@ const AIGame = () => {
 			{phase === 'draw' && (
 				<>
 					<div className="aigame__prompt-banner">
-						🤖 <strong>{prompt}</strong>
+						<strong>{prompt}</strong>
 					</div>
 					<DrawBoard prompt={prompt} onDone={handleDrawDone} />
 				</>

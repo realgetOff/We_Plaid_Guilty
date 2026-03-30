@@ -27,7 +27,7 @@ const DENY_REASONS = {
 const Lobby = () =>
 {
 	const { code } = useParams();
-	const navigate  = useNavigate();
+	const navigate = useNavigate();
 	const msgEndRef = useRef(null);
 
 	const [status,   setStatus]   = useState('checking');
@@ -79,12 +79,14 @@ const Lobby = () =>
 
 		const handler = (msg) =>
 		{
-			if (!msg) return;
+			if (!msg)
+				return;
 			const roomMatch = msg.room === normalized || msg.code === normalized;
 
 			if (msg.type === 'lobby_state' && roomMatch)
 			{
-				if (Array.isArray(msg.players)) setPlayers(msg.players);
+				if (Array.isArray(msg.players))
+					setPlayers(msg.players);
 				if (msg.me)
 				{
 					setIsHost(!!msg.me.host);
@@ -94,7 +96,8 @@ const Lobby = () =>
 
 			if (msg.type === 'chat_message' && roomMatch)
 			{
-				setMessages((prev) => [...prev, {
+				setMessages((prev) => [...prev,
+				{
 					id:   msg.id || Date.now(),
 					user: msg.user,
 					text: msg.text,
@@ -128,25 +131,69 @@ const Lobby = () =>
 
 	const handleSend = () =>
 	{
-		if (!input.trim()) return;
+		if (!input.trim() || !normalized)
+			return;
 		send({ type: 'chat_message', code: normalized, text: input.trim() });
 		setInput('');
 	};
 
+	const handleStart = () =>
+	{
+		if (players.length < 3 || !normalized)
+			return;
+		send({ type: 'start_game', code: normalized });
+	};
+
+	const handleLeave = () =>
+	{
+		navigate('/game');
+	};
+
 	if (status === 'checking')
-		return <div className="lobby__guard">Verifying {normalized}...</div>;
+	{
+		return (
+			<div className="lobby__guard">
+				<span className="lobby__guard-spinner">⧗</span>
+				checking room…
+			</div>
+		);
+	}
+
 	if (status === 'denied')
-		return <div className="lobby__guard">⚠ {deny}</div>;
+	{
+		return (
+			<div className="lobby__guard">
+				<div className="lobby__guard-card">
+					<p className="lobby__guard-msg">⚠ {deny}</p>
+					<button className="lobby__guard-btn" onClick={handleLeave}>
+						← back to game
+					</button>
+				</div>
+			</div>
+		);
+	}
 
 	return (
 		<div className="lobby">
-			<div className="lobby__code-band">ROOM: <span className="lobby__code">{normalized}</span></div>
+			<div className="lobby__card">
+				<div className="lobby__card-header">🔑 room code</div>
+				<div className="lobby__card-body lobby__card-body--center">
+					<p className="lobby__hint">
+						you have joined this room. waiting for host to start.
+					</p>
+					<div className="lobby__code-row">
+						<span className="lobby__code">{normalized}</span>
+					</div>
+				</div>
+			</div>
 
 			<div className="lobby__columns">
 				<div className="lobby__card lobby__card--grow">
 					<div className="lobby__card-header">
 						👥 players
-						<span className="lobby__card-header-count">{players.length}/8</span>
+						<span className="lobby__card-header-count">
+							{players.length} / 8
+						</span>
 					</div>
 					<div className="lobby__card-body lobby__card-body--list">
 						{players.map((p) => (
@@ -184,21 +231,33 @@ const Lobby = () =>
 			</div>
 
 			<div className="lobby__actions">
-				<button className="lobby__btn lobby__btn--leave" onClick={() => navigate('/game')}>
+				<button className="lobby__btn lobby__btn--leave" onClick={handleLeave}>
 					✕ leave room
 				</button>
 				{isHost ? (
 					<button
 						className="lobby__btn lobby__btn--start"
-						onClick={() => send({ type: 'start_game', code: normalized })}
+						onClick={handleStart}
 						disabled={players.length < 3}
+						title={players.length < 3 ? 'need at least 3 players' : ''}
 					>
 						▶ start game
 					</button>
 				) : (
-					<p className="lobby__start-hint">Waiting for host...</p>
+					<button
+						className="lobby__btn lobby__btn--start"
+						disabled={true}
+					>
+						⧗ waiting for host
+					</button>
 				)}
 			</div>
+
+			{players.length < 3 && (
+				<p className="lobby__start-hint">
+					⚠ settings will be automatically adjusted based on player count.
+				</p>
+			)}
 		</div>
 	);
 };

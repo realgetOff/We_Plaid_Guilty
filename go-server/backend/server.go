@@ -308,7 +308,7 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 		if msg.Type == "chat_message" {
 			if (currentUsername == "") { continue }
 			if (len(strings.TrimSpace(msg.Text)) == 0) { continue }
-			room, err := globalHub.GetRoom(msg.Code)
+			room, err := hub.GetRoom(msg.Code)
 			if (err != nil) { continue }
 			fmt.Printf("DEBUG: chat_message\n")
 			room.BroadcastChat(currentUserID, msg.Text)

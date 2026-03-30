@@ -29,6 +29,13 @@ type CreateLobbyResponse struct {
 	LobbyCode string `json:"lobbyCode"`
 }
 
+/*
+The message structure contains the json information to be sent / received by the websocket for room generation
+type: state before / after generation of the room code
+code: room code
+omitempty: omits empty strings, lowering network traffic
+*/
+
 
 type Message struct {
     Type    string         `json:"type"`
@@ -72,14 +79,7 @@ func generateLobbyCode(length int) string {
 	return string(ret)
 }
 
-func createLobby(c *gin.Context) {
-	// var req CreateLobbyRequest
-// 
-	// if err := c.ShouldBindJSON(&req); err != nil {
-		// c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload: " + err.Error()})
-		// return
-	// }
-
+func createLobby(c *gin.Context) { // obsolete code
 	lobbyCode := generateLobbyCode(6)
 	
 	//fmt.Println("The generated lobby code is: " + lobbyCode) //debug command
@@ -131,14 +131,6 @@ func handleGuestAuth(c *gin.Context, db *pgxpool.Pool){
 			"error": "Server couldn't create a guest user in the database."})
 		return
 	}
-	// query = "SELECT id FROM users WHERE username = $1"
-	// id, err := db.Exec(context.Background(), query, guestName)
-	// if (err != nil) {
-	// 	fmt.Println("Couldn'tget user id from username")
-	// 	c.JSON(http.StatusInternalServerError, gin.H{
-	// 		"error": "Server couldn't get user id from username in the database."})
-	// 	return
-	// }
 	fmt.Println("Guest name: " + guestName + " guest ID = " + userID)
 
 	var SignedString string

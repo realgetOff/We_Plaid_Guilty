@@ -18,15 +18,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-/*
-The message structure contains the json information to be sent / received by the websocket for room generation
-type: state before / after generation of the room code
-code: room code
-omitempty: omits empty strings, lowering network traffic
-
-*/
-
-var globalHub *gamemanager.Hub
 var globalAIHub *gamemanager.AIHub
 
 func connectToDatabase () (*pgxpool.Pool, error) {
@@ -52,76 +43,100 @@ func connectToDatabase () (*pgxpool.Pool, error) {
 }
 
 
+type serverVarsStruct struct { // the name is temporary
+	globalHub *gamemanager.Hub
+	globalAIHub *gamemanager.AIHub
+	router *gin.Engine
+	db *pgxpool.Pool
+}
+
+func NewServerStructure () *serverVarsStruct {
+	
+	// Try to connect to the database, fatally exit if we can't reach it
+	dbPool, err := connectToDatabase()
+	if err != nil {
+		log.Fatalf("Couldn't connect to the PostgreSQL database: %v", err)
+	}
+	hub := &gamemanager.Hub{
+		Rooms: make(map[string]*gamemanager.Room),
+	}
+	AIHub := &gamemanager.AIHub{
+    	Rooms: make(map[string]*gamemanager.AIRoom),
+	}
+	r := gin.Default();
+
+	return &serverVarsStruct{
+		globalHub:		hub,
+		globalAIHub:	AIHub,
+		router:			r,
+		db:				dbPool,
+	}
+}
+
+func findRoom(c *gin.Context, serverVars *serverVarsStruct, roomtype int){
+    code := strings.ToUpper(c.Param("code"))
+
+	if roomtype == 1 {
+    	room, err := globalAIHub.GetRoom(code)
+    	if err != nil {
+    	    c.JSON(http.StatusNotFound, gin.H{"error": "ai room not found"})
+    	    return
+		}
+		c.JSON(http.StatusOK, gin.H{
+        "code":    room.ID,
+        "status":  room.Status,
+        "players": len(room.Players),
+		})
+	} else {
+		room, err := serverVars.globalHub.GetRoom(code)
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "room not found"})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+        "code":    room.ID,
+        "status":  room.Status,
+        "players": len(room.Players),
+		})
+	}
+}
+
 func main() {
 	fmt.Println("~o~ This project was brought to you with hate by pmilner- mforest- namichel & lviravon! ~o~")
 	fmt.Println(" ~~ Starting transcendence backend... ~~")
 
-	db, err := connectToDatabase()
+	serverVars := NewServerStructure()
 
-	if err != nil {
-		log.Fatalf("Couldn't connect to the PostgreSQL database: %v", err)
-	}
-	defer db.Close()
-
-	globalHub = &gamemanager.Hub{
-		Rooms: make(map[string]*gamemanager.Room),
-	}
-
-	globalAIHub = &gamemanager.AIHub{
-    	Rooms: make(map[string]*gamemanager.AIRoom),
-	}
+	defer serverVars.db.Close()
 
 	// if err := loadSecretsFromVault(); err != nil {
 	// 	log.Fatalf("Failed to load secrets from Vault: %v", err)
 	// }
 	// Gin router with default "middleware"
-	router := gin.Default();
+	
 	// gin.SetMode(gin.ReleaseMode)
 	// https://github.com/gin-gonic/gin/blob/master/docs/doc.md#dont-trust-all-proxies 
 
-	router.Static("/assets", "./static/assets")
-	router.StaticFile("/favicon.ico", "./static/favicon.ico")
-	router.NoRoute(func(c *gin.Context) {
+	serverVars.router.Static("/assets", "./static/assets")
+	serverVars.router.StaticFile("/favicon.ico", "./static/favicon.ico")
+	serverVars.router.NoRoute(func(c *gin.Context) {
 		c.File("./static/index.html")
 	})
 
-
-	router.GET("/api/ai-rooms/:code", func(c *gin.Context) {
-    code := strings.ToUpper(c.Param("code"))
-    room, err := globalAIHub.GetRoom(code)
-    if err != nil {
-        c.JSON(http.StatusNotFound, gin.H{"error": "ai room not found"})
-        return
-    }
-    c.JSON(http.StatusOK, gin.H{
-        "code":    room.ID,
-        "status":  room.Status,
-        "players": len(room.Players),
-    })
-})
-	router.GET("/api/rooms/:code", func(c *gin.Context) {
-		code := strings.ToUpper(c.Param("code"))
-		room, err := globalHub.GetRoom(code)
-
-		if err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "room not found"})
-			return
-		}
-
-		c.JSON(http.StatusOK, gin.H{
-			"code":    room.ID,
-			"status":  room.Status,
-			"players": len(room.Players),
-		})
+	serverVars.router.GET("/api/ai-rooms/:code", func(c *gin.Context) { // smells like AI generated code.
+		findRoom(c, serverVars, 1)
 	})
-	router.GET("/ping", pong)
-	router.GET("/health", health)
-	router.GET("/api/config", vaultstatus)
-	router.GET("/ws", func (c *gin.Context){
-		handleWebsocket(c, db, globalHub)
+	serverVars.router.GET("/api/rooms/:code", func(c *gin.Context) { // smells like AI generated code.
+		findRoom(c, serverVars, 0)
 	})
-	router.POST("/api/auth/player", func (c *gin.Context){
-		handleGuestAuth(c, db)
+	serverVars.router.GET("/ping", pong)
+	serverVars.router.GET("/health", health)
+	serverVars.router.GET("/api/config", vaultstatus)
+	serverVars.router.GET("/ws", func (c *gin.Context){
+		handleWebsocket(c, serverVars.db, serverVars.globalHub)
+	})
+	serverVars.router.POST("/api/auth/player", func (c *gin.Context){
+		handleGuestAuth(c, serverVars.db)
 	})
 
 	// get the port defined in the environment variables, if theres fuckall, 8080
@@ -131,7 +146,7 @@ func main() {
 		port = "8080"
 	}
 		
-	if err := router.Run(":" + port); err != nil {
+	if err := serverVars.router.Run(":" + port); err != nil {
 		log.Fatalf("Failed to run server: %v", err)	
 	}
 }

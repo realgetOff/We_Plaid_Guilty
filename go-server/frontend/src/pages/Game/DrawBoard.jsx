@@ -21,6 +21,10 @@ const COLORS =
 	'#aa00aa', '#ff44ff', '#884400', '#00cccc',
 ];
 
+<<<<<<< HEAD
+const SIZES   = [2, 5, 10, 18];
+=======
+>>>>>>> fa7f18a804c33bae1c94a9d77fe980327263ffde
 const TIMER_SEC = 89;
 const MAX_UNDO  = 30;
 const TOLERANCE = 30;

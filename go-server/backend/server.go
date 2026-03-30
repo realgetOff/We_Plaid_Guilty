@@ -104,13 +104,15 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 		}
 
 		if msg.Type == "leave_lobby" {
-			fmt.Printf("DEBUG leave_game: code='%s' user='%s'\n", msg.Code, currentUsername)
 			if currentUsername == "" { continue }
 			room, err := hub.GetRoom(msg.Code)
+
 			if err != nil || room == nil { continue }
+
 			if room.Status != gamemanager.StateWaiting {
 				continue
 			}
+			fmt.Printf("DEBUG leave_lobby: code='%s' user='%s'\n", msg.Code, currentUsername)
 			isHost := false
 			if p, err := room.GetPlayer(currentUserID); err == nil {
 				isHost = p.IsHost
@@ -127,6 +129,42 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 			room.BroadcastLobbyState()
 		}
 
+		if (msg.Type == "prompt_submitted") {
+			if (currentRoom == nil) { continue }
+			data := map[string]interface{}{
+				"type": "prompt",
+				"prompt": msg.Prompt,
+			}
+			fmt.Printf("DEBUG: PROMPT\n")
+			err := currentRoom.SubmiteAction(currentUserID, data, true);
+			if (err != nil) {
+				fmt.Printf("Error: Submited prompt: %v\n", err);
+			}
+		}
+		if (msg.Type == "drawing_submitted") {
+			if (currentRoom == nil) { continue }
+			data := map[string]interface{}{
+				"type": "draw",
+				"drawing": msg.Drawing,
+			}
+			fmt.Printf("DEBUG: DRAW")
+			err := currentRoom.SubmiteAction(currentUserID, data, true);
+			if (err != nil) {
+				fmt.Printf("Error: Submited draw: %v\n", err);
+			}
+		}
+		if (msg.Type == "guess_submitted") {
+			if (currentRoom == nil) { continue }
+			data := map[string]interface{}{
+				"type": "guess",
+				"guess": msg.Guess,
+			}
+			fmt.Printf("DEBUG: GUESS\n")
+			err := currentRoom.SubmiteAction(currentUserID, data, true);
+			if (err != nil) {
+				fmt.Printf("Error: Submited guess: %v\n", err);
+			}
+		}
 		if msg.Type == "start_game" {
 			if currentUsername == "" { continue }
 
@@ -138,44 +176,47 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 				conn.WriteJSON(map[string]string{"type": "error", "message": err.Error()})
 				continue
 			}
+			fmt.Printf("DEBUG: start_game\n")
 			room.BroadcastToAll(map[string]interface{}{
 				"type": "start_game",
 				"room": room.ID,
 			})
 		}
-
+		if (msg.Type == "leave_game") {
+			fmt.Printf("DEBUG: leave_game msg %s\n", msg.Code)
+			room, err := hub.GetRoom(msg.Code)
+			if (err != nil) { continue }
+			room.LeaveGame(currentUserID)
+		}
 		if msg.Type == "join_game" {
-			fmt.Printf("DEBUG join_game: code='%s' user='%s'\n", msg.Code, currentUsername)
 
 			room, err := hub.GetRoom(msg.Code)
-			fmt.Printf("DEBUG join_game GetRoom: room=%v err=%v\n", room != nil, err)
 			if err != nil || room == nil { continue }
 
-			room.UpdatePlayerConn(currentUserID, conn)
+			room.JoinGame(currentUserID, conn)
+			// room.UpdatePlayerConn(currentUserID, conn)
+			fmt.Printf("DEBUG join_game: code='%s' user='%s'\n", msg.Code, currentUsername)
+			// fmt.Printf("DEBUG join_game GetRoom: room=%v err=%v\n", room != nil, err)
 			currentRoom = room
 
 			task := room.GetPlayerTask(currentUserID)
-			fmt.Printf("DEBUG join_game task: %+v\n", task)
-
-			// Fix : passe par MessageChan au lieu de conn.WriteJSON direct
-			room.MessageChan <- gamemanager.Notification{
-				PlayerID: currentUserID,
-				Data:     task,
-			}
+			// fmt.Printf("DEBUG join_game task: %+v\n", task)
+			conn.WriteJSON(task)
 		}
+		// if msg.Type == "join_game" {
+			// fmt.Printf("DEBUG join_game: code='%s' user='%s'\n", msg.Code, currentUsername)
+			// if currentUsername == "" { continue }
+// 
+			// room, err := hub.GetRoom(msg.Code)
+			// if err != nil || room == nil { continue }
+// 
+			// room.JoinGame(currentUserID, conn)
+			// currentRoom = room
+// 
+			// task := room.GetPlayerTask(currentUserID)
+			// conn.WriteJSON(task)
+		// }
 
-		if msg.Type == "prompt_submitted" {
-			fmt.Printf("DEBUG: PROMPT")
-			if currentRoom == nil { continue }
-			data := map[string]interface{}{
-				"type":   "prompt",
-				"prompt": msg.Prompt,
-			}
-			err := currentRoom.SubmiteAction(currentUserID, data, true)
-			if err != nil {
-				fmt.Printf("Error: Submited prompt: %v\n", err)
-			}
-		}
 
 		if msg.Type == "drawing_submitted" {
 			fmt.Printf("DEBUG: DRAW")

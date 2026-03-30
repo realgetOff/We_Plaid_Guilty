@@ -36,7 +36,9 @@ func (r *Room) resetPlayer() {
 	defer r.mu.Unlock()
 
 	for _, p := range r.Players {
-		p.IsReady = false
+		if (p.IsConnected){
+			p.IsReady = false
+		}
 	}
 }
 
@@ -89,6 +91,24 @@ func (r *Room) AddPlayer(playerID string, name string, conn *websocket.Conn) err
 	return nil
 }
 
+func (r *Room) LeaveGame(playerID string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if oldPlayer, ok := r.Players[playerID]; ok {
+		oldPlayer.IsReady = true
+		oldPlayer.IsConnected = false
+	}
+}
+
+func (r *Room) JoinGame(playerID string, newConn *websocket.Conn) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if oldPlayer, ok := r.Players[playerID]; ok {
+		oldPlayer.Conn = newConn
+		oldPlayer.IsConnected = true
+	}
+}
+
 /*
 * Remove a player from the room
 */
@@ -105,12 +125,4 @@ func (r *Room) RemovePlayer(playerID string) {
 		}
 	}
 	r.PlayerOrder = newOrder
-}
-
-func (r *Room) UpdatePlayerConn(playerID string, conn *websocket.Conn) {
-    r.mu.Lock()
-    defer r.mu.Unlock()
-    if p, ok := r.Players[playerID]; ok {
-        p.Conn = conn
-    }
 }

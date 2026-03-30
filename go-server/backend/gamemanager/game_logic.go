@@ -38,14 +38,12 @@ func (r *Room) listenForNotifaction() {
 func (r *Room) RunGameLoop() {
 	TotalRound := len(r.Players)
 
-	if TotalRound%2 == 0 {
+	if TotalRound % 2 == 0 {
 		TotalRound++
 	}
 
 	for round := 1; round <= TotalRound; round++ {
-		if round != 1 {
-			r.resetPlayer()
-		}
+		r.resetPlayer()
 
 		r.mu.Lock()
 		r.CurrentRound = round
@@ -72,15 +70,14 @@ func (r *Room) RunGameLoop() {
 			}
 		}
 
+		fmt.Printf("Round %d : %s starting...\n", round, r.Phase)
 		if r.Phase == string(StateDrawing) {
-			fmt.Printf("Round %d : Drawing starting...\n", round)
-			r.waitForPhase(90 * time.Second)
+			r.waitForPhase(95 * time.Second)
 		} else {
-			r.waitForPhase(45 * time.Second)
-			fmt.Printf("Round %d : Writing starting...\n", round)
+			r.waitForPhase(50 * time.Second)
 		}
 
-		r.forceValidation()
+		// r.forceValidation()
 	}
 
 	r.mu.Lock()
@@ -93,40 +90,40 @@ func (r *Room) RunGameLoop() {
 	fmt.Printf("GG everyone game end !")
 }
 
-func (r *Room) forceValidation() {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	for _, tmp := range r.Players {
-		if tmp.IsReady == false {
-			content := "DEFAULT_IMAGE"
-			tType := "IMAGE"
-			if r.Phase == string(StateWriting) || r.Phase == string(StateGuess) {
-				tType = "TEXT"
-				content = "..."
-			}
-
-			if tmp.LastDraft != "" {
-				content = tmp.LastDraft
-			}
-
-			newEntry := Entry{
-				AuthorID: tmp.ID,
-				Content:  content,
-				Type:     tType,
-			}
-
-			ptrBook, ok := r.Books[tmp.ID]
-			if !ok {
-				continue
-			}
-
-			ptrBook.Entries = append(ptrBook.Entries, newEntry)
-			tmp.IsReady = true
-			r.Players[tmp.ID].LastDraft = ""
-		}
-	}
-}
+// func (r *Room) forceValidation() {
+	// r.mu.Lock()
+	// defer r.mu.Unlock()
+// 
+	// for _, tmp := range r.Players {
+		// if tmp.IsReady == false {
+			// content := "DEFAULT_IMAGE"
+			// tType := "IMAGE"
+			// if r.Phase == string(StateWriting) || r.Phase == string(StateGuess) {
+				// tType = "TEXT"
+				// content = "..."
+			// }
+// 
+			// if tmp.LastDraft != "" {
+				// content = tmp.LastDraft
+			// }
+// 
+			// newEntry := Entry{
+				// AuthorID: tmp.ID,
+				// Content:  content,
+				// Type:     tType,
+			// }
+// 
+			// ptrBook, ok := r.Books[tmp.ID]
+			// if !ok {
+				// continue
+			// }
+// 
+			// ptrBook.Entries = append(ptrBook.Entries, newEntry)
+			// tmp.IsReady = true
+			// r.Players[tmp.ID].LastDraft = ""
+		// }
+	// }
+// }
 
 func (r *Room) SubmiteAction(playerID string, data map[string]interface{}, isFinal bool) error {
 	r.mu.Lock()

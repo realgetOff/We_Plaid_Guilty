@@ -89,6 +89,13 @@
   hosts: WORKERS
   become: true
   tasks:
+    - name: "wiat node-token from Master"
+      wait_for:
+        path: /var/lib/rancher/k3s/server/node-token
+        state: present
+        timeout: 60 #j'ai eu un crash par manque de temps
+      delegate_to: "{{ groups['MASTER'][0] }}" #il doit pas le chercher de lui-meme
+
     - name: "Get K3s token from master"
       slurp:
         src: /var/lib/rancher/k3s/server/node-token

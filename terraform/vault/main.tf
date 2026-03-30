@@ -38,8 +38,8 @@ module "vault_app" {
   auth_type           = "kubernetes"
   auth_backend_path   = vault_auth_backend.kubernetes.path
   k8s_service_account = "default"
-  k8s_namespace       = "vault"
-  token_ttl           = 3600
+  k8s_namespace       = "default"
+  token_ttl           = 40000
   token_max_ttl       = 86400
   extra_paths         = ["secret/data/db/*"]
   enable_pki          = true
@@ -54,6 +54,6 @@ module "vault_db" {
   auth_backend_path = vault_auth_backend.aws.path
   iam_role_name     = data.terraform_remote_state.infra.outputs.k3s_role_name
   aws_account_id    = data.terraform_remote_state.infra.outputs.aws_account_id
-  token_ttl         = 3600
+  token_ttl         = 40000
   token_max_ttl     = 86400
 }

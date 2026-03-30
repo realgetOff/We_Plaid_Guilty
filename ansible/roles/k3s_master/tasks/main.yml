@@ -139,6 +139,13 @@
   environment:
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml
 
+#foutre ca dans le terraform -> kubernetes_labels
+- name: "injection Vault on namespace default"
+  shell: |
+    /usr/local/bin/kubectl label namespace default vault-injection=enabled --overwrite
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
 - name: "Deploy app Go via Helm"
   command: >
     /usr/local/bin/helm upgrade --install gartic-app /tmp/gartic-app

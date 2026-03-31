@@ -138,26 +138,3 @@
     /usr/local/bin/kubectl apply -f -
   environment:
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml
-
-#RBAC cluster-admin 
-- name: "allow inj to patch pod"
-  shell: |
-    /usr/local/bin/kubectl create clusterrolebinding vault-agent-injector-binding \
-    --clusterrole=cluster-admin \
-    --serviceaccount=vault:vault-agent-injector || true
-
-#foutre ca dans le terraform -> kubernetes_labels
-- name: "injection Vault on namespace default"
-  shell: |
-    /usr/local/bin/kubectl label namespace default vault-injection=enabled --overwrite
-  environment:
-    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
-
-- name: "Deploy app Go via Helm"
-  command: >
-    /usr/local/bin/helm upgrade --install gartic-app /tmp/gartic-app
-    --namespace default
-    --wait
-    --timeout 120s
-  environment:
-    KUBECONFIG: /etc/rancher/k3s/k3s.yaml

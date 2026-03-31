@@ -85,6 +85,22 @@
           tags: db
       tags: db
 
+    - name: "Wait for Vault Agent Injector"
+      shell: |
+        /usr/local/bin/kubectl wait --for=condition=ready pod \
+          -l app.kubernetes.io/name=vault-agent-injector \
+          -n vault --timeout=120s
+      environment:
+        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+    - name: "Deploy app Go"
+      shell: |
+        /usr/local/bin/helm upgrade --install gartic-app /tmp/gartic-app \
+          --namespace default \
+          --timeout 120s
+      environment:
+        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
 - name: "Worker nodes"
   hosts: WORKERS
   become: true

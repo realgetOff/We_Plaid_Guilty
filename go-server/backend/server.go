@@ -112,7 +112,7 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 			// room.SendSystemMsg(fmt.Sprintf("%s join the lobby !", currentUsername))
 			// room.BroadcastLobbyState()
 		// }
-// 
+
 		// if msg.Type == "ai_chat_message" {
 			// if (currentUsername == "") { continue }
 			// if (len(strings.TrimSpace(msg.Text)) == 0) { continue }
@@ -122,7 +122,7 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 // 
 			// room.BroadcastChat(currentUserID, msg.Text)
 		// }
-// 
+
 		// if msg.Type == "start_ai_game" {
 			// if currentUsername == "" { continue }
 // 
@@ -146,29 +146,29 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 			// fmt.Printf("DEBUG: %s\n", msg.Type)
 			// go currentAIRoom.RunAIGameLoop(prompt)
 		// }
-// 
-		// if msg.Type == "join_ai_game" {
-			// if currentUsername == "" { continue }
-// 
-			// room, err := hubAI.GetRoom(msg.Code)
-			// if err != nil || room == nil { continue }
-// 
-			// hubAI.UpdatePlayerConn(msg.Code, currentUserID, conn)
-			// currentAIRoom = room
-			// if (room.Status == gamemanager.StateAIDrawing) {
-				// room.MessageChan <- gamemanager.Notification{
-					// PlayerID: currentUserID,
-					// Data: map[string]interface{}{
-						// "type":   "ai_game_state",
-						// "phase":  "draw",
-						// "prompt": room.Prompt,
-						// "room":   room.ID,
-					// },
-				// }
-			// }
-			// fmt.Printf("DEGUB: %s\n", msg.Type)
-		// }
-// 
+
+		if msg.Type == "join_ai_game" {
+			if currentUsername == "" { continue }
+
+			room, err := hubAI.GetRoom(msg.Code)
+			if err != nil || room == nil { continue }
+
+			hubAI.UpdatePlayerConn(msg.Code, currentUserID, conn)
+			currentAIRoom = room
+			if (room.Status == gamemanager.StateAIDrawing) {
+				room.MessageChan <- gamemanager.Notification{
+					PlayerID: currentUserID,
+					Data: map[string]interface{}{
+						"type":   "ai_game_state",
+						"phase":  "draw",
+						"prompt": room.Prompt,
+						"room":   room.ID,
+					},
+				}
+			}
+			fmt.Printf("DEGUB: %s\n", msg.Type)
+		}
+
 		// if msg.Type == "ai_drawing_submitted" {
     		// if currentUsername == "" { continue }
 // 
@@ -177,7 +177,7 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 // 
     		// room.SubmitDrawing(currentUserID, msg.Drawing, msg.Title, msg.Description)
 		// }
-// 
+
 		// if msg.Type == "ai_votes_submitted" {
 			// if currentUsername == "" { continue }
 // 
@@ -186,18 +186,18 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 // 
 			// room.SubmitVotes(currentUserID, msg.Votes)
 		// }
-		// if msg.Type == "leave_ai_game" {
-			// if currentUsername == "" { continue }
-// 
-			// room, err := hubAI.GetRoom(msg.Code)
-			// if err != nil { continue }
-// 
-			// del := room.LeaveGame(currentUserID)
-			// if del {
-				// hubAI.DeleteRoom(room.ID)
-				// fmt.Printf("DEBUG: Delete ROOM everybody quit\n")
-			// }
-		// }
+		if msg.Type == "leave_ai_game" {
+			if currentUsername == "" { continue }
+
+			room, err := hubAI.GetRoom(msg.Code)
+			if err != nil { continue }
+
+			del := room.LeaveGame(currentUserID)
+			if del {
+				hubAI.DeleteRoom(room.ID)
+				fmt.Printf("DEBUG: Delete ROOM everybody quit\n")
+			}
+		}
 		// if msg.Type == "leave_ai_room" {
 			// if currentUsername == "" { continue }
 // 

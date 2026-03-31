@@ -87,9 +87,85 @@ func NewDispatcher() *Dispatcher {
 	d.handlers["guess_submitted"] = d.HandleGuess
 	d.handlers["chat_message"] = d.HandleChat
 	d.handlers["start_game"] = d.HandleStartGame
+	d.handlers["create_ai_room"] = d.HandleCreateAIRoom
+	d.handlers["join_ai_room"] = d.HandleJoinRoom      // Réutilise le handler classique !
+	d.handlers["leave_ai_room"] = d.HandleLeaveLobby      // Réutilise le handler classique !
+	d.handlers["ai_chat_message"] = d.HandleChat       // Réutilise le handler classique !
+	d.handlers["start_ai_game"] = d.HandleStartAIGame
+	d.handlers["ai_drawing_submitted"] = d.HandleAIDraw
+	d.handlers["ai_votes_submitted"] = d.HandleAIVote
 
 	return d
 }
+
+func (d *Dispatcher) HandleCreateAIRoom(ctx *WSContext, msg Message) {
+	if (!RunPipeLine(ctx, msg, d.PipeIsAuth)) { return }
+
+	newRoom := ctx.Hub.CreateRoom(true)
+	base := newRoom.GetBase()
+	err := base.AddPlayer(*ctx.CurrUsrID, *ctx.CurrUsrName, ctx.Conn)
+	if err != nil { return }
+	fmt.Printf("DEGUB: AI_ROOM created\n")	
+
+	base.MessageChan <- gamemanager.Notification{
+		PlayerID: *ctx.CurrUsrID,
+		Data: map[string]interface{}{
+			"type": "ai_room_created",
+			"code": base.ID,
+			"palyers": []map[string]interface{}{
+				{
+					"id": *ctx.CurrUsrID,
+					"name": *ctx.CurrUsrName,
+					"host": true,
+				},
+			},
+		},
+	}
+	fmt.Printf("DEBUG: %s\n", msg.Type)
+	base.BroadcastLobbyState()
+}
+
+func (d *Dispatcher) HandleStartAIGame(ctx *WSContext, msg Message) {
+	if (!RunPipeLine(ctx, msg, d.PipeIsAuth, d.PipeRoomExist, d.PipeHasRoomCode)) { return }
+
+	room, _ := ctx.Hub.GetRoom(msg.Code)
+	base := room.GetBase()
+	if base.Status != gamemanager.StateAIWaiting { return }
+
+	prompt, err := gamemanager.CallAI("")
+	if err != nil {
+		fmt.Println("callAI error:", err)
+		prompt = "Error API : add Credits"
+	}
+
+
+	base.BroadcastToAll(map[string]interface{}{
+		"type": "start_ai_game",
+		"code": base.ID,
+	})
+	fmt.Printf("DEBUG: %s\n", msg.Type)
+	if RoomIA, ok := ctx.CurrentRoom.(*gamemanager.AIRoom); ok {
+		go RoomIA.RunAIGameLoop(prompt)
+	}
+}
+
+func (d *Dispatcher) HandleAIDraw(ctx *WSContext, msg Message) {
+	if (!RunPipeLine(ctx, msg, d.PipeIsAuth, d.PipeRoomExist, d.PipeHasRoomCode)) { return }
+
+	if RoomIA, ok := ctx.CurrentRoom.(*gamemanager.AIRoom); ok {
+		RoomIA.SubmitDrawing(*ctx.CurrUsrID, msg.Drawing, msg.Title, msg.Description)
+	}
+}
+
+func (d *Dispatcher) HandleAIVote(ctx *WSContext, msg Message) {
+	if (!RunPipeLine(ctx, msg, d.PipeIsAuth, d.PipeRoomExist, d.PipeHasRoomCode)) { return }
+
+	if RoomIA, ok := ctx.CurrentRoom.(*gamemanager.AIRoom); ok {
+		RoomIA.SubmitVotes(*ctx.CurrUsrID, msg.Votes)
+	}
+}
+
+
 
 func (d *Dispatcher) HandleAuth(ctx *WSContext, msg Message) {
 	claims, err := validateAndGetClaims(msg.Token)
@@ -190,7 +266,7 @@ func (d *Dispatcher) HandleLeaveLobby(ctx *WSContext, msg Message) {
 		classicRoom.SendSystemMsg(fmt.Sprintf("%s leave the lobby !", *ctx.CurrUsrName))
 	}
 
-	if len(base.Players) == -1 {
+	if len(base.Players) == 0 {
 		ctx.Hub.DeleteRoom(base.ID)
 		return
 	}

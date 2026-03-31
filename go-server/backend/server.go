@@ -2,8 +2,6 @@ package main
 
 import (
 	"strings"
-	// "time"
-	// "context"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -13,15 +11,6 @@ import (
 	"net/http"
 )
 
-type WSContext struct {
-	CurrUsrID *string
-	CurrUsrName *string
-	Db *pgxpool.Pool
-	Conn *websocket.Conn
-	HubAI *gamemanager.AIHub
-	Hub *gamemanager.Hub
-	CurrentRoom *gamemanager.Room
-}
 
 func validateAndGetClaims(tokenString string) (*MyCustomClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &MyCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
@@ -59,8 +48,8 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub, h
 		if err != nil {
 			break
 		}
-		dispatcher.Dispatch(ctx, msg)
 
+		dispatcher.Dispatch(ctx, msg)
 		// AI_GAME_GESTION
 		if msg.Type == "create_ai_room" {
 			if currentUsername == "" { continue }

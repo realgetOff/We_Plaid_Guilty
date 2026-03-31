@@ -57,13 +57,37 @@ func NewRoom(id string, rounds int, timer int) *Room {
 		ID:           id,
 		Status:       StateWaiting,
 		TotalRound:   rounds,
-		Timer:        timer,
 		Players:      make(map[string]*Player),
 		Books:        make(map[string]*Book),
 		PlayerOrder:  []string{},
 		MessageChan:  make(chan Notification, 100),
 		FinishedChan: make(chan bool, 1),
 	}
+}
+
+/*
+* Add a player to the room
+*/
+func (b *BaseRoom) AddPlayer(playerID string, name string, conn *websocket.Conn) error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	if len(b.Players) >= 8 {
+		return fmt.Errorf("Room is full")
+	}
+
+	newPlayer := &Player{
+		ID:          playerID,
+		Name:        name,
+		Conn:        conn,
+		IsHost:      len(b.Players) == 0,
+		IsConnected: true,
+		IsReady:     false,
+		Score:       0,
+	}
+
+	b.Players[playerID] = newPlayer
+	return nil
 }
 
 /*

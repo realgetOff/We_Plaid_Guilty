@@ -13,7 +13,6 @@ import (
 
 type LobbySettings struct {
 	Rounds int `json:"rounds"`
-	Timer int `json:"timer"`
 }
 
 type playerNameTemp struct {

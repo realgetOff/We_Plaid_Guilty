@@ -146,6 +146,24 @@ func (r *Room) broadcastGallery() {
 	}
 }
 
+func (b *BaseRoom) BroadcastToAll(data map[string]interface{}) {
+	b.mu.Lock()
+	ids := make([]string, 0, len(b.Players))
+	for id := range b.Players {
+		ids = append(ids, id)
+	}
+	roomID := b.ID
+	b.mu.Unlock()
+
+	data["room"] = roomID
+	for _, id := range ids {
+		b.MessageChan <- Notification{
+			PlayerID: id,
+			Data:     data,
+		}
+	}
+}
+
 func (r *Room) BroadcastToAll(data map[string]interface{}) {
 	r.mu.Lock()
 	ids := make([]string, 0, len(r.Players))

@@ -46,7 +46,6 @@ func (r *Room) RunGameLoop() {
 		r.resetPlayer()
 
 		r.mu.Lock()
-		r.CurrentRound = round
 		r.FinishedChan = make(chan bool, 1)
 		r.mu.Unlock()
 
@@ -77,7 +76,6 @@ func (r *Room) RunGameLoop() {
 			r.waitForPhase(50 * time.Second)
 		}
 
-		// r.forceValidation()
 	}
 
 	r.mu.Lock()
@@ -89,41 +87,6 @@ func (r *Room) RunGameLoop() {
 
 	fmt.Printf("GG everyone game end !")
 }
-
-// func (r *Room) forceValidation() {
-	// r.mu.Lock()
-	// defer r.mu.Unlock()
-// 
-	// for _, tmp := range r.Players {
-		// if tmp.IsReady == false {
-			// content := "DEFAULT_IMAGE"
-			// tType := "IMAGE"
-			// if r.Phase == string(StateWriting) || r.Phase == string(StateGuess) {
-				// tType = "TEXT"
-				// content = "..."
-			// }
-// 
-			// if tmp.LastDraft != "" {
-				// content = tmp.LastDraft
-			// }
-// 
-			// newEntry := Entry{
-				// AuthorID: tmp.ID,
-				// Content:  content,
-				// Type:     tType,
-			// }
-// 
-			// ptrBook, ok := r.Books[tmp.ID]
-			// if !ok {
-				// continue
-			// }
-// 
-			// ptrBook.Entries = append(ptrBook.Entries, newEntry)
-			// tmp.IsReady = true
-			// r.Players[tmp.ID].LastDraft = ""
-		// }
-	// }
-// }
 
 func (r *Room) SubmiteAction(playerID string, data map[string]interface{}, isFinal bool) error {
 	r.mu.Lock()
@@ -241,7 +204,6 @@ func (r *Room) StartGame() error {
 
 	r.Status = "started"
 	r.Phase = string(StateWriting)
-	r.CurrentRound = 1
 
 	r.Books = make(map[string]*Book)
 	r.PlayerOrder = []string{}

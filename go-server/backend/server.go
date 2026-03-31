@@ -20,6 +20,7 @@ type WSContext struct {
 	Conn *websocket.Conn
 	HubAI *gamemanager.AIHub
 	Hub *gamemanager.Hub
+	CurrentRoom *gamemanager.Room
 }
 
 func validateAndGetClaims(tokenString string) (*MyCustomClaims, error) {
@@ -60,184 +61,6 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub, h
 		}
 		dispatcher.Dispatch(ctx, msg)
 
-		// if msg.Type == "authenticate" {
-			// claims, err := validateAndGetClaims(msg.Token)
-			// if err != nil {
-				// fmt.Println("WS Auth Failed:", err)
-				// conn.WriteMessage(websocket.CloseMessage,
-				// websocket.FormatCloseMessage(4001, "token expired"))
-				// return
-			// }
-			// currentUsername = claims.Username
-			// currentUserID = claims.UserID
-			// fmt.Printf("WS Authenticated: %s (ID: %s)\n", currentUsername, currentUserID)
-			// continue
-		// }
-
-		// if msg.Type == "create_room" {
-			// if currentUsername == "" { continue }
-// 
-			// newRoom := hub.CreateRoom()
-			// err = newRoom.AddPlayer(currentUserID, currentUsername, conn)
-// 
-			// currentRoom = newRoom
-			// newRoom.MessageChan <- gamemanager.Notification{
-				// PlayerID: currentUserID,
-				// Data: map[string]interface{}{
-					// "type": "room_created",
-					// "code": newRoom.ID,
-					// "players": []map[string]interface{}{
-						// {
-							// "id":   currentUserID,
-							// "name": currentUsername,
-							// "host": true,
-						// },
-					// },
-				// },
-			// }
-// 
-			// newRoom.BroadcastLobbyState()
-// 
-			// go func(roomID string) {
-				// db.Exec(context.Background(), "INSERT INTO rooms (room_code, created_at) VALUES ($1, NOW())", roomID)
-			// }(newRoom.ID)
-		// }
-
-		// if msg.Type == "join_room" {
-			// if currentUsername == "" { continue }
-// 
-			// room, err := hub.GetRoom(msg.Code)
-			// if err != nil || room == nil {
-				// room.MessageChan <- gamemanager.Notification{
-					// PlayerID: currentUserID,
-					// Data: map[string]string{"type": "error", "message": "room not found"},
-				// }
-				// continue
-			// }
-// 
-			// err = room.AddPlayer(currentUserID, currentUsername, conn)
-			// if err != nil {
-				// fmt.Println("AddPlayer error:", err)
-				// continue
-			// }
-			// room.SendSystemMsg(fmt.Sprintf("%s join the lobby !", currentUsername))
-// 
-			// currentRoom = room
-// 
-			// room.BroadcastLobbyState()
-		// }
-// 
-		// if msg.Type == "leave_lobby" {
-			// if currentUsername == "" { continue }
-			// room, err := hub.GetRoom(msg.Code)
-// 
-			// if err != nil || room == nil { continue }
-// 
-			// if room.Status != gamemanager.StateWaiting {
-				// continue
-			// }
-			// fmt.Printf("DEBUG leave_lobby: code='%s' user='%s'\n", msg.Code, currentUsername)
-			// isHost := false
-			// if p, err := room.GetPlayer(currentUserID); err == nil {
-				// isHost = p.IsHost
-			// }
-			// room.RemovePlayer(currentUserID)
-			// room.SendSystemMsg(fmt.Sprintf("%s leave the lobby !", currentUsername))
-			// currentRoom = nil
-			// if len(room.Players) == 0 {
-				// hub.DeleteRoom(room.ID)
-				// continue
-			// }
-			// if isHost {
-				// room.TransferHost()
-			// }
-			// room.BroadcastLobbyState()
-		// }
-
-		// if (msg.Type == "prompt_submitted") {
-			// if (currentRoom == nil) { continue }
-			// data := map[string]interface{}{
-				// "type": "prompt",
-				// "prompt": msg.Prompt,
-			// }
-			// fmt.Printf("DEGUB: %s\n", msg.Type)
-			// err := currentRoom.SubmiteAction(currentUserID, data, true);
-			// if (err != nil) {
-				// fmt.Printf("Error: Submited prompt: %v\n", err);
-			// }
-		// }
-		// if (msg.Type == "drawing_submitted") {
-			// if (currentRoom == nil) { continue }
-			// data := map[string]interface{}{
-				// "type": "draw",
-				// "drawing": msg.Drawing,
-			// }
-			// fmt.Printf("DEGUB: %s\n", msg.Type)
-			// err := currentRoom.SubmiteAction(currentUserID, data, true);
-			// if (err != nil) {
-				// fmt.Printf("Error: Submited draw: %v\n", err);
-			// }
-		// }
-		// if (msg.Type == "guess_submitted") {
-			// if (currentRoom == nil) { continue }
-			// data := map[string]interface{}{
-				// "type": "guess",
-				// "guess": msg.Guess,
-			// }
-			// fmt.Printf("DEGUB: %s\n", msg.Type)
-			// err := currentRoom.SubmiteAction(currentUserID, data, true);
-			// if (err != nil) {
-				// fmt.Printf("Error: Submited guess: %v\n", err);
-			// }
-		// }
-		// if msg.Type == "start_game" {
-			// if currentUsername == "" { continue }
-// 
-			// room, err := hub.GetRoom(msg.Code)
-			// if err != nil || room == nil { continue }
-// 
-			// err = room.StartGame()
-			// if err != nil {
-				// conn.WriteJSON(map[string]string{"type": "error", "message": err.Error()})
-				// continue
-			// }
-			// fmt.Printf("DEBUG: start_game\n")
-			// room.BroadcastToAll(map[string]interface{}{
-				// "type": "start_game",
-				// "code": room.ID,
-			// })
-		// }
-		// if (msg.Type == "leave_game") {
-			// fmt.Printf("DEBUG: leave_game msg %s\n", msg.Code)
-			// room, err := hub.GetRoom(msg.Code)
-			// if (err != nil) { continue }
-			// del := room.LeaveGame(currentUserID)
-			// if del {
-				// hub.DeleteRoom(msg.Code)
-				// fmt.Printf("DEBUG: DELETE ROOM nobody is in")
-			// }
-		// }
-		// if msg.Type == "join_game" {
-// 
-			// room, err := hub.GetRoom(msg.Code)
-			// if err != nil || room == nil { continue }
-// 
-			// room.JoinGame(currentUserID, conn)
-			// fmt.Printf("DEBUG join_game: code='%s' user='%s'\n", msg.Code, currentUsername)
-			// currentRoom = room
-// 
-			// task := room.GetPlayerTask(currentUserID)
-			// conn.WriteJSON(task)
-		// }
-		// if msg.Type == "chat_message" {
-			// if (currentUsername == "") { continue }
-			// if (len(strings.TrimSpace(msg.Text)) == 0) { continue }
-			// room, err := hub.GetRoom(msg.Code)
-			// if (err != nil) { continue }
-			// fmt.Printf("DEBUG: chat_message\n")
-			// room.BroadcastChat(currentUserID, msg.Text)
-		// }
-// 
 		// AI_GAME_GESTION
 		if msg.Type == "create_ai_room" {
 			if currentUsername == "" { continue }
@@ -361,13 +184,8 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub, h
 		if msg.Type == "ai_drawing_submitted" {
     		if currentUsername == "" { continue }
 
-<<<<<<< HEAD
-			room, err := hubAI.GetRoom(msg.Code)
-			if err != nil || room == nil { continue }
-=======
     		room, err := globalAIHub.GetRoom(msg.Code)
    			if err != nil || room == nil { continue }
->>>>>>> 10b2a52690a579c8128fd9a99b4e03ece75ff787
 
     		room.SubmitDrawing(currentUserID, msg.Drawing, msg.Title, msg.Description)
 		}

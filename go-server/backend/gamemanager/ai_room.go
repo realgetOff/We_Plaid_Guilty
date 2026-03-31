@@ -85,6 +85,7 @@ func (r *AIRoom) BroadcastToAll(data map[string]interface{}) {
         }
     }
 }
+
 func (r *AIRoom) BroadcastLobbyState() {
 	r.mu.Lock()
 	type toNotify struct {

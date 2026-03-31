@@ -65,6 +65,46 @@ func NewRoom(id string, rounds int, timer int) *Room {
 	}
 }
 
+func (b *BaseRoom) RemovePlayer(playerID string) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	delete(b.Players, playerID)
+}
+
+func (b *BaseRoom) TransfertHost() {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	if (len(b.Players) == 0) { // NOTE suprimer room si vide ?
+		return
+	}
+
+	hasHost := false
+	for _, p := range b.Players {
+		if p.IsHost {
+			hasHost = true
+			return
+		}
+	}
+	if !hasHost {
+		for _, p := range b.Players {
+				p.IsHost = true
+			}
+		}
+}
+
+func (b *BaseRoom) GetPlayer(playerID string) (*Player, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	p, ok := b.Players[playerID]
+	if !ok {
+		return nil, fmt.Errorf("player with id %s not found", playerID)
+	}
+	return p, nil
+}
+
 /*
 * Add a player to the room
 */

@@ -236,24 +236,24 @@ func (r *AIRoom) BroadcastChat(playerID string, content string) {
 	}
 }
 
-// func (r *AIRoom) LeaveGame(playerID string) (bool){
-	// r.mu.Lock()
-	// defer r.mu.Unlock()
-	// if oldPlayer, ok := r.Players[playerID]; ok {
-		// oldPlayer.IsReady = true
-		// oldPlayer.IsConnected = false
-	// }
-	// var isAllDisconnect bool
-	// for _, p := range r.Players {
-		// if !p.IsConnected {
-			// isAllDisconnect = true
-		// } else {
-			// isAllDisconnect = false
-			// break
-		// }
-	// }
-	// return isAllDisconnect
-// }
+func (r *AIRoom) LeaveGame(playerID string) (bool){
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if oldPlayer, ok := r.Players[playerID]; ok {
+		oldPlayer.IsReady = true
+		oldPlayer.IsConnected = false
+	}
+	var isAllDisconnect bool
+	for _, p := range r.Players {
+		if !p.IsConnected {
+			isAllDisconnect = true
+		} else {
+			isAllDisconnect = false
+			break
+		}
+	}
+	return isAllDisconnect
+}
 
 
 func (r *AIRoom) RunAIGameLoop(prompt string) {
@@ -266,6 +266,7 @@ func (r *AIRoom) RunAIGameLoop(prompt string) {
 	r.VotesDone = 0
 	r.mu.Unlock()
 
+	fmt.Printf("DEBUG: Etape1")
 	r.BroadcastToAll(map[string]interface{}{
 		"type":   "ai_game_state",
 		"phase":  "draw",
@@ -319,6 +320,7 @@ func (r *AIRoom) RunAIGameLoop(prompt string) {
 	r.Status = StateAIFinished
 	r.mu.Unlock()
 
+	fmt.Printf("DEBUG: gallery")
 	r.BroadcastToAll(map[string]interface{}{
 		"type":    "ai_results",
 		"phase":   "gallery",

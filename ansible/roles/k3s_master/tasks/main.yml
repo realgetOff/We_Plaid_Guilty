@@ -139,6 +139,13 @@
   environment:
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml
 
+#RBAC cluster-admin 
+- name: "allow inj to patch pod"
+  shell: |
+    /usr/local/bin/kubectl create clusterrolebinding vault-agent-injector-binding \
+    --clusterrole=cluster-admin \
+    --serviceaccount=vault:vault-agent-injector || true
+
 #foutre ca dans le terraform -> kubernetes_labels
 - name: "injection Vault on namespace default"
   shell: |

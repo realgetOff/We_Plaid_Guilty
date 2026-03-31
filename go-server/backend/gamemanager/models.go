@@ -71,7 +71,8 @@ type BaseRoom struct {
 	mu           sync.Mutex
 }
 
-type RoomAI struct {
+type AIRoom struct {
+	BaseRoom
 	Prompt       string
 	Drawings     map[string]*AIDrawing
 	Votes        []AIVote
@@ -81,7 +82,7 @@ type RoomAI struct {
 	VoteChan     chan bool
 }
 
-type ClassicRoom struct {
+type Room struct {
 	BaseRoom
 	Books map[string]*Book
 }
@@ -89,16 +90,16 @@ type ClassicRoom struct {
 /*
 * All the others structs are contained in the Room structure.
 */
-type Room struct {
-	ID           string
-	Phase        string
-	TotalRound   int
-	Players      map[string]*Player
-	Books        map[string]*Book
-	PlayerOrder  []string  
-	FinishedChan chan bool
-	Status       GameStates
-	MessageChan  chan Notification
-	
-	mu           sync.Mutex
-}
+// type Room struct {
+	// ID           string
+	// Phase        string
+	// TotalRound   int
+	// Players      map[string]*Player
+	// Books        map[string]*Book
+	// PlayerOrder  []string  
+	// FinishedChan chan bool
+	// Status       GameStates
+	// MessageChan  chan Notification
+	// 
+	// mu           sync.Mutex
+// }

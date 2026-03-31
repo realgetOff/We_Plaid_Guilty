@@ -8,10 +8,21 @@ import (
 	"time"
 )
 
+type GameRoom interface {
+	GetID() string
+	GetBase() *BaseRoom
+}
+
+func (r *Room) GetID() string   { return r.ID }
+func (r *Room) GetBase() *BaseRoom { return &r.BaseRoom }
+
+func (r *AIRoom) GetID() string { return r.ID }
+func (r *AIRoom) GetBase() *BaseRoom { return &r.BaseRoom }
+
 const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 type Hub struct {
-	Rooms map[string]*Room
+	Rooms map[string]GameRoom
 	mu sync.RWMutex
 }
 
@@ -32,7 +43,38 @@ func (h *Hub) DeleteRoom(id string) {
     delete(h.Rooms, id)
 }
 
-func (h *Hub) GetRoom(id string) (*Room, error) {
+func NewAIRoom(id string) *AIRoom {
+	return &AIRoom{
+		BaseRoom: BaseRoom{
+			ID:          id,
+			Status:      StateAIWaiting,
+			Players:     make(map[string]*Player),
+			MessageChan: make(chan Notification, 100),
+		},
+		Drawings:    make(map[string]*AIDrawing),
+		Votes:       []AIVote{},
+		DrawChan:    make(chan bool, 1),
+		VoteChan:    make(chan bool, 1),
+	}
+}
+
+
+func NewRoom(id string) *Room {
+	return &Room{
+		BaseRoom: BaseRoom{
+			ID:           id,
+			Status:       StateWaiting,
+			Players:      make(map[string]*Player),
+			PlayerOrder:  []string{},
+			MessageChan:  make(chan Notification, 100),
+			FinishedChan: make(chan bool, 1),
+		},
+		Books:        make(map[string]*Book),
+	}
+}
+
+
+func (h *Hub) GetRoom(id string) (GameRoom, error) {
 	id = strings.ToUpper(strings.TrimSpace(id))
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -45,8 +87,7 @@ func (h *Hub) GetRoom(id string) (*Room, error) {
 	return ptr, nil
 }
 
-func (h *Hub) CreateRoom() (* Room){
-	var R *Room
+func (h *Hub) CreateRoom(isAI bool) (GameRoom){
 	var IdRoom string
 	rand.Seed(time.Now().UnixNano())
 
@@ -57,21 +98,30 @@ func (h *Hub) CreateRoom() (* Room){
 		_, ok := h.Rooms[IdRoom]
 		h.mu.Unlock()
 
-		if ok {
-			continue
-		} else {
-			fmt.Println("HUB: Création de l'objet Room...")
-			R = NewRoom(IdRoom, 45, 0)
-			fmt.Println("HUB: Tentative de lancement de la Goroutine...")
-			go R.listenForNotifaction()
-			fmt.Println("HUB: Goroutine lancée, sortie de boucle.")
+		if !ok {
 			break
-		}
+		}	
 	}
 
+	var newRoom GameRoom
+
+	if (isAI) {
+		newRoom = NewAIRoom(IdRoom)
+	} else {
+		newRoom = NewRoom(IdRoom)
+	}
+
+
+
+	fmt.Println("HUB: Tentative de lancement de la Goroutine...")
+
+	go newRoom.GetBase().listenForNotifaction()
+
+	fmt.Println("HUB: Goroutine lancée, sortie de boucle.")
+
 	h.mu.Lock()
-	h.Rooms[IdRoom] = R
+	h.Rooms[IdRoom] = newRoom
 	h.mu.Unlock()
 
-	return R
+	return newRoom
 }

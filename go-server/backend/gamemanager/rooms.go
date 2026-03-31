@@ -5,16 +5,16 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func (r *Room) GetPlayer(playerID string) (*Player, error) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	player, ok := r.Players[playerID]
-	if !ok {
-		return nil, fmt.Errorf("Player not found")
-	}
-	return player, nil
-}
+// func (r *Room) GetPlayer(playerID string) (*Player, error) {
+	// r.mu.Lock()
+	// defer r.mu.Unlock()
+// 
+	// player, ok := r.Players[playerID]
+	// if !ok {
+		// return nil, fmt.Errorf("Player not found")
+	// }
+	// return player, nil
+// }
 
 func (r *Room) SetPlayerOnline(playerID string, isOnline bool) {
 	r.mu.Lock()
@@ -42,37 +42,30 @@ func (r *Room) resetPlayer() {
 	}
 }
 
-func (r *Room) TransferHost() {
-    r.mu.Lock()
-    defer r.mu.Unlock()
-
-    for _, p := range r.Players {
-        p.IsHost = true
-        break
-    }
-}
-
-func NewRoom(id string, rounds int, timer int) *Room {
-	return &Room{
-		ID:           id,
-		Status:       StateWaiting,
-		TotalRound:   rounds,
-		Players:      make(map[string]*Player),
-		Books:        make(map[string]*Book),
-		PlayerOrder:  []string{},
-		MessageChan:  make(chan Notification, 100),
-		FinishedChan: make(chan bool, 1),
-	}
-}
+// func (r *Room) TransferHost() {
+    // r.mu.Lock()
+    // defer r.mu.Unlock()
+// 
+    // for _, p := range r.Players {
+        // p.IsHost = true
+        // break
+    // }
+// }
 
 func (b *BaseRoom) RemovePlayer(playerID string) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
-
+	newOrder := []string{}
+	for _, id := range b.PlayerOrder {
+		if id != playerID {
+			newOrder = append(newOrder, id)
+		}
+	}
+	b.PlayerOrder = newOrder
 	delete(b.Players, playerID)
 }
 
-func (b *BaseRoom) TransfertHost() {
+func (b *BaseRoom) TransferHost() {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
@@ -90,6 +83,7 @@ func (b *BaseRoom) TransfertHost() {
 	if !hasHost {
 		for _, p := range b.Players {
 				p.IsHost = true
+				break
 			}
 		}
 }
@@ -127,33 +121,54 @@ func (b *BaseRoom) AddPlayer(playerID string, name string, conn *websocket.Conn)
 	}
 
 	b.Players[playerID] = newPlayer
+	fmt.Printf("DEBUG: Player %s joined room %s (Host: %v)\n", name, b.ID, newPlayer.IsHost)
 	return nil
 }
 
 /*
 * Add a player to the room
 */
-func (r *Room) AddPlayer(playerID string, name string, conn *websocket.Conn) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+// func (r *Room) AddPlayer(playerID string, name string, conn *websocket.Conn) error {
+	// r.mu.Lock()
+	// defer r.mu.Unlock()
+// 
+	// if len(r.Players) >= 8 {
+		// return fmt.Errorf("Room is full")
+	// }
+// 
+	// newPlayer := &Player{
+		// ID:          playerID,
+		// Name:        name,
+		// Conn:        conn,
+		// IsHost:      len(r.Players) == 0,
+		// IsConnected: true,
+		// IsReady:     false,
+		// Score:       0,
+	// }
+// 
+	// r.Players[playerID] = newPlayer
+	// return nil
+// }
 
-	if len(r.Players) >= 8 {
-		return fmt.Errorf("Room is full")
-	}
-
-	newPlayer := &Player{
-		ID:          playerID,
-		Name:        name,
-		Conn:        conn,
-		IsHost:      len(r.Players) == 0,
-		IsConnected: true,
-		IsReady:     false,
-		Score:       0,
-	}
-
-	r.Players[playerID] = newPlayer
-	return nil
-}
+// func (b *BaseRoom) LeaveGame(playerID string) bool {
+	// b.mu.Lock()
+	// defer b.mu.Unlock()
+	// if oldPlayer, ok := b.Players[playerID]; ok {
+		// oldPlayer.IsReady = true
+		// oldPlayer.IsConnected = false
+	// }
+	// var isAllDisconnect bool
+	// for _, p := range b.Players {
+		// if !p.IsConnected {
+			// isAllDisconnect = true
+		// } else {
+			// isAllDisconnect = false
+			// break
+		// }
+	// }
+	// return isAllDisconnect
+// 
+// }
 
 func (r *Room) LeaveGame(playerID string) (bool){
 	r.mu.Lock()
@@ -174,29 +189,38 @@ func (r *Room) LeaveGame(playerID string) (bool){
 	return isAllDisconnect
 }
 
-func (r *Room) JoinGame(playerID string, newConn *websocket.Conn) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	if oldPlayer, ok := r.Players[playerID]; ok {
+func (b *BaseRoom) JoinGame(playerID string, newConn *websocket.Conn) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if oldPlayer, ok := b.Players[playerID]; ok {
 		oldPlayer.Conn = newConn
 		oldPlayer.IsConnected = true
 	}
 }
 
+// func (r *Room) JoinGame(playerID string, newConn *websocket.Conn) {
+	// r.mu.Lock()
+	// defer r.mu.Unlock()
+	// if oldPlayer, ok := r.Players[playerID]; ok {
+		// oldPlayer.Conn = newConn
+		// oldPlayer.IsConnected = true
+	// }
+// }
+
 /*
 * Remove a player from the room
 */
-func (r *Room) RemovePlayer(playerID string) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	delete(r.Players, playerID)
-
-	newOrder := []string{}
-	for _, id := range r.PlayerOrder {
-		if id != playerID {
-			newOrder = append(newOrder, id)
-		}
-	}
-	r.PlayerOrder = newOrder
-}
+// func (r *Room) RemovePlayer(playerID string) {
+	// r.mu.Lock()
+	// defer r.mu.Unlock()
+// 
+	// delete(r.Players, playerID)
+// 
+	// newOrder := []string{}
+	// for _, id := range r.PlayerOrder {
+		// if id != playerID {
+			// newOrder = append(newOrder, id)
+		// }
+	// }
+	// r.PlayerOrder = newOrder
+// }

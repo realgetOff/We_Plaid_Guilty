@@ -91,47 +91,47 @@ func (b *BaseRoom) BroadcastLobbyState() {
 	}
 }
 
-func (r *Room) BroadcastLobbyState() {
-	r.mu.Lock()
-	
-	playerList := make([]map[string]interface{}, 0)
-	type toNotify struct {
-		id   string
-		name string
-		host bool
-	}
-	targets := make([]toNotify, 0)
-
-	for _, p := range r.Players {
-		playerList = append(playerList, map[string]interface{}{
-			"id":     p.ID,
-			"name":   p.Name,
-			"host":   p.IsHost,
-			"online": p.IsConnected,
-		})
-		targets = append(targets, toNotify{id: p.ID, name: p.Name, host: p.IsHost})
-	}
-	
-	roomID := r.ID
-	r.mu.Unlock()
-
-	for _, target := range targets {
-		
-		r.MessageChan <- Notification{
-			PlayerID: target.id,
-			Data: map[string]interface{}{
-				"type":    "lobby_state",
-				"room":    roomID,
-				"players": playerList,
-				"me": map[string]interface{}{
-					"id":   target.id,
-					"name": target.name,
-					"host": target.host,
-				},
-			},
-		}
-	}
-}
+// func (r *Room) BroadcastLobbyState() {
+	// r.mu.Lock()
+	// 
+	// playerList := make([]map[string]interface{}, 0)
+	// type toNotify struct {
+		// id   string
+		// name string
+		// host bool
+	// }
+	// targets := make([]toNotify, 0)
+// 
+	// for _, p := range r.Players {
+		// playerList = append(playerList, map[string]interface{}{
+			// "id":     p.ID,
+			// "name":   p.Name,
+			// "host":   p.IsHost,
+			// "online": p.IsConnected,
+		// })
+		// targets = append(targets, toNotify{id: p.ID, name: p.Name, host: p.IsHost})
+	// }
+	// 
+	// roomID := r.ID
+	// r.mu.Unlock()
+// 
+	// for _, target := range targets {
+		// 
+		// r.MessageChan <- Notification{
+			// PlayerID: target.id,
+			// Data: map[string]interface{}{
+				// "type":    "lobby_state",
+				// "room":    roomID,
+				// "players": playerList,
+				// "me": map[string]interface{}{
+					// "id":   target.id,
+					// "name": target.name,
+					// "host": target.host,
+				// },
+			// },
+		// }
+	// }
+// }
 
 func (r *Room) broadcastGallery() {
 	r.mu.Lock()
@@ -211,20 +211,20 @@ func (b *BaseRoom) BroadcastToAll(data map[string]interface{}) {
     }
 }
 
-func (r *Room) BroadcastToAll(data map[string]interface{}) {
-	r.mu.Lock()
-	ids := make([]string, 0, len(r.Players))
-	for id := range r.Players {
-		ids = append(ids, id)
-	}
-	roomID := r.ID
-	r.mu.Unlock()
-
-	data["room"] = roomID
-	for _, id := range ids {
-		r.MessageChan <- Notification{
-			PlayerID: id,
-			Data:     data,
-		}
-	}
-}
+// func (r *Room) BroadcastToAll(data map[string]interface{}) {
+	// r.mu.Lock()
+	// ids := make([]string, 0, len(r.Players))
+	// for id := range r.Players {
+		// ids = append(ids, id)
+	// }
+	// roomID := r.ID
+	// r.mu.Unlock()
+// 
+	// data["room"] = roomID
+	// for _, id := range ids {
+		// r.MessageChan <- Notification{
+			// PlayerID: id,
+			// Data:     data,
+		// }
+	// }
+// }

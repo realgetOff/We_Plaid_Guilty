@@ -14,9 +14,8 @@ type WSContext struct {
 	CurrUsrName *string
 	Db *pgxpool.Pool
 	Conn *websocket.Conn
-	HubAI *gamemanager.AIHub
 	Hub *gamemanager.Hub
-	CurrentRoom *gamemanager.Room
+	CurrentRoom *gamemanager.BaseRoom
 }
 
 type HandleFunc func(context *WSContext, msg Message)

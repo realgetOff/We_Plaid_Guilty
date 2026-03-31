@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gorilla/websocket"
+	// "github.com/gorilla/websocket"
 )
 
 // func (r *AIRoom) AddPlayer(playerID string, name string, conn *websocket.Conn) error {

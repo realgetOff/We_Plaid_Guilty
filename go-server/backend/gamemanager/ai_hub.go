@@ -1,4 +1,4 @@
-// package gamemanager
+package gamemanager
 // 
 // import (
 	// "fmt"

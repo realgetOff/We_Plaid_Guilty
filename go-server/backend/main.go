@@ -27,7 +27,6 @@ omitempty: omits empty strings, lowering network traffic
 */
 
 var globalHub *gamemanager.Hub
-var globalAIHub *gamemanager.AIHub
 
 func connectToDatabase () (*pgxpool.Pool, error) {
 
@@ -64,12 +63,9 @@ func main() {
 	defer db.Close()
 
 	globalHub = &gamemanager.Hub{
-		Rooms: make(map[string]*gamemanager.Room),
+		Rooms: make(map[string]gamemanager.GameRoom),
 	}
 
-	globalAIHub = &gamemanager.AIHub{
-    	Rooms: make(map[string]*gamemanager.AIRoom),
-	}
 
 	// if err := loadSecretsFromVault(); err != nil {
 	// 	log.Fatalf("Failed to load secrets from Vault: %v", err)
@@ -88,37 +84,38 @@ func main() {
 
 	router.GET("/api/ai-rooms/:code", func(c *gin.Context) {
     code := strings.ToUpper(c.Param("code"))
-    room, err := globalAIHub.GetRoom(code)
+    room, err := globalHub.GetRoom(code)
     if err != nil {
         c.JSON(http.StatusNotFound, gin.H{"error": "ai room not found"})
         return
     }
+	base := room.GetBase()
     c.JSON(http.StatusOK, gin.H{
-        "code":    room.ID,
-        "status":  room.Status,
-        "players": len(room.Players),
+        "code":    base.ID,
+        "status":  base.Status,
+        "players": len(base.Players),
     })
 })
 	router.GET("/api/rooms/:code", func(c *gin.Context) {
 		code := strings.ToUpper(c.Param("code"))
 		room, err := globalHub.GetRoom(code)
-
 		if err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "room not found"})
 			return
 		}
-
+		
+		base := room.GetBase()
 		c.JSON(http.StatusOK, gin.H{
-			"code":    room.ID,
-			"status":  room.Status,
-			"players": len(room.Players),
+			"code":    base.ID,
+			"status":  base.Status,
+			"players": len(base.Players),
 		})
 	})
 	router.GET("/ping", pong)
 	router.GET("/health", health)
 	router.GET("/api/config", vaultstatus)
 	router.GET("/ws", func (c *gin.Context){
-		handleWebsocket(c, db, globalHub, globalAIHub)
+		handleWebsocket(c, db, globalHub)
 	})
 	router.POST("/api/auth/player", func (c *gin.Context){
 		handleGuestAuth(c, db)

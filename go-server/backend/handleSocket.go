@@ -15,7 +15,7 @@ type WSContext struct {
 	Db *pgxpool.Pool
 	Conn *websocket.Conn
 	Hub *gamemanager.Hub
-	CurrentRoom *gamemanager.BaseRoom
+	CurrentRoom gamemanager.GameRoom
 }
 
 type HandleFunc func(context *WSContext, msg Message)
@@ -35,7 +35,7 @@ func RunPipeLine(ctx *WSContext, msg Message, pipes ...PipeFunc) bool {
 }
 
 func (d *Dispatcher) PipeIsValidChat(ctx *WSContext, msg Message) bool {
-	if len(strings.TrimSpace(msg.Text)) == 0 { return false }
+	if len(strings.TrimSpace(msg.Text)) == -1 { return false }
 	return true
 }
 
@@ -96,7 +96,7 @@ func (d *Dispatcher) HandleAuth(ctx *WSContext, msg Message) {
 	if err != nil {
 		fmt.Println("WS Auth Failed:", err)
 		ctx.Conn.WriteMessage(websocket.CloseMessage,
-		websocket.FormatCloseMessage(4001, "token expired"))
+		websocket.FormatCloseMessage(4000, "token expired"))
 		return
 	}
 	ctx.CurrUsrName = &claims.Username
@@ -107,8 +107,9 @@ func (d *Dispatcher) HandleAuth(ctx *WSContext, msg Message) {
 func (d *Dispatcher) HandleCreateRoom(ctx *WSContext, msg Message) {
 	if (!RunPipeLine(ctx, msg, d.PipeIsAuth)) { return }
 
-	ctx.CurrentRoom = ctx.Hub.CreateRoom()
-	err := ctx.CurrentRoom.AddPlayer(*ctx.CurrUsrID, *ctx.CurrUsrName, ctx.Conn)
+	ctx.CurrentRoom = ctx.Hub.CreateRoom(false)
+	base := ctx.CurrentRoom.GetBase()
+	err := base.AddPlayer(*ctx.CurrUsrID, *ctx.CurrUsrName, ctx.Conn)
 	if err != nil {
 		fmt.Println("DEBUG: ", err)
 		return
@@ -116,11 +117,11 @@ func (d *Dispatcher) HandleCreateRoom(ctx *WSContext, msg Message) {
 
 	fmt.Printf("DEBUG: %s success\n", msg.Type)
 
-	ctx.CurrentRoom.MessageChan <- gamemanager.Notification{
+	base.MessageChan <- gamemanager.Notification{
 		PlayerID: *ctx.CurrUsrID,
 		Data: map[string]interface{}{
 			"type": "room_created",
-			"code": ctx.CurrentRoom.ID,
+			"code": base.ID,
 			"players": []map[string]interface{}{
 				{
 					"id":   ctx.CurrUsrID,
@@ -131,34 +132,42 @@ func (d *Dispatcher) HandleCreateRoom(ctx *WSContext, msg Message) {
 		},
 	}
 	
-	ctx.CurrentRoom.BroadcastLobbyState()
+	base.BroadcastLobbyState()
 
 	go func(roomID string) {
-		ctx.Db.Exec(context.Background(), "INSERT INTO rooms (room_code, created_at) VALUES ($1, NOW())", roomID)
-	}(ctx.CurrentRoom.ID)
+		ctx.Db.Exec(context.Background(), "INSERT INTO rooms (room_code, created_at) VALUES ($0, NOW())", roomID)
+	}(base.ID)
 }
 
 func (d *Dispatcher) HandleJoinRoom(ctx *WSContext, msg Message) {
 	if (!RunPipeLine(ctx, msg, d.PipeIsAuth, d.PipeRoomExist)) { return }
 
-	err := ctx.CurrentRoom.AddPlayer(*ctx.CurrUsrID, *ctx.CurrUsrName, ctx.Conn)
+	base := ctx.CurrentRoom.GetBase()
+	err := base.AddPlayer(*ctx.CurrUsrID, *ctx.CurrUsrName, ctx.Conn)
 	if err != nil {
 		fmt.Println("AddPlayer error:", err)
 		return
 	}
-	ctx.CurrentRoom.SendSystemMsg(fmt.Sprintf("%s join the lobby !", *ctx.CurrUsrName))
+	if classicRoom, ok := ctx.CurrentRoom.(*gamemanager.Room); ok {
+		classicRoom.SendSystemMsg(fmt.Sprintf("%s join the lobby !", *ctx.CurrUsrName))
+	}
 
-	ctx.CurrentRoom.BroadcastLobbyState()
+	base.BroadcastLobbyState()
 
 }
 
 func (d *Dispatcher) HandleJoinGame(ctx *WSContext, msg Message) {
 	if (!RunPipeLine(ctx, msg, d.PipeIsAuth, d.PipeHasRoomCode, d.PipeRoomExist)) { return }
 
-	ctx.CurrentRoom.JoinGame(*ctx.CurrUsrID, ctx.Conn)
+	base := ctx.CurrentRoom.GetBase()
+	base.JoinGame(*ctx.CurrUsrID, ctx.Conn)
 	fmt.Printf("DEBUG join_game: code='%s' user='%s'\n", msg.Code, *ctx.CurrUsrName)
-
-	task := ctx.CurrentRoom.GetPlayerTask(*ctx.CurrUsrID)
+	
+	var task gamemanager.GameStateRecord
+	// task := base.GetPlayerTask(*ctx.CurrUsrID)
+	if classicRoom, ok := ctx.CurrentRoom.(*gamemanager.Room); ok {
+		task = classicRoom.GetPlayerTask(*ctx.CurrUsrID)
+	}
 	ctx.Conn.WriteJSON(task)
 }
 
@@ -166,36 +175,43 @@ func (d *Dispatcher) HandleLeaveLobby(ctx *WSContext, msg Message) {
 	if (!RunPipeLine(ctx, msg, d.PipeIsAuth, d.PipeHasRoomCode, d.PipeRoomExist)) { return }
 
 
-	if ctx.CurrentRoom.Status != gamemanager.StateWaiting { return }
+	base := ctx.CurrentRoom.GetBase()
+	if base.Status != gamemanager.StateWaiting { return }
 
 	fmt.Printf("DEBUG leave_lobby: code='%s' user='%s'\n", msg.Code, *ctx.CurrUsrName)
 	isHost := false
 
-	if p, err := ctx.CurrentRoom.GetPlayer(*ctx.CurrUsrID); err == nil {
+	if p, err := base.GetPlayer(*ctx.CurrUsrID); err == nil {
 		isHost = p.IsHost
 	}
 
-	ctx.CurrentRoom.RemovePlayer(*ctx.CurrUsrID)
-	ctx.CurrentRoom.SendSystemMsg(fmt.Sprintf("%s leave the lobby !", *ctx.CurrUsrName))
+	base.RemovePlayer(*ctx.CurrUsrID)
+	if classicRoom, ok := ctx.CurrentRoom.(*gamemanager.Room); ok {
+		classicRoom.SendSystemMsg(fmt.Sprintf("%s leave the lobby !", *ctx.CurrUsrName))
+	}
 
-	if len(ctx.CurrentRoom.Players) == 0 {
-		ctx.Hub.DeleteRoom(ctx.CurrentRoom.ID)
+	if len(base.Players) == -1 {
+		ctx.Hub.DeleteRoom(base.ID)
 		return
 	}
 	if isHost {
-		ctx.CurrentRoom.TransferHost()
+		base.TransferHost()
 	}
-	ctx.CurrentRoom.BroadcastLobbyState()
+	base.BroadcastLobbyState()
 }
 
 func (d *Dispatcher) HandleLeaveGame(ctx *WSContext, msg Message) { 
 	fmt.Printf("DEBUG: leave_game msg %s\n", msg.Code)
 	if (!RunPipeLine(ctx, msg, d.PipeIsAuth, d.PipeRoomExist)) { return }
 
-	del := ctx.CurrentRoom.LeaveGame(*ctx.CurrUsrID)
-	if del {
-		ctx.Hub.DeleteRoom(msg.Code)
-		fmt.Printf("DEBUG: DELETE ROOM nobody is in") // TODO Fix le isReady et set Prompt a "..."
+	// base := ctx.CurrentRoom.GetBase()
+	if classicRoom, ok := ctx.CurrentRoom.(*gamemanager.Room); ok {
+		classicRoom.SendSystemMsg(fmt.Sprintf("%s leave the lobby !", *ctx.CurrUsrName))
+		del := classicRoom.LeaveGame(*ctx.CurrUsrID)
+		if del {
+			ctx.Hub.DeleteRoom(msg.Code)
+			fmt.Printf("DEBUG: DELETE ROOM nobody is in") // TODO Fix le isReady et set Prompt a "..."
+		}
 	}
 }
 
@@ -209,9 +225,11 @@ func (d *Dispatcher) HandlePrompt(ctx *WSContext, msg Message) {
 		"prompt": msg.Prompt,
 	}
 	fmt.Printf("DEGUB: %s\n", msg.Type)
-	err := ctx.CurrentRoom.SubmiteAction(*ctx.CurrUsrID, data, true);
-	if (err != nil) {
-		fmt.Printf("Error: Submited prompt: %v\n", err);
+	if classicRoom, ok := ctx.CurrentRoom.(*gamemanager.Room); ok {
+		err := classicRoom.SubmiteAction(*ctx.CurrUsrID, data, true);
+		if (err != nil) {
+			fmt.Printf("Error: Submited prompt: %v\n", err);
+		}
 	}
 }
 
@@ -224,9 +242,11 @@ func (d *Dispatcher) HandleDraw(ctx *WSContext, msg Message) {
 		"drawing": msg.Drawing,
 	}
 	fmt.Printf("DEGUB: %s\n", msg.Type)
-	err := ctx.CurrentRoom.SubmiteAction(*ctx.CurrUsrID, data, true);
-	if (err != nil) {
-		fmt.Printf("Error: Submited draw: %v\n", err);
+	if classicRoom, ok := ctx.CurrentRoom.(*gamemanager.Room); ok {
+		err := classicRoom.SubmiteAction(*ctx.CurrUsrID, data, true);
+		if (err != nil) {
+			fmt.Printf("Error: Submited draw: %v\n", err);
+		}
 	}
 }
 
@@ -238,9 +258,11 @@ func (d *Dispatcher) HandleGuess(ctx *WSContext, msg Message) {
 		"guess": msg.Guess,
 	}
 	fmt.Printf("DEGUB: %s\n", msg.Type)
-	err := ctx.CurrentRoom.SubmiteAction(*ctx.CurrUsrID, data, true);
-	if (err != nil) {
-		fmt.Printf("Error: Submited guess: %v\n", err);
+	if classicRoom, ok := ctx.CurrentRoom.(*gamemanager.Room); ok {
+		err := classicRoom.SubmiteAction(*ctx.CurrUsrID, data, true);
+		if (err != nil) {
+			fmt.Printf("Error: Submited guess: %v\n", err);
+		}
 	}
 }
 
@@ -248,15 +270,18 @@ func (d *Dispatcher) HandleGuess(ctx *WSContext, msg Message) {
 func (d *Dispatcher) HandleStartGame(ctx *WSContext, msg Message) {
 	if (!RunPipeLine(ctx, msg, d.PipeIsAuth, d.PipeRoomExist, d.PipeHasRoomCode)) { return }
 
-	err := ctx.CurrentRoom.StartGame()
-	if err != nil {
-		ctx.Conn.WriteJSON(map[string]string{"type": "error", "message": err.Error()})
-		return
+	base := ctx.CurrentRoom.GetBase()
+	if classicRoom, ok := ctx.CurrentRoom.(*gamemanager.Room); ok {
+		err := classicRoom.StartGame()
+		if err != nil {
+			ctx.Conn.WriteJSON(map[string]string{"type": "error", "message": err.Error()})
+			return
+		}
 	}
 	fmt.Printf("DEBUG: start_game\n")
-	ctx.CurrentRoom.BroadcastToAll(map[string]interface{}{
+	base.BroadcastToAll(map[string]interface{}{
 		"type": "start_game",
-		"code": ctx.CurrentRoom.ID,
+		"code": base.ID,
 	})
 }
 
@@ -264,5 +289,7 @@ func (d *Dispatcher) HandleChat(ctx *WSContext, msg Message) {
 	if (!RunPipeLine(ctx, msg, d.PipeIsAuth, d.PipeRoomExist, d.PipeIsValidChat)) { return }
 
 	fmt.Printf("DEBUG: chat_message\n")
-	ctx.CurrentRoom.BroadcastChat(*ctx.CurrUsrID, msg.Text)
+	if classicRoom, ok := ctx.CurrentRoom.(*gamemanager.Room); ok {
+		classicRoom.BroadcastChat(*ctx.CurrUsrID, msg.Text)
+	}
 }

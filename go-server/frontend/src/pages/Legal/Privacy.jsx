@@ -18,26 +18,37 @@ const Navbar = () =>
 {
 	return (
 		<div className="legal">
-			<h2 className="legal__title">Privacy Policy</h2>
-			<p className="legal__date">Last updated: February 2026</p>
+			<h2 className="legal__title">Privacy? What Privacy?</h2>
+			<p className="legal__date">Last updated: The moment you clicked</p>
 
 			<section className="legal__section">
-				<h3>1. Data Protection</h3>
+				<h3>1. Data Harvesting</h3>
 				<p>
-					We are committed to protecting your personal data and 
-					respecting your privacy according to school standards.
+					We reserve the right to monitor your keystrokes, your
+					unfiltered thoughts, and the exact brand of snacks you
+					consume while coding. If you blink, we log it.
 				</p>
 			</section>
 
 			<section className="legal__section">
-				<h3>2. Usage</h3>
+				<h3>2. Deep Dark Web Sharing</h3>
 				<p>
-					Your data is only used for the purpose of the 
-					ft_transcendence project and is not shared with third parties.
+					Your personal data, including your most embarrassing
+					git commit messages, will be sold to the highest bidder,
+					or simply traded for a lukewarm cup of cluster coffee.
 				</p>
 			</section>
 
-			<Link to="/" className="legal__back">← Back to Home</Link>
+			<section className="legal__section">
+				<h3>3. Biometric Surrender</h3>
+				<p>
+					By staying on this page for more than five seconds, you
+					legally grant us ownership of your digital soul and
+					your first-born's future GitHub username.
+				</p>
+			</section>
+
+			<Link to="/" className="legal__back">← Escape while you can</Link>
 		</div>
 	);
 };

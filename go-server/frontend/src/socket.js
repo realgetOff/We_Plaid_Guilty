@@ -93,8 +93,11 @@ const setupSocketHandlers = (token) =>
 			fn(msg);
 		});
 	};
-	socket.onclose = () =>
+	socket.onclose = (event) =>
 	{
+		if(event.code == 4000)
+			window.location.href = "/logout";
+		console.warn("event: ", event.msg);
     	socket = null;
 	};
 	socket.onerror = (err) =>

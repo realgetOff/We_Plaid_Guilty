@@ -50,6 +50,7 @@ type Message struct {
     Votes   map[string]int `json:"votes,omitempty"`
 	Title       string `json:"title,omitempty"`
     Description string `json:"description,omitempty"`
+	Username string `json:username,omitempty`
 }
 
 type AuthResponse struct {

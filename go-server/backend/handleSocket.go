@@ -72,10 +72,69 @@ func (d *Dispatcher) Dispatch(ctx *WSContext, msg Message) {
 	handler(ctx, msg)
 }
 
+type Friend struct {
+	ID string `json:"id"`
+	Username string `json:"username"`
+	Online bool `json:"online"`
+}
+
+type FriendsListResponse struct {
+		Type string `json:"type"`
+		Friends []Friend `json:"friends"`
+}
+
+
+func (d *Dispatcher) HandleGetFriend(ctx *WSContext, msg Message) {
+	fmt.Println("DEBUG: HandleGetFriend triggered!")
+	
+	if (!RunPipeLine(ctx, msg, d.PipeIsAuth)) { 
+		return
+	}
+
+	friend := Friend {
+		ID:	"1",
+		Username: "george",
+		Online: false,
+	}
+
+	friends := make([]Friend, 0)
+	friends = append(friends, friend)
+
+	response := FriendsListResponse {
+		Type: "friends_list",
+		Friends: friends, 
+	}
+
+	err := ctx.Conn.WriteJSON(response)
+	if err != nil {
+		fmt.Printf("failed to send friends list: %v", err)
+	}
+}
+
+func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
+	if (!RunPipeLine(ctx, msg, d.PipeIsAuth)) {
+		return
+	}
+
+	query := `
+		INSERT INTO friendships (requester_id, addressee_id, status)
+		SELECT $1, id, $2
+		FROM users
+		WHERE username = $3
+	`
+	_, err := ctx.Db.Exec(context.Background(), query, ctx.CurrUsrID, "pending", msg.Username)
+	if (err != nil) {
+		fmt.Println("Friend invite failed :: Server couldn't create the friendship row in the database")
+		return
+	}
+}
+
 func NewDispatcher() *Dispatcher {
 	d:= &Dispatcher{
 		handlers: make(map[string]HandleFunc),
 	}
+	d.handlers["add_friend"] = d.HandleAddFriend
+	d.handlers["get_friends"] = d.HandleGetFriend
 	d.handlers["authenticate"] = d.HandleAuth
 	d.handlers["create_room"] = d.HandleCreateRoom
 	d.handlers["join_room"] = d.HandleJoinRoom
@@ -96,6 +155,7 @@ func NewDispatcher() *Dispatcher {
 	d.handlers["start_ai_game"] = d.HandleStartAIGame
 	d.handlers["ai_drawing_submitted"] = d.HandleAIDraw
 	d.handlers["ai_votes_submitted"] = d.HandleAIVote
+
 
 	return d
 }

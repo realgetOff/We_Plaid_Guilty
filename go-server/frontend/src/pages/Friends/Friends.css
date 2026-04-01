@@ -12,285 +12,284 @@
 
 .friends
 {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  font-family: 'Courier New', Courier, monospace;
-  color: #000000;
-  width: 100%;
-  max-width: 520px;
-  margin: 0 auto;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 14px;
+	font-family: 'Courier New', Courier, monospace;
+	color: #000000;
 }
 
 .friends__guard
 {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 280px;
-  font-family: 'Courier New', Courier, monospace;
-  color: #000000;
-  gap: 10px;
-  font-size: 13px;
-  font-weight: bold;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 280px;
+	font-family: 'Courier New', Courier, monospace;
+	color: #000000;
+	gap: 10px;
+	font-size: 13px;
+	font-weight: bold;
 }
 
 .friends__spinner
 {
-  font-size: 20px;
-  animation: friends-blink .7s steps(1) infinite;
+	font-size: 20px;
+	animation: friends-blink .7s steps(1) infinite;
 }
 
 @keyframes friends-blink
 {
-  0%, 100%
-  {
-    opacity: 1;
-  }
-  50%
-  {
-    opacity: 0;
-  }
+	0%, 100% { opacity: 1; }
+	50% { opacity: 0; }
 }
 
 .friends__card
 {
-  border: 1px solid #000000;
-  background: #ffffff;
-  box-shadow: 2px 2px 0 #000000;
+	width: 100%;
+	max-width: 560px;
+	border: 1px solid #000000;
+	background: #ffffff;
+	box-shadow: 2px 2px 0 #000000;
 }
 
 .friends__card-header
 {
-  background: #000000;
-  color: #ffffff;
-  padding: 6px 14px;
-  font-size: 12px;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
+	background: #000000;
+	color: #ffffff;
+	padding: 6px 14px;
+	font-size: 13px;
+	font-weight: bold;
+	display: flex;
+	align-items: center;
+	letter-spacing: 0.3px;
 }
 
 .friends__card-count
 {
-  margin-left: auto;
-  font-size: 10px;
-  opacity: 0.7;
+	margin-left: auto;
+	font-size: 11px;
+	opacity: 0.7;
 }
 
 .friends__card-body
 {
-  padding: 14px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+	padding: 14px 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
 }
 
 .friends__hint
 {
-  font-size: 11px;
-  font-weight: bold;
-  color: #555555;
-  line-height: 1.6;
+	font-size: 11px;
+	font-weight: bold;
+	color: #555555;
 }
 
 .friends__add-row
 {
-  display: flex;
-  gap: 8px;
+	display: flex;
+	gap: 8px;
 }
 
 .friends__input
 {
-  flex: 1;
-  border: 1px solid #000000;
-  padding: 5px 8px;
-  font-size: 13px;
-  font-weight: bold;
-  font-family: 'Courier New', Courier, monospace;
-  color: #000000;
-  background: #ffffff;
-  box-shadow: inset 1px 1px 0 #777777;
-  outline: none;
+	flex: 1;
+	border: 1px solid #000000;
+	padding: 5px 8px;
+	font-size: 13px;
+	font-weight: bold;
+	font-family: 'Courier New', Courier, monospace;
+	color: #000000;
+	background: #ffffff;
+	box-shadow: inset 1px 1px 0 #777777;
+	outline: none;
 }
 
 .friends__input:focus
 {
-  box-shadow: inset 1px 1px 0 #000000;
+	box-shadow: inset 1px 1px 0 #000000;
 }
 
 .friends__input--error
 {
-  border-color: #aa0000;
-  box-shadow: inset 1px 1px 0 #aa0000;
+	border-color: #aa0000;
+	box-shadow: inset 1px 1px 0 #aa0000;
 }
 
 .friends__input::placeholder
 {
-  color: #bbbbbb;
+	color: #bbbbbb;
 }
 
 .friends__error
 {
-  font-size: 10px;
-  font-weight: bold;
-  color: #aa0000;
+	font-size: 10px;
+	font-weight: bold;
+	color: #aa0000;
 }
 
 .friends__success
 {
-  font-size: 10px;
-  font-weight: bold;
-  color: #008800;
+	font-size: 10px;
+	font-weight: bold;
+	color: #008800;
 }
 
 .friends__empty
 {
-  padding: 16px;
-  font-size: 11px;
-  font-weight: bold;
-  color: #888888;
-  text-align: center;
+	padding: 16px;
+	font-size: 11px;
+	font-weight: bold;
+	color: #888888;
+	text-align: center;
 }
 
 .friends__list
 {
-  padding: 0;
+	padding: 0;
 }
 
 .friends__row
 {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
-  border-bottom: 1px solid #eeeeee;
-  font-size: 12px;
-  font-weight: bold;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 7px 14px;
+	border-bottom: 1px solid #eeeeee;
+	font-size: 12px;
+	font-weight: bold;
 }
 
 .friends__row:last-child
 {
-  border-bottom: none;
+	border-bottom: none;
 }
 
 .friends__dot
 {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #cccccc;
-  flex-shrink: 0;
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: #cccccc;
+	flex-shrink: 0;
 }
 
 .friends__dot--online
 {
-  background: #00aa00;
+	background: #00aa00;
 }
 
 .friends__username
 {
-  flex: 1;
-  color: #000000;
-  text-decoration: underline;
-  font-family: 'Courier New', Courier, monospace;
-  font-weight: bold;
-  font-size: 12px;
+	flex: 1;
+	color: #000000;
+	text-decoration: underline;
+	font-family: 'Courier New', Courier, monospace;
+	font-weight: bold;
+	font-size: 12px;
 }
 
 .friends__username:hover
 {
-  color: #555555;
+	color: #555555;
 }
 
 .friends__status
 {
-  font-size: 10px;
-  color: #888888;
-  width: 46px;
-  text-align: right;
-  flex-shrink: 0;
+	font-size: 10px;
+	color: #888888;
+	width: 46px;
+	text-align: right;
+	flex-shrink: 0;
 }
 
 .friends__actions
 {
-  display: flex;
-  gap: 4px;
-  flex-shrink: 0;
+	display: flex;
+	gap: 4px;
+	flex-shrink: 0;
 }
 
 .friends__btn
 {
-  border: 1px solid #000000;
-  font-size: 11px;
-  font-weight: bold;
-  font-family: 'Courier New', Courier, monospace;
-  padding: 4px 10px;
-  cursor: pointer;
-  box-shadow: 1px 1px 0 #000000;
+	border: 1px solid #000000;
+	font-size: 12px;
+	font-weight: bold;
+	font-family: 'Courier New', Courier, monospace;
+	padding: 6px 16px;
+	cursor: pointer;
+	box-shadow: 1px 1px 0 #000000;
 }
 
 .friends__btn:active:not(:disabled)
 {
-  box-shadow: none;
-  transform: translate(1px, 1px);
+	box-shadow: none;
+	transform: translate(1px, 1px);
 }
 
 .friends__btn--primary
 {
-  background: #000000;
-  color: #ffffff;
-  outline: 3px solid #000000;
-  outline-offset: 2px;
-  white-space: nowrap;
+	background: #000000;
+	color: #ffffff;
+	outline: 3px solid #000000;
+	outline-offset: 2px;
+	white-space: nowrap;
 }
 
 .friends__btn--primary:hover
 {
-  background: #333333;
+	background: #333333;
 }
 
 .friends__btn--invite
 {
-  background: #ffffff;
-  color: #000000;
-  white-space: nowrap;
+	background: #ffffff;
+	color: #000000;
+	white-space: nowrap;
+	font-size: 11px;
+	padding: 4px 10px;
 }
 
 .friends__btn--invite:hover:not(:disabled)
 {
-  background: #dddddd;
+	background: #dddddd;
 }
 
 .friends__btn--invite:disabled
 {
-  opacity: 0.35;
-  cursor: not-allowed;
-  box-shadow: none;
+	opacity: 0.35;
+	cursor: not-allowed;
+	box-shadow: none;
 }
 
 .friends__btn--remove
 {
-  background: #ffffff;
-  color: #aa0000;
-  border-color: #aa0000;
-  box-shadow: 1px 1px 0 #aa0000;
-  padding: 4px 8px;
+	background: #ffffff;
+	color: #aa0000;
+	border-color: #aa0000;
+	box-shadow: 1px 1px 0 #aa0000;
+	font-size: 11px;
+	padding: 4px 8px;
 }
 
 .friends__btn--remove:hover
 {
-  background: #fff0f0;
+	background: #fff0f0;
 }
 
 .friends__btn--back
 {
-  background: #ffffff;
-  color: #000000;
-  align-self: flex-start;
+	background: #ffffff;
+	color: #000000;
+	align-self: flex-start;
+	max-width: 560px;
+	width: 100%;
 }
 
 .friends__btn--back:hover
 {
-  background: #dddddd;
+	background: #dddddd;
 }

@@ -12,7 +12,7 @@
 
 import React, { useState, useEffect }          from 'react';
 import { useNavigate, Link }                   from 'react-router-dom';
-import { send, addListener, removeListener }   from '../../socket';
+import { connect, send, addListener, removeListener }   from '../../socket';
 import { useNotifications }                    from '../../components/common/NotificationContext';
 import './Friends.css';
 
@@ -32,6 +32,7 @@ const Friends = () =>
 
   useEffect(() =>
   {
+	connect();
     const onMessage = (msg) =>
     {
       if (msg.type === 'friends_list')

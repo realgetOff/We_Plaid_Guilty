@@ -38,7 +38,6 @@ const CreateGame = () =>
 	useEffect(() =>
 	{
 		connect();
-
 		const handler = (msg) =>
 		{
 			const currentCode = roomCodeRef.current;

@@ -1,14 +1,14 @@
-// ************************************************************************** //
-//                                                                            //
-//                                                        :::      ::::::::   //
-//   socket.js                                          :+:      :+:    :+:   //
-//                                                    +:+ +:+         +:+     //
-//   By: mforest- <mforest-@student.42angouleme.fr  +#+  +:+       +#+        //
-//                                                +#+#+#+#+#+   +#+           //
-//   Created: 2026/02/26 00:09:36 by mforest-          #+#    #+#             //
-//   Updated: 2026/02/26 00:53:58 by mforest-         ###   ########.fr       //
-//                                                                            //
-// ************************************************************************** //
+// // ************************************************************************** //
+// //                                                                            //
+// //                                                        :::      ::::::::   //
+// //   socket.js                                          :+:      :+:    :+:   //
+// //                                                    +:+ +:+         +:+     //
+// //   By: mforest- <mforest-@student.42angouleme.fr  +#+  +:+       +#+        //
+// //                                                +#+#+#+#+#+   +#+           //
+// //   Created: 2026/02/26 00:09:36 by mforest-          #+#    #+#             //
+// //   Updated: 2026/02/26 00:53:58 by mforest-         ###   ########.fr       //
+// //                                                                            //
+// // ************************************************************************** //
 
 const getWsUrl = () =>
 {
@@ -30,25 +30,32 @@ let socket = null;
 let listeners = [];
 let pending = [];
 
+export const getUsernameFromToken = () =>
+{
+    const token = localStorage.getItem("authToken");
+    if (!token)
+		return null;
+    try
+	{
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return payload.username;
+    }
+	catch (e)
+	{
+        return null;
+    }
+};
+
 const getAuthToken = async() =>
 {
-	try
-	{		
-		const res = await fetch('api/auth/player');
-		const data = await res.json();
-		if(!data.token || !res.ok)
-		{
-			window.location.href = "/login";
-			return null;
-		}
-		console.log("token: ", data.token);
-		return(data.token)
-	}
-	catch(err)
-	{
-		window.location.href = "/login";
-		return null;
-	}
+    const localToken = localStorage.getItem("authToken");
+
+    if (localToken)
+        return localToken;
+
+    console.log("[getAuthToken] no token found");
+    window.location.href = "/login";
+    return null;
 };
 
 const send = (payload) =>
@@ -67,7 +74,7 @@ const setupSocketHandlers = (token) =>
 {
 	socket.onopen = () =>
 	{
-		send({type: 'authenticate', token});
+		send({type: 'authenticate', token: token});
 		pending.forEach((data) =>
 			{
 				try
@@ -88,7 +95,7 @@ const setupSocketHandlers = (token) =>
 	};
 	socket.onclose = () =>
 	{
-		socket = null;
+    	socket = null;
 	};
 	socket.onerror = (err) =>
 	{

@@ -1,17 +1,17 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   DrawBoard.jsx                                      :+:      :+:    :+:   */
+/*   AIDrawBoard.jsx                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: mforest- <marvin@d42.fr>                   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/02/23 23:33:59 by mforest-          #+#    #+#             */
-/*   Updated: 2026/02/23 23:33:59 by mforest-         ###   ########.fr       */
+/*   Created: 2026/03/30 22:50:05 by mforest-          #+#    #+#             */
+/*   Updated: 2026/03/30 22:50:05 by mforest-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import './DrawBoard.css';
+import '../Game/DrawBoard.css';
 
 const COLORS =
 [
@@ -40,6 +40,7 @@ const floodFill = (ctx, startX, startY, fillColor, canvas) =>
 	const toIndex   = (x, y) => (y * w + x) * 4;
 	const sx        = Math.floor(startX);
 	const sy        = Math.floor(startY);
+
 	if (sx < 0 || sx >= w || sy < 0 || sy >= h)
 		return;
 
@@ -69,19 +70,25 @@ const floodFill = (ctx, startX, startY, fillColor, canvas) =>
 		const pos = stack.pop();
 		const x   = pos % w;
 		const y   = Math.floor(pos / w);
+
 		if (x < 0 || x >= w || y < 0 || y >= h)
 			continue;
 		if (visited[pos])
 			continue;
+
 		visited[pos] = 1;
 		const idx = pos * 4;
+
 		if (!colorMatch(data, idx, targetR, targetG, targetB, targetA)) continue;
+
 		data[idx]     = fillR;
 		data[idx + 1] = fillG;
 		data[idx + 2] = fillB;
 		data[idx + 3] = fillA;
+
 		stack.push(pos + 1, pos - 1, pos + w, pos - w);
 	}
+
 	ctx.putImageData(imageData, 0, 0);
 };
 
@@ -100,7 +107,7 @@ const TOOLS =
 
 const isShapeTool = (t) => ['line', 'rect', 'rect_fill', 'circle', 'circle_fill'].includes(t);
 
-const DrawBoard = ({ prompt, onDone }) =>
+const AIDrawBoard = ({ prompt, onDone }) =>
 {
 	const canvasRef     = useRef(null);
 	const isDrawing     = useRef(false);
@@ -114,10 +121,13 @@ const DrawBoard = ({ prompt, onDone }) =>
 	const [size,        setSize]        = useState(5);
 	const [seconds,     setSeconds]     = useState(TIMER_SEC);
 	const [customColor, setCustomColor] = useState('#000000');
+	const [title,       setTitle]       = useState('');
+	const [description, setDescription] = useState('');
 
 	const saveHistory = useCallback(() =>
 	{
 		const cv   = canvasRef.current;
+		if (!cv) return;
 		const ctx  = cv.getContext('2d');
 		const data = ctx.getImageData(0, 0, cv.width, cv.height);
 		historyRef.current.push(data);
@@ -128,6 +138,7 @@ const DrawBoard = ({ prompt, onDone }) =>
 	useEffect(() =>
 	{
 		const cv  = canvasRef.current;
+		if (!cv) return;
 		const ctx = cv.getContext('2d');
 		ctx.fillStyle = '#ffffff';
 		ctx.fillRect(0, 0, cv.width, cv.height);
@@ -142,12 +153,14 @@ const DrawBoard = ({ prompt, onDone }) =>
 		if (seconds <= 0)
 		{
 			const cv = canvasRef.current;
-			onDoneRef.current(cv.toDataURL('image/png'));
+			if (cv) {
+				onDoneRef.current(cv.toDataURL('image/png'), title.trim(), description.trim());
+			}
 			return;
 		}
 		const id = setTimeout(() => setSeconds((s) => s - 1), 1000);
 		return () => clearTimeout(id);
-	}, [seconds]);
+	}, [seconds, title, description]);
 
 	const undo = () =>
 	{
@@ -155,6 +168,7 @@ const DrawBoard = ({ prompt, onDone }) =>
 			return;
 		historyRef.current.pop();
 		const cv  = canvasRef.current;
+		if (!cv) return;
 		const ctx = cv.getContext('2d');
 		ctx.putImageData(historyRef.current[historyRef.current.length - 1], 0, 0);
 	};
@@ -184,7 +198,6 @@ const DrawBoard = ({ prompt, onDone }) =>
 	const drawShape = useCallback((ctx, start, end) =>
 	{
 		applyStrokeStyle(ctx);
-
 		if (tool === 'line')
 		{
 			ctx.beginPath();
@@ -217,13 +230,13 @@ const DrawBoard = ({ prompt, onDone }) =>
 			ctx.ellipse(start.x + rx, start.y + ry, Math.abs(rx), Math.abs(ry), 0, 0, Math.PI * 2);
 			ctx.fill();
 		}
-
 	}, [tool, color, size]);
 
 	const startDraw = useCallback((e) =>
 	{
 		e.preventDefault();
 		const cv  = canvasRef.current;
+		if (!cv) return;
 		const ctx = cv.getContext('2d');
 		const pos = getPos(e);
 
@@ -256,35 +269,29 @@ const DrawBoard = ({ prompt, onDone }) =>
 			saveHistory();
 	}, [tool, color, saveHistory]);
 
-
 	const draw = useCallback((e) =>
 	{
-	    if (!isDrawing.current)
-	        return;
-	    e.preventDefault();
-	    const cv  = canvasRef.current;
-	    const ctx = cv.getContext('2d');
-	    const pos = getPos(e);
+		if (!isDrawing.current)
+			return;
+		e.preventDefault();
+		const cv  = canvasRef.current;
+		if (!cv) return;
+		const ctx = cv.getContext('2d');
+		const pos = getPos(e);
 
-	    if (isShapeTool(tool))
-	    {
-	        ctx.putImageData(snapshotRef.current, 0, 0);
-	        drawShape(ctx, startPosRef.current, pos);
-	        return;
-	    }
-
-	    applyStrokeStyle(ctx);
-    
-	    if (lastPos.current === startPosRef.current)
+		if (isShapeTool(tool))
 		{
-	        ctx.beginPath();
-	        ctx.moveTo(lastPos.current.x, lastPos.current.y);
-	    }
-    
-	    ctx.lineTo(pos.x, pos.y);
-	    ctx.stroke();
-    
-	    lastPos.current = pos;
+			ctx.putImageData(snapshotRef.current, 0, 0);
+			drawShape(ctx, startPosRef.current, pos);
+			return;
+		}
+
+		applyStrokeStyle(ctx);
+		ctx.beginPath();
+		ctx.moveTo(lastPos.current.x, lastPos.current.y);
+		ctx.lineTo(pos.x, pos.y);
+		ctx.stroke();
+		lastPos.current = pos;
 	}, [tool, color, size, drawShape]);
 
 	const stopDraw = useCallback(() =>
@@ -293,7 +300,6 @@ const DrawBoard = ({ prompt, onDone }) =>
 			return;
 		isDrawing.current = false;
 		lastPos.current   = null;
-
 		if (isShapeTool(tool))
 			saveHistory();
 	}, [tool, saveHistory]);
@@ -301,6 +307,7 @@ const DrawBoard = ({ prompt, onDone }) =>
 	const clearCanvas = () =>
 	{
 		const cv  = canvasRef.current;
+		if (!cv) return;
 		const ctx = cv.getContext('2d');
 		ctx.fillStyle = '#ffffff';
 		ctx.fillRect(0, 0, cv.width, cv.height);
@@ -310,7 +317,9 @@ const DrawBoard = ({ prompt, onDone }) =>
 	const handleDone = () =>
 	{
 		const cv = canvasRef.current;
-		onDone(cv.toDataURL('image/png'));
+		if (cv) {
+			onDone(cv.toDataURL('image/png'), title.trim(), description.trim());
+		}
 	};
 
 	const pct             = (seconds / TIMER_SEC) * 100;
@@ -318,7 +327,6 @@ const DrawBoard = ({ prompt, onDone }) =>
 
 	return (
 		<div className="drawboard">
-
 			{/* timer */}
 			<div className="drawboard__timer-track">
 				<div className="drawboard__timer-fill" style={{ width: `${pct}%`, background: timerColor }} />
@@ -330,9 +338,28 @@ const DrawBoard = ({ prompt, onDone }) =>
 				✏ Draw : <strong>{prompt || '…'}</strong>
 			</div>
 
+			{/* titre et description */}
+			<div className="drawboard__meta-section">
+				<input
+					type="text"
+					placeholder="Title (optional)"
+					value={title}
+					onChange={(e) => setTitle(e.target.value)}
+					maxLength={50}
+					className="drawboard__meta-input"
+				/>
+				<textarea
+					placeholder="Description (optional)"
+					value={description}
+					onChange={(e) => setDescription(e.target.value)}
+					maxLength={200}
+					rows={2}
+					className="drawboard__meta-textarea"
+				/>
+			</div>
+
 			{/* toolbar */}
 			<div className="drawboard__toolbar">
-
 				{/* draw tools */}
 				<div className="drawboard__section">
 					<span className="drawboard__section-label">Tools</span>
@@ -349,10 +376,9 @@ const DrawBoard = ({ prompt, onDone }) =>
 						))}
 					</div>
 				</div>
-
 				<div className="drawboard__toolbar-sep" />
 
-				{/* formes */}
+				{/* shapes */}
 				<div className="drawboard__section">
 					<span className="drawboard__section-label">Shapes</span>
 					<div className="drawboard__toolbar-group">
@@ -368,10 +394,9 @@ const DrawBoard = ({ prompt, onDone }) =>
 						))}
 					</div>
 				</div>
-
 				<div className="drawboard__toolbar-sep" />
 
-				{/* size+prev */}
+				{/* size */}
 				<div className="drawboard__section">
 					<span className="drawboard__section-label">Size</span>
 					<div className="drawboard__size-row">
@@ -395,7 +420,6 @@ const DrawBoard = ({ prompt, onDone }) =>
 						<span className="drawboard__size-value">{size}px</span>
 					</div>
 				</div>
-
 				<div className="drawboard__toolbar-sep" />
 
 				{/* palette */}
@@ -425,7 +449,6 @@ const DrawBoard = ({ prompt, onDone }) =>
 						/>
 					</div>
 				</div>
-
 				<div className="drawboard__toolbar-sep" />
 
 				{/* actions */}
@@ -436,7 +459,6 @@ const DrawBoard = ({ prompt, onDone }) =>
 						<button className="drawboard__tool-btn" onClick={clearCanvas} title="Clear">🗑</button>
 					</div>
 				</div>
-
 			</div>
 
 			{/* canvas */}
@@ -461,4 +483,4 @@ const DrawBoard = ({ prompt, onDone }) =>
 	);
 };
 
-export default DrawBoard;
+export default AIDrawBoard;

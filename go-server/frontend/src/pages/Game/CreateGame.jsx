@@ -17,263 +17,226 @@ import './CreateGame.css';
 
 const CreateGame = () =>
 {
-  const navigate = useNavigate();
+	const navigate = useNavigate();
+	const msgEndRef = useRef(null);
+	const roomCodeRef = useRef('');
 
-  const [status,   setStatus]   = useState('checking');
-  const [roomCode, setRoomCode] = useState('');
-  const [copied,   setCopied]   = useState(false);
-  const [players,  setPlayers]  = useState([]);
-  const [rounds,   setRounds]   = useState(3);
-  const [timer,    setTimer]    = useState(60);
-  const [createErr, setCreateErr] = useState('');
-  const roomCodeRef = useRef('');
+	const [status,    setStatus]    = useState('checking');
+	const [roomCode,  setRoomCode]  = useState('');
+	const [copied,    setCopied]    = useState(false);
+	const [players,   setPlayers]   = useState([]);
+	const [messages,  setMessages]  = useState([]);
+	const [input,     setInput]     = useState('');
+	const [myName,    setMyName]    = useState('');
+	const [createErr, setCreateErr] = useState('');
 
-  useEffect(() =>
-  {
-    roomCodeRef.current = roomCode;
-  }, [roomCode]);
-
-  useEffect(() =>
-  {
-    connect();
-
-    const handler = (msg) =>
-    {
-      if (msg.type === 'room_created')
-      {
-        if (msg.code)
-        {
-          setRoomCode(msg.code);
-          roomCodeRef.current = msg.code;
-        }
-        if (Array.isArray(msg.players))
-          setPlayers(msg.players);
-        setCreateErr('');
-        setStatus('ready');
-      }
-
-      if (msg.type === 'create_denied')
-      {
-        setCreateErr(msg.reason || 'Could not create room.');
-        setStatus('ready');
-      }
-
-      if (msg.type === 'player_joined' && msg.player)
-      {
-        setPlayers((prev) =>
-        {
-          const exists = prev.some((p) => p.id === msg.player.id);
-          if (exists)
-            return prev;
-          return [...prev, msg.player];
-        });
-      }
-
-      if (msg.type === 'player_left' && msg.playerId !== undefined)
-      {
-        setPlayers((prev) => prev.filter((p) => p.id !== msg.playerId));
-      }
-    };
-
-    addListener(handler);
-
-    send({
-    type: 'create_room',
-	settings:
+	useEffect(() =>
 	{
-            rounds: rounds,
-		    timer: timer,
-			status: status
+		roomCodeRef.current = roomCode;
+	}, [roomCode]);
+
+	useEffect(() =>
+	{
+		connect();
+
+		const handler = (msg) =>
+		{
+			const currentCode = roomCodeRef.current;
+			const msgRoom = msg.room || msg.code;
+			const isMatch = msgRoom === currentCode;
+
+			if (msg.type === 'room_created')
+			{
+				if (msg.code)
+				{
+					setRoomCode(msg.code);
+					roomCodeRef.current = msg.code;
+				}
+				if (Array.isArray(msg.players))
+					setPlayers(msg.players);
+				if (msg.me)
+					setMyName(msg.me.name || '');
+				setCreateErr('');
+				setStatus('ready');
+			}
+
+			if (msg.type === 'lobby_state' && isMatch)
+			{
+				if (Array.isArray(msg.players))
+					setPlayers(msg.players);
+				if (msg.me)
+					setMyName(msg.me.name || '');
+			}
+
+			if (msg.type === 'chat_message' && isMatch)
+			{
+				setMessages((prev) => [...prev,
+				{
+					id:   msg.id || Date.now(),
+					user: msg.user,
+					text: msg.text,
+				}]);
+			}
+
+			if (msg.type === 'create_denied')
+			{
+				setCreateErr(msg.reason || 'Could not create room.');
+				setStatus('ready');
+			}
+
+			if (msg.type === 'start_game' && isMatch)
+				navigate(`/game/play/${msg.code || msg.room}`);
+		};
+
+		addListener(handler);
+		send({ type: 'create_room' });
+
+		return () =>
+		{
+			removeListener(handler);
+			const code = roomCodeRef.current;
+			if (code)
+				send({ type: 'leave_lobby', code: code });
+		};
+	}, [navigate]);
+
+	useEffect(() =>
+	{
+		msgEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+	}, [messages]);
+
+	const handleSend = () =>
+	{
+		if (!input.trim() || !roomCode)
+			return;
+		send({ type: 'chat_message', code: roomCode, text: input.trim() });
+		setInput('');
+	};
+
+	const handleCopy = () =>
+	{
+		navigator.clipboard.writeText(roomCode);
+		setCopied(true);
+		setTimeout(() => setCopied(false), 2000);
+	};
+
+	const handleStart = () =>
+	{
+		if (players.length < 3 || !roomCode)
+			return;
+		send({ type: 'start_game', code: roomCode });
+	};
+
+	const handleLeave = () =>
+	{
+		navigate('/game');
+	};
+
+	if (status === 'checking')
+	{
+		return (
+			<div className="creategame__guard">
+				<span className="creategame__guard-spinner">⧗</span>
+				creating your room…
+			</div>
+		);
 	}
-    });
 
-	  return () =>
-    {
-      removeListener(handler);
-      const code = roomCodeRef.current;
-      if (code)
-        send({ type: 'leave_lobby', room: code });
-    };
-  }, []);
+	if (createErr && !roomCode)
+	{
+		return (
+			<div className="creategame__guard">
+				<div className="creategame__guard-card">
+					<p className="creategame__guard-msg">⚠ {createErr}</p>
+					<button className="creategame__guard-btn" onClick={() => navigate('/game')}>
+						← back to game
+					</button>
+				</div>
+			</div>
+		);
+	}
 
-  const handleCopy = () =>
-  {
-    navigator.clipboard.writeText(roomCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+	return (
+		<div className="creategame">
+			<div className="creategame__card">
+				<div className="creategame__card-header">🔑 room code</div>
+				<div className="creategame__card-body creategame__card-body--center">
+					<p className="creategame__hint">
+						share this code with your friends so they can join.
+					</p>
+					<div className="creategame__code-row">
+						<span className="creategame__code">{roomCode}</span>
+						<button className="creategame__btn creategame__btn--copy" onClick={handleCopy}>
+							{copied ? '✓ copied!' : '⎘ copy'}
+						</button>
+					</div>
+				</div>
+			</div>
 
-  const handleStart = () =>
-  {
-    if (players.length < 2 || !roomCode)
-      return;
-    send({ type: 'start_game', room: roomCode });
-    navigate(`/game/play/${roomCode}`);
-  };
+			<div className="creategame__columns">
+				<div className="creategame__card creategame__card--grow">
+					<div className="creategame__card-header">
+						👥 players
+						<span className="creategame__card-header-count">
+							{players.length} / 8
+						</span>
+					</div>
+					<div className="creategame__card-body creategame__card-body--list">
+						{players.map((p) => (
+							<div key={p.id} className="creategame__player-row">
+								<span className="creategame__player-dot" />
+								<span className="creategame__player-name">{p.name}</span>
+								{p.host && <span className="creategame__badge">HOST</span>}
+							</div>
+						))}
+						{players.length < 3 && (
+							<p className="creategame__waiting">⧗ waiting for players…</p>
+						)}
+					</div>
+				</div>
 
-  const handleLeave = () =>
-  {
-    if (roomCode)
-      send({ type: 'leave_lobby', room: roomCode });
-    navigate('/game');
-  };
+				<div className="creategame__card creategame__card--chat">
+					<div className="creategame__card-header">💬 chat</div>
+					<div className="creategame__chat-messages">
+						{messages.map((m) => (
+							<div key={m.id} className={`creategame__msg ${m.user === myName ? 'creategame__msg--me' : ''}`}>
+								<strong>{m.user}:</strong> {m.text}
+							</div>
+						))}
+						<div ref={msgEndRef} />
+					</div>
+					<div className="creategame__chat-input-row">
+						<input
+							value={input}
+							onChange={(e) => setInput(e.target.value)}
+							onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+						/>
+						<button onClick={handleSend}>→</button>
+					</div>
+				</div>
+			</div>
 
-  let copyLabel = '⎘ copy';
-  if (copied)
-    copyLabel = '✓ copied!';
+			<div className="creategame__actions">
+				<button className="creategame__btn creategame__btn--leave" onClick={handleLeave}>
+					✕ leave room
+				</button>
+				<button
+					className="creategame__btn creategame__btn--start"
+					onClick={handleStart}
+					disabled={players.length < 3}
+					title={players.length < 3 ? 'need at least 3 players' : ''}
+				>
+					▶ start game
+				</button>
+			</div>
 
-  let startTitle = '';
-  if (players.length < 2)
-    startTitle = 'need at least 2 players';
-
-  if (status === 'checking')
-  {
-    return (
-      <div className="creategame__guard">
-        <span className="creategame__guard-spinner">⧗</span>
-        creating your room…
-      </div>
-    );
-  }
-
-  if (createErr && !roomCode)
-  {
-    return (
-      <div className="creategame__guard">
-        <div className="creategame__guard-card">
-          <p className="creategame__guard-msg">⚠ {createErr}</p>
-          <button
-            className="creategame__guard-btn"
-            onClick={() => navigate('/game')}
-          >
-            ← back to game
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="creategame">
-
-      <div className="creategame__card">
-        <div className="creategame__card-header">🔑 room code</div>
-        <div className="creategame__card-body creategame__card-body--center">
-          <p className="creategame__hint">
-            share this code with your friends so they can join.
-          </p>
-          <div className="creategame__code-row">
-            <span className="creategame__code">{roomCode}</span>
-            <button
-              className="creategame__btn creategame__btn--copy"
-              onClick={handleCopy}
-            >
-              {copyLabel}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="creategame__columns">
-
-        <div className="creategame__card creategame__card--grow">
-          <div className="creategame__card-header">
-            👥 players
-            <span className="creategame__card-header-count">
-              {players.length} / 8
-            </span>
-          </div>
-          <div className="creategame__card-body creategame__card-body--list">
-            {players.map((p) =>
-            {
-              return (
-                <div key={p.id} className="creategame__player-row">
-                  <span className="creategame__player-dot" />
-                  <span className="creategame__player-name">{p.name}</span>
-                  {p.host && (
-                    <span className="creategame__badge">HOST</span>
-                  )}
-                </div>
-              );
-            })}
-            {players.length < 2 && (
-              <p className="creategame__waiting">
-                ⧗ waiting for players…
-              </p>
-            )}
-          </div>
-        </div>
-
-        <div className="creategame__card creategame__card--grow">
-          <div className="creategame__card-header">⚙ settings</div>
-          <div className="creategame__card-body">
-
-            <label className="creategame__label">
-              rounds
-              <select
-                className="creategame__select"
-                value={rounds}
-                onChange={(e) => setRounds(Number(e.target.value))}
-              >
-                {[2, 3, 4, 5, 6].map((n) =>
-                {
-                  return (
-                    <option key={n} value={n}>
-                      {n} rounds
-                    </option>
-                  );
-                })}
-              </select>
-            </label>
-
-            <label className="creategame__label">
-              draw timer
-              <select
-                className="creategame__select"
-                value={timer}
-                onChange={(e) => setTimer(Number(e.target.value))}
-              >
-                {[30, 45, 60, 90, 120].map((n) =>
-                {
-                  return (
-                    <option key={n} value={n}>
-                      {n} seconds
-                    </option>
-                  );
-                })}
-              </select>
-            </label>
-
-          </div>
-        </div>
-
-      </div>
-
-      <div className="creategame__actions">
-        <button
-          className="creategame__btn creategame__btn--leave"
-          onClick={handleLeave}
-        >
-          ✕ leave room
-        </button>
-        <button
-          className="creategame__btn creategame__btn--start"
-          onClick={handleStart}
-          disabled={players.length < 2}
-          title={startTitle}
-        >
-          ▶ start game
-        </button>
-      </div>
-
-      {players.length < 2 && (
-        <p className="creategame__start-hint">
-          ⚠ at least 2 players are required to start.
-        </p>
-      )}
-
-    </div>
-  );
+			{players.length < 3 && (
+				<p className="creategame__start-hint">
+					⚠ settings will be automatically adjusted based on player count.
+				</p>
+			)}
+		</div>
+	);
 };
 
 export default CreateGame;

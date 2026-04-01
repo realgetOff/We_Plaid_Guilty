@@ -4,14 +4,17 @@ import (
 	"fmt"
 	"math/rand"
 	"time"
-
+	"context"
 	"net/http"
+	"strings"
+
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type LobbySettings struct {
 	Rounds int `json:"rounds"`
-	Timer int `json:"timer"`
 }
 
 type playerNameTemp struct {
@@ -27,12 +30,26 @@ type CreateLobbyResponse struct {
 	LobbyCode string `json:"lobbyCode"`
 }
 
+/*
+The message structure contains the json information to be sent / received by the websocket for room generation
+type: state before / after generation of the room code
+code: room code
+omitempty: omits empty strings, lowering network traffic
+*/
+
 
 type Message struct {
-	Type	string `json:"type"`
-	Token	string `json:"token,omitempty"`
-	Code	string `json:"code,omitempty"`
-	Reason	string `json:"reason,omitempty"`
+    Type    string         `json:"type"`
+	Text    string         `json:"text,omitempty"`
+    Token   string         `json:"token,omitempty"`
+    Code    string         `json:"code,omitempty"`
+    Reason  string         `json:"reason,omitempty"`
+    Prompt  string         `json:"prompt,omitempty"`
+    Drawing string         `json:"drawing,omitempty"`
+    Guess   string         `json:"guess,omitempty"`
+    Votes   map[string]int `json:"votes,omitempty"`
+	Title       string `json:"title,omitempty"`
+    Description string `json:"description,omitempty"`
 }
 
 type AuthResponse struct {
@@ -65,14 +82,7 @@ func generateLobbyCode(length int) string {
 	return string(ret)
 }
 
-func createLobby(c *gin.Context) {
-	// var req CreateLobbyRequest
-// 
-	// if err := c.ShouldBindJSON(&req); err != nil {
-		// c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload: " + err.Error()})
-		// return
-	// }
-
+func createLobby(c *gin.Context) { // obsolete code
 	lobbyCode := generateLobbyCode(6)
 	
 	//fmt.Println("The generated lobby code is: " + lobbyCode) //debug command
@@ -82,26 +92,103 @@ func createLobby(c *gin.Context) {
 	})
 }
 
-func handleGuestAuth(c *gin.Context){
-	guestName := fmt.Sprintf("guest_%d%d", rand.Intn(99), time.Now().UnixNano()%1000)
+var jwtSecret = []byte("replace_with_env_or_equivalent_later")
 
-	fmt.Println("Guest name: " + guestName)
-	c.JSON(http.StatusOK, AuthResponse{
-		Token: guestName,
-	})
+type MyCustomClaims struct {
+	Username string `json:"username"`
+	UserID string `json:"id"`
+	jwt.RegisteredClaims
 }
 
-func handleLogin(c *gin.Context) {
-	var name playerNameTemp
-
-	if err := c.ShouldBindJSON(&name); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload: " + err.Error()})
-		return
+func generateJWT(userID string, guestName string) (string, error) {
+	claims := MyCustomClaims{
+		Username:	guestName,
+		UserID:		userID,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)), // change later, temporarily 24h
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
 	}
 
-	fmt.Println("Player name is : " + name.PlayerName)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	
+	signedToken, err := token.SignedString(jwtSecret)
+	if ( err != nil ) {
+		fmt.Println("Couldn't sign / generate JWT for guest " + guestName + " where id = " + userID)
+		return "", err
+	}
+	return signedToken, nil
+}
 
+func validateAndGetClaims(tokenString string) (*MyCustomClaims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &MyCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return jwtSecret, nil
+	})
+
+	if err != nil || token == nil {
+		return nil, fmt.Errorf("invalid token: %v", err)
+	}
+
+	if claims, ok := token.Claims.(*MyCustomClaims); ok && token.Valid {
+		return claims, nil
+	}
+
+	return nil, fmt.Errorf("token is invalid or claims are corrupted")
+}
+
+func handleGuestAuth(c *gin.Context, db *pgxpool.Pool){
+	guestName := fmt.Sprintf("guest_%d%d", rand.Intn(99), time.Now().UnixNano()%1000)
+	var userID string
+
+	query := "INSERT INTO users (username, is_guest) VALUES ($1, TRUE) RETURNING id;"
+	err := db.QueryRow(context.Background(), query, guestName).Scan(&userID);
+
+	if (err != nil) {
+		fmt.Println("Guest creation failed")
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Server couldn't create a guest user in the database."})
+		return
+	}
+	fmt.Println("Guest name: " + guestName + " guest ID = " + userID)
+
+	var SignedString string
+	SignedString, err = generateJWT(userID, guestName)
+	if (err != nil) {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Couldn't sign / generate JWT for guest."})
+		return 
+	}
+
+	c.JSON(http.StatusOK, AuthResponse{
+		Token: SignedString,
+		})
+}
+
+func findRoom(c *gin.Context, serverVars *serverVarsStruct){
+    code := strings.ToUpper(c.Param("code"))
+	room, err := serverVars.globalHub.GetRoom(code)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Couldn't find the room"})
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{
-		"login": "success",
+	"code":		room.GetBase().ID,
+	"status":	room.GetBase().Status,
+	"players":	len(room.GetBase().Players),
 	})
 }
+
+// func handleLogin(c *gin.Context) {
+// 	var name playerNameTemp
+
+// 	if err := c.ShouldBindJSON(&name); err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload: " + err.Error()})
+// 		return
+// 	}
+
+// 	fmt.Println("Player name is : " + name.PlayerName)	
+
+// 	c.JSON(http.StatusOK, gin.H{
+// 		"login": "success",
+// 	})
+// }

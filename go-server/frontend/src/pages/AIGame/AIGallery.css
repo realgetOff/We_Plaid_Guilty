@@ -1,0 +1,92 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   AIGallery.css                                      :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mforest- <marvin@d42.fr>                   +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/03/30 04:04:33 by mforest-          #+#    #+#             */
+/*   Updated: 2026/03/30 04:04:33 by mforest-         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+.aigallery {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 2.5rem;
+	width: 100%;
+}
+
+.aigallery__title {
+	font-size: 2.5rem;
+	font-weight: 900;
+	color: #111;
+	text-transform: uppercase;
+}
+
+.aigallery__grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+	gap: 2.5rem;
+	width: 100%;
+}
+
+.aigallery__card {
+	background: #fff;
+	border: 3px solid #eee;
+	border-radius: 15px;
+	padding: 1.5rem;
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 1rem;
+	transition: transform 0.3s ease;
+}
+
+.aigallery__card--winner {
+	border-color: #ffcc00;
+	transform: scale(1.05);
+	box-shadow: 0 15px 35px rgba(255, 204, 0, 0.2);
+}
+
+.aigallery__rank {
+	position: absolute;
+	top: -20px;
+	left: -20px;
+	width: 50px;
+	height: 50px;
+	background: #111;
+	color: #fff;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 900;
+	font-size: 1.2rem;
+	border: 4px solid #fff;
+	box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.aigallery__card--winner .aigallery__rank {
+	background: #ffcc00;
+	color: #111;
+}
+
+.aigallery__score {
+	font-size: 1.8rem;
+	font-weight: 900;
+	color: #ffcc00;
+	text-shadow: 1px 1px 0 #111;
+}
+
+.aigallery__btn {
+	padding: 1rem 2.5rem;
+	background: #111;
+	color: #fff;
+	border: none;
+	border-radius: 8px;
+	font-weight: 700;
+	cursor: pointer;
+}

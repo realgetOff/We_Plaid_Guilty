@@ -2,21 +2,21 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
+	"fmt"
 	"main.go/gamemanager"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-var globalHub *gamemanager.Hub
 
-func connectToDatabase() (*pgxpool.Pool, error) {
-	db_host     := os.Getenv("DB_HOST")
-	db_port     := os.Getenv("DB_PORT")
-	db_user     := os.Getenv("DB_USER")
+func connectToDatabase () (*pgxpool.Pool, error) {
+
+	db_host := os.Getenv("DB_HOST")
+	db_port := os.Getenv("DB_PORT")
+	db_user := os.Getenv("DB_USER")
 	db_password := os.Getenv("DB_PASSWORD")
 	db_name     := os.Getenv("DB_NAME")
 
@@ -33,43 +33,77 @@ func connectToDatabase() (*pgxpool.Pool, error) {
 	return db, nil
 }
 
+
+type serverVarsStruct struct { // the name is temporary
+	globalHub *gamemanager.Hub
+	router *gin.Engine
+	db *pgxpool.Pool
+}
+
+func NewServerStructure () *serverVarsStruct {
+	
+	// Try to connect to the database, fatally exit if we can't reach it
+	dbPool, err := connectToDatabase()
+	if err != nil {
+		log.Fatalf("Couldn't connect to the PostgreSQL database: %v", err)
+	}
+	hub := &gamemanager.Hub{
+		Rooms: make(map[string]gamemanager.GameRoom),
+	}
+	r := gin.Default();
+
+	return &serverVarsStruct{
+		globalHub:		hub,
+		router:			r,
+		db:				dbPool,
+	}
+}
+
+
 func main() {
 	fmt.Println("~o~ This project was brought to you with hate by pmilner- mforest- namichel & lviravon! ~o~")
 	fmt.Println(" ~~ Starting transcendence backend... ~~")
 
-	// Load secrets from Vault Agent Injector before connecting to DB
-	if err := loadSecrets(); err != nil {
-		log.Fatalf("Failed to load secrets: %v", err)
-	}
+	serverVars := NewServerStructure()
 
-	db, err := connectToDatabase()
-	if err != nil {
-		log.Fatalf("Couldn't connect to the PostgreSQL database: %v", err)
-	}
-	defer db.Close()
+	defer serverVars.db.Close()
 
-	router := gin.Default()
+	// if err := loadSecretsFromVault(); err != nil {
+	// 	log.Fatalf("Failed to load secrets from Vault: %v", err)
+	// }
+	// Gin router with default "middleware"
+	
+	// gin.SetMode(gin.ReleaseMode)
+	// https://github.com/gin-gonic/gin/blob/master/docs/doc.md#dont-trust-all-proxies 
 
-	router.Static("/assets", "./static/assets")
-	router.StaticFile("/favicon.ico", "./static/favicon.ico")
-	router.NoRoute(func(c *gin.Context) {
+	serverVars.router.Static("/assets", "./static/assets")
+	serverVars.router.StaticFile("/favicon.ico", "./static/favicon.ico")
+	serverVars.router.NoRoute(func(c *gin.Context) {
 		c.File("./static/index.html")
 	})
 
-	router.GET("/ping", pong)
-	router.GET("/health", health)
-	router.GET("/api/config", vaultstatus)
-	router.GET("/ws", func(c *gin.Context) {
-		handleWebsocket(c, db, globalHub)
+	serverVars.router.GET("/api/rooms/:code", func(c *gin.Context) {
+		findRoom(c, serverVars)
 	})
-	router.POST("/api/player", handleGuestAuth)
+		serverVars.router.GET("/api/ai-rooms/:code", func(c *gin.Context) {
+		findRoom(c, serverVars)
+	})
+	serverVars.router.GET("/ping", pong)
+	serverVars.router.GET("/health", health)
+	serverVars.router.GET("/api/config", vaultstatus)
+	serverVars.router.GET("/ws", func (c *gin.Context){
+		handleWebsocket(c, serverVars)
+	})
+	serverVars.router.POST("/api/auth/player", func (c *gin.Context){
+		handleGuestAuth(c, serverVars.db)
+	})
 
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
-
-	if err := router.Run(":" + port); err != nil {
-		log.Fatalf("Failed to run server: %v", err)
+		
+	if err := serverVars.router.Run(":" + port); err != nil {
+		log.Fatalf("Failed to run server: %v", err)	
 	}
 }

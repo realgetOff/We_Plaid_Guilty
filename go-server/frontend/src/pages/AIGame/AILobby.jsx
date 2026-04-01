@@ -1,86 +1,51 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Lobby.jsx                                          :+:      :+:    :+:   */
+/*   AILobby.jsx                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: mforest- <marvin@d42.fr>                   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/03/28 19:52:46 by mforest-          #+#    #+#             */
-/*   Updated: 2026/03/28 19:52:46 by mforest-         ###   ########.fr       */
+/*   Created: 2026/03/30 00:06:44 by mforest-          #+#    #+#             */
+/*   Updated: 2026/03/30 00:06:44 by mforest-         ###   ########.fr       */
 /*                                                                            */
+/* ************************************************************************** */
+/* ************************************************************************** */
+/* */
+/* :::      ::::::::   */
+/* AILobby.jsx                                        :+:      :+:    :+:   */
+/* +:+ +:+         +:+     */
+/* By: mforest- <marvin@d42.fr>                   +#+  +:+       +#+        */
+/* +#+#+#+#+#+   +#+           */
+/* Created: 2026/03/30 00:06:44 by mforest-          #+#    #+#             */
+/* Updated: 2026/03/31 00:15:00 by gemini           ###   ########.fr       */
+/* */
 /* ************************************************************************** */
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { connect, send, addListener, removeListener } from '../../socket';
-import { roomsApi } from '../../api/rooms';
 import '../Game/CreateGame.css';
 
-const DENY_REASONS = {
-	invalid:   'invalid room code format.',
-	not_found: 'room not found.',
-	started:   'this game has already started.',
-	finished:  'this game is already finished.',
-	unknown:   'cannot access this room.',
-};
-
-const Lobby = () =>
+const AILobby = () =>
 {
 	const { code } = useParams();
 	const navigate = useNavigate();
 	const msgEndRef = useRef(null);
-
-	const [status,   setStatus]   = useState('checking');
-	const [deny,     setDeny]     = useState('');
-	const [players,  setPlayers]  = useState([]);
-	const [messages, setMessages] = useState([]);
-	const [input,    setInput]    = useState('');
-	const [isHost,   setIsHost]   = useState(false);
-	const [myName,   setMyName]   = useState('');
-
 	const normalized = code?.toUpperCase();
 
-	useEffect(() =>
-	{
-		const checkRoom = async () =>
-		{
-			if (!normalized || !/^[A-Z]{6}$/.test(normalized))
-			{
-				setDeny(DENY_REASONS.invalid);
-				setStatus('denied');
-				return;
-			}
-			try
-			{
-				const room = await roomsApi.getRoom(normalized);
-				if (!room || room.status === 'started')
-				{
-					setDeny(room?.status === 'started' ? DENY_REASONS.started : DENY_REASONS.not_found);
-					setStatus('denied');
-					return;
-				}
-				setStatus('ready');
-			}
-			catch (err)
-			{
-				setDeny(DENY_REASONS.not_found);
-				setStatus('denied');
-			}
-		};
-		checkRoom();
-	}, [normalized]);
+	const [players, setPlayers] = useState([]);
+	const [messages, setMessages] = useState([]);
+	const [input, setInput] = useState('');
+	const [isHost, setIsHost] = useState(false);
+	const [isStarting, setIsStarting] = useState(false);
+	const [myName, setMyName] = useState('');
+	const [deny, setDeny] = useState('');
 
 	useEffect(() =>
 	{
-		if (status !== 'ready')
-			return;
-
 		connect();
-
 		const handler = (msg) =>
 		{
-			if (!msg)
-				return;
 			const roomMatch = msg.room === normalized || msg.code === normalized;
 
 			if (msg.type === 'lobby_state' && roomMatch)
@@ -90,100 +55,73 @@ const Lobby = () =>
 				if (msg.me)
 				{
 					setIsHost(!!msg.me.host);
-					setMyName(msg.me.name || '');
+					setMyName(msg.me.name);
 				}
 			}
-
-			if (msg.type === 'chat_message' && roomMatch)
-			{
-				console.log("msg.type modal received: ", msg.text);
-				setMessages((prev) => [...prev,
-				{
-					id:   msg.id || Date.now(),
-					user: msg.user,
-					text: msg.text,
-				}]);
-			}
-
-			if (msg.type === 'start_game' && roomMatch)
-				navigate(`/game/play/${normalized}`);
-
+			if (msg.type === 'ai_chat_message' && roomMatch)
+				setMessages(prev => [...prev, { id: Date.now(), user: msg.user, text: msg.text }]);
+			if (msg.type === 'start_ai_game' && roomMatch)
+				navigate(`/aigame/play/${normalized}`);
 			if (msg.type === 'join_denied')
 			{
-				setDeny(msg.reason || DENY_REASONS.unknown);
-				setStatus('denied');
+				setDeny(msg.reason);
+				setIsStarting(false);
 			}
 		};
 
 		addListener(handler);
-		send({ type: 'join_room', code: normalized });
-
+		send({ type: 'join_ai_room', code: normalized });
 		return () =>
 		{
 			removeListener(handler);
-			send({ type: 'leave_lobby', code: normalized });
+			send({ type: 'leave_ai_room', code: normalized });
 		};
-	}, [status, normalized, navigate]);
+	}, [normalized, navigate]);
 
-	useEffect(() =>
-	{
-		msgEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-	}, [messages]);
+	useEffect(() => { msgEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
 	const handleSend = () =>
 	{
-		if (!input.trim() || !normalized)
+		if (!input.trim())
 			return;
-		send({ type: 'chat_message', code: normalized, text: input.trim() });
+		send({ type: 'ai_chat_message', code: normalized, text: input.trim() });
 		setInput('');
 	};
 
-	const handleStart = () =>
+	const handleStartGame = () =>
 	{
-		if (players.length < 3 || !normalized)
+		if (isStarting)
 			return;
-		send({ type: 'start_game', code: normalized });
+		setIsStarting(true);
+		send({ type: 'start_ai_game', code: normalized });
+		
+		setTimeout(() => setIsStarting(false), 10000);
 	};
 
-	const handleLeave = () =>
-	{
-		navigate('/game');
-	};
-
-	if (status === 'checking')
-	{
-		return (
-			<div className="creategame__guard">
-				<span className="creategame__guard-spinner">⧗</span>
-				checking room…
+	if (deny) return (
+		<div className="creategame__guard">
+			<div className="creategame__guard-card">
+				<p className="creategame__guard-msg">⚠ {deny}</p>
+				<button className="creategame__guard-btn" onClick={() => navigate('/game')}>
+					← back to game
+				</button>
 			</div>
-		);
-	}
-
-	if (status === 'denied')
-	{
-		return (
-			<div className="creategame__guard">
-				<div className="creategame__guard-card">
-					<p className="creategame__guard-msg">⚠ {deny}</p>
-					<button className="creategame__guard-btn" onClick={handleLeave}>
-						← back to game
-					</button>
-				</div>
-			</div>
-		);
-	}
+		</div>
+	);
 
 	return (
 		<div className="creategame">
 			<div className="creategame__card">
-				<div className="creategame__card-header">🔑 room code</div>
+				<div className="creategame__card-header">🤖 room code</div>
 				<div className="creategame__card-body creategame__card-body--center">
 					<p className="creategame__hint">
 						you have joined this room. waiting for host to start.
 					</p>
 					<div className="creategame__code-row">
 						<span className="creategame__code">{normalized}</span>
+						<button className="creategame__btn creategame__btn--copy" style={{opacity: 0.3}} disabled>
+							⎘ copy
+						</button>
 					</div>
 				</div>
 			</div>
@@ -225,6 +163,7 @@ const Lobby = () =>
 							value={input}
 							onChange={(e) => setInput(e.target.value)}
 							onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+							placeholder="Type a message..."
 						/>
 						<button onClick={handleSend}>→</button>
 					</div>
@@ -232,17 +171,16 @@ const Lobby = () =>
 			</div>
 
 			<div className="creategame__actions">
-				<button className="creategame__btn creategame__btn--leave" onClick={handleLeave}>
+				<button className="creategame__btn creategame__btn--leave" onClick={() => navigate('/game')}>
 					✕ leave room
 				</button>
 				{isHost ? (
 					<button
 						className="creategame__btn creategame__btn--start"
-						onClick={handleStart}
-						disabled={players.length < 3}
-						title={players.length < 3 ? 'need at least 3 players' : ''}
+						onClick={handleStartGame}
+						disabled={players.length < 3 || isStarting}
 					>
-						▶ start game
+						{isStarting ? '🤖 starting...' : '🤖 start AI game'}
 					</button>
 				) : (
 					<button
@@ -256,11 +194,11 @@ const Lobby = () =>
 
 			{players.length < 3 && (
 				<p className="creategame__start-hint">
-					⚠ settings will be automatically adjusted based on player count.
+					⚠ need at least 3 players to start.
 				</p>
 			)}
 		</div>
 	);
 };
 
-export default Lobby;
+export default AILobby;

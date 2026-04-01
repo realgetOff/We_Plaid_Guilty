@@ -98,7 +98,7 @@ func main() {
 	serverVars.router.GET("/health", health)
 	serverVars.router.GET("/api/config", vaultstatus)
 	serverVars.router.GET("/ws", func (c *gin.Context){
-		handleWebsocket(c, serverVars.db, serverVars.globalHub)
+		handleWebsocket(c, serverVars)
 	})
 	serverVars.router.POST("/api/auth/player", func (c *gin.Context){
 		handleGuestAuth(c, serverVars.db)

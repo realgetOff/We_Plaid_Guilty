@@ -5,36 +5,20 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/golang-jwt/jwt/v5"
+	// "github.com/jackc/pgx/v5/pgxpool"
+	// "github.com/golang-jwt/jwt/v5"
 	"main.go/gamemanager"
 	"net/http"
 )
 
 
-func validateAndGetClaims(tokenString string) (*MyCustomClaims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &MyCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return jwtSecret, nil
-	})
-
-	if err != nil || token == nil {
-		return nil, fmt.Errorf("invalid token: %v", err)
-	}
-
-	if claims, ok := token.Claims.(*MyCustomClaims); ok && token.Valid {
-		return claims, nil
-	}
-
-	return nil, fmt.Errorf("token is invalid or claims are corrupted")
-}
-
-func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
+func socketLogic(conn *websocket.Conn, serverVars *serverVarsStruct) {
 	dispatcher := NewDispatcher()
 
 	ctx := &WSContext{
-		Db: db,
+		Db: serverVars.db,
 		Conn: conn,
-		Hub: hub,
+		Hub: serverVars.globalHub,
 	}
 	for {
 		var msg Message
@@ -59,7 +43,7 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 		}
 
 		if len(base.Players) == 0 {
-			hub.DeleteRoom(base.ID)
+			serverVars.globalHub.DeleteRoom(base.ID)
 		} else {
 			if isHost {
 				base.TransferHost()
@@ -77,11 +61,11 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func handleWebsocket(c *gin.Context, db *pgxpool.Pool, hub *gamemanager.Hub) {
+func handleWebsocket(c *gin.Context, serverVars *serverVarsStruct) {
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		return
 	}
 	defer conn.Close()
-	socketLogic(conn, db, hub)
+	socketLogic(conn, serverVars)
 }

@@ -120,6 +120,21 @@ func generateJWT(userID string, guestName string) (string, error) {
 	return signedToken, nil
 }
 
+func validateAndGetClaims(tokenString string) (*MyCustomClaims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &MyCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return jwtSecret, nil
+	})
+
+	if err != nil || token == nil {
+		return nil, fmt.Errorf("invalid token: %v", err)
+	}
+
+	if claims, ok := token.Claims.(*MyCustomClaims); ok && token.Valid {
+		return claims, nil
+	}
+
+	return nil, fmt.Errorf("token is invalid or claims are corrupted")
+}
 
 func handleGuestAuth(c *gin.Context, db *pgxpool.Pool){
 	guestName := fmt.Sprintf("guest_%d%d", rand.Intn(99), time.Now().UnixNano()%1000)

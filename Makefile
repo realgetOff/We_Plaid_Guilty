@@ -136,7 +136,8 @@ deploy: ## Deploy full infrastructure (interactive)
 	@echo "$(YELLOW)Uploading secrets to S3...$(RESET)"
 	@aws s3 cp $(ANSIBLE_DIR)/secrets.yml s3://$(BUCKET)/secrets.yml
 	@echo "$(YELLOW)--- Step 3/3: Terraform Vault (policies + roles) ---$(RESET)"
-	@cd $(TF_VAULT_DIR) && terraform init && \
+	@cd $(TF_VAULT_DIR) && terraform init
+	@cd $(TF_VAULT_DIR) && \
 	TF_VAR_vault_root_token=$$(ansible-vault decrypt \
 		--vault-password-file $(VAULT_FILE) \
 		--output - ../../$(ANSIBLE_DIR)/secrets.yml \
@@ -174,7 +175,8 @@ deploy-ci: bootstrap ## Deploy infrastructure (CI/CD, no prompt)
 	@echo "$(YELLOW)Uploading secrets to S3...$(RESET)"
 	@aws s3 cp $(ANSIBLE_DIR)/secrets.yml s3://$(BUCKET)/secrets.yml
 	@echo "$(YELLOW)--- Step 3/3: Terraform Vault (policies + roles) ---$(RESET)"
-	@cd $(TF_VAULT_DIR) && terraform init && \
+	@cd $(TF_VAULT_DIR) && terraform init
+	@cd $(TF_VAULT_DIR) && \
 	TF_VAR_vault_root_token=$$(ansible-vault decrypt \
 		--vault-password-file $(VAULT_FILE) \
 		--output - ../../$(ANSIBLE_DIR)/secrets.yml \

@@ -16,7 +16,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-var globalAIHub *gamemanager.AIHub
 
 func connectToDatabase () (*pgxpool.Pool, error) {
 
@@ -43,7 +42,6 @@ func connectToDatabase () (*pgxpool.Pool, error) {
 
 type serverVarsStruct struct { // the name is temporary
 	globalHub *gamemanager.Hub
-	globalAIHub *gamemanager.AIHub
 	router *gin.Engine
 	db *pgxpool.Pool
 }
@@ -56,16 +54,12 @@ func NewServerStructure () *serverVarsStruct {
 		log.Fatalf("Couldn't connect to the PostgreSQL database: %v", err)
 	}
 	hub := &gamemanager.Hub{
-		Rooms: make(map[string]*gamemanager.Room),
-	}
-	AIHub := &gamemanager.AIHub{
-    	Rooms: make(map[string]*gamemanager.AIRoom),
+		Rooms: make(map[string]gamemanager.GameRoom),
 	}
 	r := gin.Default();
 
 	return &serverVarsStruct{
 		globalHub:		hub,
-		globalAIHub:	AIHub,
 		router:			r,
 		db:				dbPool,
 	}
@@ -94,11 +88,8 @@ func main() {
 		c.File("./static/index.html")
 	})
 
-	serverVars.router.GET("/api/ai-rooms/:code", func(c *gin.Context) { // smells like AI generated code.
-		findRoom(c, serverVars, 1)
-	})
-	serverVars.router.GET("/api/rooms/:code", func(c *gin.Context) { // smells like AI generated code.
-		findRoom(c, serverVars, 0)
+	serverVars.router.GET("/api/rooms/:code", func(c *gin.Context) {
+		findRoom(c, serverVars)
 	})
 	serverVars.router.GET("/ping", pong)
 	serverVars.router.GET("/health", health)

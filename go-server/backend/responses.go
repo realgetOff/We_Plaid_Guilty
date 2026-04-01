@@ -15,7 +15,6 @@ import (
 
 type LobbySettings struct {
 	Rounds int `json:"rounds"`
-	Timer int `json:"timer"`
 }
 
 type playerNameTemp struct {
@@ -49,6 +48,8 @@ type Message struct {
     Drawing string         `json:"drawing,omitempty"`
     Guess   string         `json:"guess,omitempty"`
     Votes   map[string]int `json:"votes,omitempty"`
+	Title       string `json:"title,omitempty"`
+    Description string `json:"description,omitempty"`
 }
 
 type AuthResponse struct {
@@ -138,7 +139,6 @@ func handleGuestAuth(c *gin.Context, db *pgxpool.Pool){
 	var SignedString string
 	SignedString, err = generateJWT(userID, guestName)
 	if (err != nil) {
-		// fmt.Println("Guest creation failed")
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Couldn't sign / generate JWT for guest."})
 		return 
@@ -149,32 +149,18 @@ func handleGuestAuth(c *gin.Context, db *pgxpool.Pool){
 		})
 }
 
-func findRoom(c *gin.Context, serverVars *serverVarsStruct, roomtype int){
+func findRoom(c *gin.Context, serverVars *serverVarsStruct){
     code := strings.ToUpper(c.Param("code"))
-
-	if roomtype == 1 {
-    	room, err := globalAIHub.GetRoom(code)
-    	if err != nil {
-    	    c.JSON(http.StatusNotFound, gin.H{"error": "Couldn't find the AI room"})
-    	    return
-		}
-		c.JSON(http.StatusOK, gin.H{
-        "code":    room.ID,
-        "status":  room.Status,
-        "players": len(room.Players),
-		})
-	} else {
-		room, err := serverVars.globalHub.GetRoom(code)
-		if err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Couldn't find the room"})
-			return
-		}
-		c.JSON(http.StatusOK, gin.H{
-        "code":    room.ID,
-        "status":  room.Status,
-        "players": len(room.Players),
-		})
+	room, err := serverVars.globalHub.GetRoom(code)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Couldn't find the room"})
+		return
 	}
+	c.JSON(http.StatusOK, gin.H{
+	"code":		room.GetBase().ID,
+	"status":	room.GetBase().Status,
+	"players":	len(room.GetBase().Players),
+	})
 }
 
 // func handleLogin(c *gin.Context) {

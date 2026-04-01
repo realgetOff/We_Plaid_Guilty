@@ -1,6 +1,6 @@
 package gamemanager
 
-import "sync"
+// import "sync"
 
 const (
 	StateAIWaiting  GameStates = "ai_waiting"
@@ -10,9 +10,11 @@ const (
 )
 
 type AIDrawing struct {
-	PlayerID   string `json:"player_id"`
-	PlayerName string `json:"player_name"`
-	Drawing    string `json:"drawing"`
+	PlayerID    string `json:"player_id"`
+	PlayerName  string `json:"player_name"`
+	Drawing     string `json:"drawing"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
 }
 
 type AIVote struct {
@@ -30,17 +32,17 @@ type AIResult struct {
 	Score      float64 `json:"score"`
 }
 
-type AIRoom struct {
-	ID           string
-	Status       GameStates
-	Prompt       string
-	Players      map[string]*Player
-	Drawings     map[string]*AIDrawing
-	Votes        []AIVote
-	DrawingsDone int
-	VotesDone    int
-	DrawChan     chan bool
-	VoteChan     chan bool
-	MessageChan  chan Notification
-	mu           sync.Mutex
-}
+// type AIRoom struct {
+	// ID           string
+	// Status       GameStates
+	// Prompt       string
+	// Players      map[string]*Player
+	// Drawings     map[string]*AIDrawing
+	// Votes        []AIVote
+	// DrawingsDone int
+	// VotesDone    int
+	// DrawChan     chan bool
+	// VoteChan     chan bool
+	// MessageChan  chan Notification
+	// mu           sync.Mutex
+// }

@@ -58,17 +58,11 @@ type Notification struct {
 	Data     interface{} `json:"data"`
 }
 
-/*
-* All the others structs are contained in the Room structure.
-*/
-type Room struct {
+type BaseRoom struct {
 	ID           string
 	Phase        string
-	Timer        int
 	TotalRound   int
-	CurrentRound int
 	Players      map[string]*Player
-	Books        map[string]*Book
 	PlayerOrder  []string  
 	FinishedChan chan bool
 	Status       GameStates
@@ -76,3 +70,36 @@ type Room struct {
 	
 	mu           sync.Mutex
 }
+
+type AIRoom struct {
+	BaseRoom
+	Prompt       string
+	Drawings     map[string]*AIDrawing
+	Votes        []AIVote
+	DrawingsDone int
+	VotesDone    int
+	DrawChan     chan bool
+	VoteChan     chan bool
+}
+
+type Room struct {
+	BaseRoom
+	Books map[string]*Book
+}
+
+/*
+* All the others structs are contained in the Room structure.
+*/
+// type Room struct {
+	// ID           string
+	// Phase        string
+	// TotalRound   int
+	// Players      map[string]*Player
+	// Books        map[string]*Book
+	// PlayerOrder  []string  
+	// FinishedChan chan bool
+	// Status       GameStates
+	// MessageChan  chan Notification
+	// 
+	// mu           sync.Mutex
+// }

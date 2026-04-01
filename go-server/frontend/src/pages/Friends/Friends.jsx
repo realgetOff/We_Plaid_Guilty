@@ -12,7 +12,7 @@
 
 import React, { useState, useEffect }          from 'react';
 import { useNavigate, Link }                   from 'react-router-dom';
-import { connect, send, addListener, removeListener }   from '../../socket';
+import { connect, send, addListener, removeListener, getUsernameFromToken, getIDFromToken }   from '../../socket';
 import { useNotifications }                    from '../../components/common/NotificationContext';
 import './Friends.css';
 
@@ -90,8 +90,14 @@ const Friends = () =>
     };
 
     addListener(onMessage);
-    
-    send({ type: 'get_friends' });
+
+	const id = getIDFromToken()
+	console.log("I FUCKING HATE THIS DOGSHIT LANGUAGE", id)
+
+    send({
+			type: 'get_friends',
+			id: id
+		});
 
     return () => removeListener(onMessage);
   }, [push]);

@@ -51,6 +51,7 @@ type Message struct {
 	Title       string `json:"title,omitempty"`
     Description string `json:"description,omitempty"`
 	Username string `json:username,omitempty`
+	ID string `json:id,omitempty`
 }
 
 type AuthResponse struct {

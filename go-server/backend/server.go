@@ -54,6 +54,9 @@ func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
 		}
 
 		base.RemovePlayer(*ctx.CurrUsrID)
+		if classicRoom, ok := ctx.CurrentRoom.(*gamemanager.Room); ok {
+			classicRoom.SendSystemMsg(fmt.Sprintf("%s leave the lobby !", *ctx.CurrUsrName))
+		}
 
 		if len(base.Players) == 0 {
 			hub.DeleteRoom(base.ID)

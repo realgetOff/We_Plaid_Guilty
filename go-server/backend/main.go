@@ -91,6 +91,9 @@ func main() {
 	serverVars.router.GET("/api/rooms/:code", func(c *gin.Context) {
 		findRoom(c, serverVars)
 	})
+		serverVars.router.GET("/api/ai-rooms/:code", func(c *gin.Context) {
+		findRoom(c, serverVars)
+	})
 	serverVars.router.GET("/ping", pong)
 	serverVars.router.GET("/health", health)
 	serverVars.router.GET("/api/config", vaultstatus)

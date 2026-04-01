@@ -248,7 +248,7 @@ func (d *Dispatcher) HandleCreateRoom(ctx *WSContext, msg Message) {
 	base.BroadcastLobbyState()
 
 	go func(roomID string) {
-		ctx.Db.Exec(context.Background(), "INSERT INTO rooms (room_code, created_at) VALUES ($0, NOW())", roomID)
+		ctx.Db.Exec(context.Background(), "INSERT INTO rooms (room_code, created_at) VALUES ($1, NOW())", roomID)
 	}(base.ID)
 }
 

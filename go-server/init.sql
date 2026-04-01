@@ -44,3 +44,28 @@ CREATE TABLE IF NOT EXISTS friends (
 	CONSTRAINT unique_friendship
 		UNIQUE (requester_id, addressee_id)
 );
+
+-- INSERTION INTO FRIENDS
+-- INSERT INTO friends (requester_id, addressee_id, status) 
+-- VALUES (
+--     'user_a_uuid', 
+--     'user_b_uuid', 
+--     'pending'
+-- );
+
+-- GETTING FRIENDS
+-- SELECT 
+--     users.id, 
+--     users.username, 
+--     users.is_online 
+-- FROM users
+-- JOIN friendships ON (users.id = friendships.requester_id OR users.id = friendships.addressee_id)
+-- WHERE 
+--     (friendships.requester_id = 'user_a_uuid' OR friendships.addressee_id = 'user_a_uuid')
+--     AND users.id != 'user_a_uuid'
+--     AND friendships.status = 'accepted';
+
+-- REMOVING FRIENDS
+-- DELETE FROM friendships 
+-- WHERE (requester_id = 'user_a_uuid' AND addressee_id = 'user_b_uuid')
+--    OR (requester_id = 'user_b_uuid' AND addressee_id = 'user_a_uuid');

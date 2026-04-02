@@ -359,3 +359,189 @@
 	0%, 100% { opacity: 1; }
 	50% { opacity: 0; }
 }
+
+.creategame__friends-toggle
+{
+	border: 1px solid #000000;
+	background: #ffffff;
+	color: #000000;
+	font-size: 11px;
+	font-weight: bold;
+	font-family: 'Courier New', Courier, monospace;
+	padding: 6px 12px;
+	cursor: pointer;
+	box-shadow: 1px 1px 0 #000000;
+	align-self: center;
+	margin-bottom: 8px;
+}
+
+.creategame__friends-toggle:hover
+{
+	background: #dddddd;
+}
+
+.creategame__friends-toggle:active
+{
+	box-shadow: none;
+	transform: translate(1px, 1px);
+}
+
+.creategame__layout
+{
+	display: flex;
+	gap: 14px;
+	width: 100%;
+	justify-content: center;
+	align-items: flex-start;
+}
+
+.creategame__main
+{
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 14px;
+	min-width: 0;
+	max-width: 560px;
+}
+
+.creategame__friends-sidebar
+{
+	width: 260px;
+	flex-shrink: 0;
+	max-height: 400px;
+	overflow: hidden;
+}
+
+.creategame__friends-sidebar .creategame__card-body
+{
+	max-height: 300px;
+	overflow-y: auto;
+}
+
+.creategame__friends-close
+{
+	position: absolute;
+	right: 6px;
+	top: 50%;
+	transform: translateY(-50%);
+	background: none;
+	border: none;
+	color: #ffffff;
+	cursor: pointer;
+	font-size: 12px;
+	font-weight: bold;
+	padding: 0;
+	width: 16px;
+	height: 16px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.creategame__friends-close:hover
+{
+	background: rgba(255,255,255,0.2);
+}
+
+.creategame__invite-friend
+{
+	background: none;
+	border: none;
+	color: #888888;
+	cursor: pointer;
+	font-size: 12px;
+	padding: 2px;
+	margin-left: auto;
+	font-weight: bold;
+}
+
+.creategame__invite-friend:hover:not(:disabled)
+{
+	color: #000000;
+}
+
+.creategame__invite-friend:disabled
+{
+	color: #00aa00;
+}
+
+@media (max-width: 1200px)
+{
+	.creategame__layout
+	{
+		flex-direction: column;
+		align-items: center;
+	}
+
+	.creategame__friends-sidebar
+	{
+		width: 100%;
+		max-width: 560px;
+	}
+
+	.creategame__main
+	{
+		min-width: auto;
+		width: 100%;
+	}
+
+	.creategame__main .creategame__card,
+	.creategame__main .creategame__columns
+	{
+		max-width: 560px;
+		width: 100%;
+	}
+}
+
+@media (max-width: 768px)
+{
+	.creategame__friends-sidebar
+	{
+		max-width: 100%;
+	}
+
+	.creategame__columns
+	{
+		flex-direction: column;
+		min-height: auto;
+	}
+
+	.creategame__card--grow,
+	.creategame__card--chat
+	{
+		max-width: 100%;
+		flex: none;
+	}
+
+	.creategame__chat-messages
+	{
+		max-height: 120px;
+	}
+}
+
+@media (max-width: 600px)
+{
+	.creategame
+	{
+		gap: 10px;
+	}
+
+	.creategame__layout
+	{
+		gap: 10px;
+	}
+
+	.creategame__friends-sidebar
+	{
+		width: 100%;
+	}
+
+	.creategame__code
+	{
+		font-size: 28px;
+		letter-spacing: 6px;
+		padding: 6px 16px 6px 20px;
+	}
+}

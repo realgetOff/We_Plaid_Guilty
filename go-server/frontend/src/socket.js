@@ -46,6 +46,23 @@ export const getUsernameFromToken = () =>
     }
 };
 
+export const getIDFromToken = () =>
+{
+    const token = localStorage.getItem("authToken");
+    if (!token)
+		return null;
+    try
+	{
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return payload.id;
+    }
+	catch (e)
+	{
+        return null;
+    }
+};
+
+
 const getAuthToken = async() =>
 {
     const localToken = localStorage.getItem("authToken");
@@ -93,8 +110,11 @@ const setupSocketHandlers = (token) =>
 			fn(msg);
 		});
 	};
-	socket.onclose = () =>
+	socket.onclose = (event) =>
 	{
+		if(event.code == 4000)
+			window.location.href = "/logout";
+		console.warn("event: ", event.msg);
     	socket = null;
 	};
 	socket.onerror = (err) =>

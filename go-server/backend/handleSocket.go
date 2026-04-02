@@ -72,10 +72,86 @@ func (d *Dispatcher) Dispatch(ctx *WSContext, msg Message) {
 	handler(ctx, msg)
 }
 
+type Friend struct {
+	ID string `json:"id"`
+	Username string `json:"username"`
+	Online bool `json:"online"`
+}
+
+type FriendsListResponse struct {
+		Type string `json:"type"`
+		Friends []Friend `json:"friends"`
+}
+
+
+func (d *Dispatcher) HandleGetFriend(ctx *WSContext, msg Message) {
+	fmt.Println("DEBUG: HandleGetFriend triggered!")
+	if (!RunPipeLine(ctx, msg, d.PipeIsAuth)) { 
+		return
+	}
+
+	query := `	SELECT users.id, users.username, users.is_online 
+				FROM users
+				JOIN friends ON (users.id = friends.requester_id OR users.id = friends.addressee_id)
+				WHERE
+    			(friends.requester_id = $1 OR friends.addressee_id = $1)
+    			AND users.id != $1
+			`
+
+	rows, err := ctx.Db.Query(context.Background(), query, msg.ID)
+	if err != nil {
+		fmt.Printf("Failed to open rows :: %v\n", err)
+		return
+	}
+	defer rows.Close()
+
+	friends := make([]Friend, 0)
+	for rows.Next() {
+		var f Friend
+		if err := rows.Scan(&f.ID, &f.Username, &f.Online); err != nil {
+			fmt.Printf("Error scanning friends row :: %v\n", err)
+			continue 
+		}
+		friends = append(friends, f)
+	}
+
+	response := FriendsListResponse {
+		Type: "friends_list",
+		Friends: friends, 
+	}
+
+	err = ctx.Conn.WriteJSON(response)
+	if err != nil {
+		fmt.Printf("failed to send friends list: %v", err)
+	}
+}
+
+func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
+	fmt.Println("DEBUG: HandleAddFriend triggered!")
+	if (!RunPipeLine(ctx, msg, d.PipeIsAuth)) {
+		return
+	}
+
+	query := `
+		INSERT INTO friends (requester_id, addressee_id)
+		SELECT $1, id
+		FROM users
+		WHERE username = $2
+	`
+
+	_, err := ctx.Db.Exec(context.Background(), query, ctx.CurrUsrID, msg.Username)
+	if (err != nil) {
+		fmt.Printf("Friend invite failed :: %v\n", err)
+		return
+	}
+}
+
 func NewDispatcher() *Dispatcher {
 	d:= &Dispatcher{
 		handlers: make(map[string]HandleFunc),
 	}
+	d.handlers["add_friend"] = d.HandleAddFriend
+	d.handlers["get_friends"] = d.HandleGetFriend
 	d.handlers["authenticate"] = d.HandleAuth
 	d.handlers["create_room"] = d.HandleCreateRoom
 	d.handlers["join_room"] = d.HandleJoinRoom
@@ -96,6 +172,7 @@ func NewDispatcher() *Dispatcher {
 	d.handlers["start_ai_game"] = d.HandleStartAIGame
 	d.handlers["ai_drawing_submitted"] = d.HandleAIDraw
 	d.handlers["ai_votes_submitted"] = d.HandleAIVote
+
 
 	return d
 }

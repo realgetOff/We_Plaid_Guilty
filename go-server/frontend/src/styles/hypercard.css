@@ -21,6 +21,8 @@
   align-items: center;
   z-index: 9999;
   user-select: none;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .hc-menubar__apple
@@ -32,9 +34,48 @@
   align-items: center;
   border-right: 1px solid #cccccc;
   cursor: default;
+  flex-shrink: 0;
 }
 
 .hc-menubar__apple:hover
+{
+  background: #000;
+  color: #fff;
+}
+
+.hc-menubar__item_useful
+{
+  padding: 0 10px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: default;
+  overflow:hidden;
+  flex-shrink: 0;
+}
+
+.hc-menubar__item_useful:hover
+{
+  background: #000;
+  color: #fff;
+}
+
+.hc-menubar__username
+{
+  padding: 0 50px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: default;
+  overflow:hidden;
+  flex-shrink: 0;
+}
+
+.hc-menubar__username:hover
 {
   background: #000;
   color: #fff;
@@ -46,10 +87,13 @@
   height: 100%;
   display: flex;
   align-items: center;
-  font-size: 12px;
-  font-weight: bold;
+  font-size: 10px;
+  font-weight: 300;
   cursor: default;
+  overflow:hidden;
+  flex-shrink: 0;
 }
+
 .hc-menubar__item:hover
 {
   background: #000;
@@ -63,6 +107,7 @@
   gap: 4px;
   margin-left: auto;
   margin-right: 8px;
+  flex-shrink: 0;
 }
 
 .hc-menubar__user
@@ -74,6 +119,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   padding: 0 6px;
+  flex-shrink: 0;
 }
 
 .hc-menubar__auth-link,
@@ -91,6 +137,7 @@
   cursor: pointer;
   color: inherit;
   text-decoration: none;
+  flex-shrink: 0;
 }
 
 .hc-menubar__auth-link:hover,
@@ -105,6 +152,12 @@
   padding: 0 10px;
   font-size: 11px;
   font-weight: bold;
+  flex-shrink: 0;
+}
+
+.hc-menubar__spacer
+{
+  flex: 1;
 }
 
 .hc-main-container
@@ -271,9 +324,4 @@
   .hc-window { margin-top: 24px; }
   .hc-card-content { padding: 16px 12px; min-height: 240px; }
   .hc-titlebar::before { left: 50px; right: 50px; }
-}
-
-.hc-menubar__spacer
-{
-  flex: 1;
 }

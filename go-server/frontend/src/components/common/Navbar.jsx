@@ -70,7 +70,7 @@ const Navbar = () =>
 				&#63743;
 			</div>
 			<div
-				className="hc-menubar__item"
+				className="hc-menubar__item_useful"
 				role="menuitem"
 				onClick={() => navigate('/')}
 			>
@@ -84,7 +84,7 @@ const Navbar = () =>
 			<div className="hc-menubar__spacer" />
 			
 		{isLogged ?(
-			<div className="hc-menubar__item" 
+			<div className="hc-menubar__username" 
 			role="menuitem"
 			>
 			{username}
@@ -97,7 +97,7 @@ const Navbar = () =>
 
 			{isLogged ? (
 				<div
-					className="hc-menubar__item"
+					className="hc-menubar__item_useful"
 					role="menuitem"
 					onClick={() => navigate('/logout')}
 				>
@@ -105,7 +105,7 @@ const Navbar = () =>
 				</div>
 			) : (
 				<div
-					className="hc-menubar__item"
+					className="hc-menubar__item_useful"
 					role="menuitem"
 					onClick={() => navigate('/login')}
 				>
@@ -114,14 +114,14 @@ const Navbar = () =>
 			)}
 
 			<div
-				className="hc-menubar__item"
+				className="hc-menubar__item_useful"
 				role="menuitem"
 				onClick={() => navigate('/profile/mforest-')}
 			>
 				Profile
 			</div>
 			<div
-				className="hc-menubar__item"
+				className="hc-menubar__item_useful"
 				role="menuitem"
 				onClick={() => navigate('/friends')}
 			>

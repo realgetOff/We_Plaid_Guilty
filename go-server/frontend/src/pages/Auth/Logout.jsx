@@ -12,7 +12,7 @@
 
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { disconnect } from '../../socket';
+import { disconnect } from '../../api/socket';
 
 const Logout = () =>
 {

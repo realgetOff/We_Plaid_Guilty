@@ -15,7 +15,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import DrawBoard from './AIDrawBoard';
 import AIVotePanel from './AIVotePanel';
 import AIGallery from './AIGallery';
-import { connect, send, addListener, removeListener } from '../../socket';
+import { connect, send, addListener, removeListener } from '../../api/socket';
 import '../Game/Game.css';
 
 const AIGame = () =>

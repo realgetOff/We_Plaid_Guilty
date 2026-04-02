@@ -12,7 +12,7 @@
 
 import React, { useState, useEffect }          from 'react';
 import { useNavigate, Link }                   from 'react-router-dom';
-import { connect, send, addListener, removeListener, getUsernameFromToken, getIDFromToken }   from '../../socket';
+import { connect, send, addListener, removeListener, getUsernameFromToken, getIDFromToken }   from '../../api/socket';
 import { useNotifications }                    from '../../components/common/NotificationContext';
 import './Friends.css';
 

@@ -10,7 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-const getApiBaseUrl = () =>
+export const getApiBaseUrl = () =>
 {
 	const raw = import.meta.env.VITE_API_URL;
 	if (raw && typeof raw === 'string' && raw.trim() !== '')

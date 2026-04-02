@@ -16,7 +16,7 @@ import WritePrompt from './WritePrompt';
 import DrawBoard from './DrawBoard';
 import GuessPrompt from './GuessPrompt';
 import Gallery from './Gallery';
-import { connect, send, addListener, removeListener } from '../../socket';
+import { connect, send, addListener, removeListener } from '../../api/socket';
 import './Game.css';
 
 const DENY_REASONS =

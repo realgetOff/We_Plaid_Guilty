@@ -14,6 +14,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
 import '../../styles/hypercard.css';
+import { getUsernameFromToken } from '../../api/socket';
+
+const username = getUsernameFromToken();
 
 const Clock = () =>
 {
@@ -79,6 +82,18 @@ const Navbar = () =>
 			<div className="hc-menubar__item" role="menuitem">Help</div>
 
 			<div className="hc-menubar__spacer" />
+			
+		{isLogged ?(
+			<div className="hc-menubar__item" 
+			role="menuitem"
+			>
+			{username}
+			</div>
+
+		):(<div></div>)}
+
+			<div className="hc-menubar__spacer" />
+
 
 			{isLogged ? (
 				<div

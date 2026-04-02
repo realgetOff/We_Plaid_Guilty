@@ -12,7 +12,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { send, addListener, removeListener } from '../../socket';
+import { send, addListener, removeListener } from '../../api/socket';
 import './Profile.css';
 
 const FONT_STYLES = ['normal', 'bold', 'italic'];

@@ -12,20 +12,10 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { roomsApi } from '../../api/rooms';
+import { roomsApi, getApiBaseUrl } from '../../api/rooms';
 import './HomeGame.css';
 
 const VALID_CODE_RE = /^[A-Z]{6}$/;
-
-const getApiBaseUrl = () =>
-{
-	const raw = import.meta.env.VITE_API_URL;
-	if (raw && typeof raw === 'string' && raw.trim() !== '')
-		return raw.replace(/\/$/, '');
-	if (typeof window !== 'undefined' && window.location && window.location.origin)
-		return window.location.origin;
-	return '';
-};
 
 const HomeGame = () =>
 {

@@ -221,6 +221,7 @@
 	font-family: 'Courier New', Courier, monospace;
 	padding: 6px 16px;
 	cursor: pointer;
+	align-items: center;
 	box-shadow: 1px 1px 0 #000000;
 }
 
@@ -284,7 +285,8 @@
 {
 	background: #ffffff;
 	color: #000000;
-	align-self: flex-start;
+	align-self: center;
+	align-items: center;
 	max-width: 560px;
 	width: 100%;
 }

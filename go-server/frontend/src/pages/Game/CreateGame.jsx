@@ -12,7 +12,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { connect, send, addListener, removeListener } from '../../socket';
+import { connect, send, addListener, removeListener } from '../../api/socket';
 import './CreateGame.css';
 
 const CreateGame = () =>

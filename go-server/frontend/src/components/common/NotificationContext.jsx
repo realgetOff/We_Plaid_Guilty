@@ -12,7 +12,7 @@
 
 import React, { createContext, useContext,
                 useState, useEffect, useRef } from 'react';
-import { addListener, removeListener }        from '../../socket';
+import { addListener, removeListener }        from '../../api/socket';
 
 const NotificationContext = createContext(null);
 
@@ -22,6 +22,7 @@ export const NotificationProvider = ({ children }) =>
 {
   const [notifs, setNotifs] = useState([]);
   const idRef = useRef(0);
+  const cooldowns = useRef({});
 
   const push = (notif) =>
   {
@@ -41,6 +42,12 @@ export const NotificationProvider = ({ children }) =>
     {
       if (msg.type === 'room_invite')
       {
+        const now = Date.now();
+        const last = cooldowns.current[msg.from] || 0;
+
+        if (now - last < 10000)
+          return ;
+        cooldowns.current[msg.from] = now;
         push({
           kind:  'invite',
           from:  msg.from,

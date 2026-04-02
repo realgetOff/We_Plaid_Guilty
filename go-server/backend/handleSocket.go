@@ -81,6 +81,8 @@ type Friend struct {
 type FriendsListResponse struct {
 		Type string `json:"type"`
 		Friends []Friend `json:"friends"`
+		Friend Friend `json:"friend,omitempty"`
+		Success bool `json:"success,omitempty"`
 }
 
 
@@ -156,12 +158,38 @@ func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 		SELECT $1, id
 		FROM users
 		WHERE username = $2
+		RETURNING id;
 	`
 
-	_, err := ctx.Db.Exec(context.Background(), query, ctx.CurrUsrID, msg.Username)
+	var addressee_id string
+
+	err := ctx.Db.QueryRow(context.Background(), query, ctx.CurrUsrID, msg.Username).Scan(&addressee_id)
 	if (err != nil) {
 		fmt.Printf("Friend invite failed :: %v\n", err)
 		return
+	}
+
+	// friend_info := Friend {
+	// 		ID : addressee_id,
+	// 		Username : msg.Username,
+	// 		Online : false,
+	// 	}
+
+	response := FriendsListResponse {
+		Friend : Friend {
+			ID : addressee_id,
+			Username : msg.Username,
+			Online : false,
+		},
+		Type : "friend_added",
+		Success : true,
+	}
+
+	fmt.Printf("DEBUG: SENDING TYPE %v SUCCESS %v ID %v USERNAME %v ONLINE %v\n", "friend_added", true, addressee_id, msg.Username, false)
+
+	err = ctx.Conn.WriteJSON(response)
+	if err != nil {
+		fmt.Printf("failed to send friends list: %v", err)
 	}
 }
 

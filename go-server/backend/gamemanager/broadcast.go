@@ -19,7 +19,7 @@ func (r *Room) BroadcastChat(playerID string, content string) {
 	messageId := fmt.Sprintf("%d", time.Now().UnixNano())
 
 	if playerID == "SYSTEM" {
-		userName = "📢 Système"
+		userName = "📢 System"
 		isSystem = true
 	} else {
 		sender, ok := r.Players[playerID]

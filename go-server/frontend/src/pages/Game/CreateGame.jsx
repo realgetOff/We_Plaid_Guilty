@@ -110,13 +110,9 @@ const CreateGame = () =>
 			if (msg.type === 'invite_sent')
 			{
 				if (msg.success)
-				{
 					setTimeout(() => setInviting(null), 2000);
-				}
 				else
-				{
 					setInviting(null);
-				}
 			}
 		};
 

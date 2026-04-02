@@ -9,17 +9,6 @@
 /*   Updated: 2026/03/30 00:06:44 by mforest-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-/* ************************************************************************** */
-/* */
-/* :::      ::::::::   */
-/* AILobby.jsx                                        :+:      :+:    :+:   */
-/* +:+ +:+         +:+     */
-/* By: mforest- <marvin@d42.fr>                   +#+  +:+       +#+        */
-/* +#+#+#+#+#+   +#+           */
-/* Created: 2026/03/30 00:06:44 by mforest-          #+#    #+#             */
-/* Updated: 2026/03/31 00:15:00 by gemini           ###   ########.fr       */
-/* */
-/* ************************************************************************** */
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -40,6 +29,11 @@ const AILobby = () =>
 	const [isStarting, setIsStarting] = useState(false);
 	const [myName, setMyName] = useState('');
 	const [deny, setDeny] = useState('');
+
+	const [showFriends, setShowFriends] = useState(false);
+	const [friends, setFriends] = useState([]);
+	const [friendsLoading, setFriendsLoading] = useState(false);
+	const [inviting, setInviting] = useState(null);
 
 	useEffect(() =>
 	{
@@ -67,6 +61,27 @@ const AILobby = () =>
 				setDeny(msg.reason);
 				setIsStarting(false);
 			}
+
+			if (msg.type === 'friends_list')
+			{
+				setFriends(msg.friends || []);
+				setFriendsLoading(false);
+			}
+			if (msg.type === 'friend_online_status')
+			{
+				setFriends(prev => prev.map(f =>
+					f.username === msg.username
+						? { ...f, online: msg.online }
+						: f
+				));
+			}
+			if (msg.type === 'invite_sent')
+			{
+				if (msg.success)
+					setTimeout(() => setInviting(null), 2000);
+				else
+					setInviting(null);
+			}
 		};
 
 		addListener(handler);
@@ -88,14 +103,42 @@ const AILobby = () =>
 		setInput('');
 	};
 
+	const handleCopy = () =>
+	{
+		navigator.clipboard.writeText(roomCode);
+		setCopied(true);
+		setTimeout(() => setCopied(false), 2000);
+	};
+
 	const handleStartGame = () =>
 	{
 		if (isStarting)
 			return;
 		setIsStarting(true);
 		send({ type: 'start_ai_game', code: normalized });
-		
+
 		setTimeout(() => setIsStarting(false), 10000);
+	};
+
+	const toggleFriends = () =>
+	{
+		if (!showFriends && friends.length === 0)
+		{
+			setFriendsLoading(true);
+			send({ type: 'get_friends' });
+		}
+		setShowFriends(!showFriends);
+	};
+
+	const handleInviteFriend = (friend) =>
+	{
+		if (!normalized) return;
+		setInviting(friend.id);
+		send({
+			type: 'invite_friend',
+			to: friend.username,
+			code: normalized
+		});
 	};
 
 	if (deny) return (
@@ -111,92 +154,143 @@ const AILobby = () =>
 
 	return (
 		<div className="creategame">
-			<div className="creategame__card">
-				<div className="creategame__card-header">🤖 room code</div>
-				<div className="creategame__card-body creategame__card-body--center">
-					<p className="creategame__hint">
-						you have joined this room. waiting for host to start.
-					</p>
-					<div className="creategame__code-row">
-						<span className="creategame__code">{normalized}</span>
-						<button className="creategame__btn creategame__btn--copy" style={{opacity: 0.3}} disabled>
-							⎘ copy
-						</button>
-					</div>
-				</div>
-			</div>
+			<button
+				className="creategame__friends-toggle"
+				onClick={toggleFriends}
+			>
+				👥 friends ({friends.filter(f => f.online).length} online)
+			</button>
 
-			<div className="creategame__columns">
-				<div className="creategame__card creategame__card--grow">
-					<div className="creategame__card-header">
-						👥 players
-						<span className="creategame__card-header-count">
-							{players.length} / 8
-						</span>
-					</div>
-					<div className="creategame__card-body creategame__card-body--list">
-						{players.map((p) => (
-							<div key={p.id} className="creategame__player-row">
-								<span className="creategame__player-dot" />
-								<span className="creategame__player-name">{p.name}</span>
-								{p.host && <span className="creategame__badge">HOST</span>}
+			<div className="creategame__layout">
+				<div className="creategame__main">
+					<div className="creategame__card">
+						<div className="creategame__card-header">🤖 room code</div>
+						<div className="creategame__card-body creategame__card-body--center">
+							<p className="creategame__hint">
+								you have joined this room. waiting for host to start.
+							</p>
+							<div className="creategame__code-row">
+								<span className="creategame__code">{normalized}</span>
 							</div>
-						))}
-						{players.length < 3 && (
-							<p className="creategame__waiting">⧗ waiting for players…</p>
+						</div>
+					</div>
+
+					<div className="creategame__columns">
+						<div className="creategame__card creategame__card--grow">
+							<div className="creategame__card-header">
+								👥 players
+								<span className="creategame__card-header-count">
+									{players.length} / 8
+								</span>
+							</div>
+							<div className="creategame__card-body creategame__card-body--list">
+								{players.map((p) => (
+									<div key={p.id} className="creategame__player-row">
+										<span className="creategame__player-dot" />
+										<span className="creategame__player-name">{p.name}</span>
+										{p.host && <span className="creategame__badge">HOST</span>}
+									</div>
+								))}
+								{players.length < 3 && (
+									<p className="creategame__waiting">⧗ waiting for players…</p>
+								)}
+							</div>
+						</div>
+
+						<div className="creategame__card creategame__card--chat">
+							<div className="creategame__card-header">💬 chat</div>
+							<div className="creategame__chat-messages">
+								{messages.map((m) => (
+									<div key={m.id} className={`creategame__msg ${m.user === myName ? 'creategame__msg--me' : ''}`}>
+										<strong>{m.user}:</strong> {m.text}
+									</div>
+								))}
+								<div ref={msgEndRef} />
+							</div>
+							<div className="creategame__chat-input-row">
+								<input
+									value={input}
+									onChange={(e) => setInput(e.target.value)}
+									onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+									placeholder="Type a message..."
+								/>
+								<button onClick={handleSend}>→</button>
+							</div>
+						</div>
+					</div>
+
+					<div className="creategame__actions">
+						<button className="creategame__btn creategame__btn--leave" onClick={() => navigate('/game')}>
+							✕ leave room
+						</button>
+						{isHost ? (
+							<button
+								className="creategame__btn creategame__btn--start"
+								onClick={handleStartGame}
+								disabled={players.length < 3 || isStarting}
+							>
+								{isStarting ? '🤖 starting...' : '🤖 start AI game'}
+							</button>
+						) : (
+							<button
+								className="creategame__btn creategame__btn--start"
+								disabled={true}
+							>
+								⧗ waiting for host
+							</button>
 						)}
 					</div>
+
+					{players.length < 3 && (
+						<p className="creategame__start-hint">
+							⚠ need at least 3 players to start.
+						</p>
+					)}
 				</div>
 
-				<div className="creategame__card creategame__card--chat">
-					<div className="creategame__card-header">💬 chat</div>
-					<div className="creategame__chat-messages">
-						{messages.map((m) => (
-							<div key={m.id} className={`creategame__msg ${m.user === myName ? 'creategame__msg--me' : ''}`}>
-								<strong>{m.user}:</strong> {m.text}
+				{showFriends && (
+					<div className="creategame__friends-sidebar">
+						<div className="creategame__card">
+							<div className="creategame__card-header">
+								👥 friends online
+								<button
+									className="creategame__friends-close"
+									onClick={() => setShowFriends(false)}
+								>
+									✕
+								</button>
 							</div>
-						))}
-						<div ref={msgEndRef} />
+							<div className="creategame__card-body creategame__card-body--list">
+								{friendsLoading ? (
+									<p className="creategame__waiting">⧗ loading friends...</p>
+								) : friends.length === 0 ? (
+									<p className="creategame__waiting">no friends yet.</p>
+								) : (
+									friends
+										.filter(f => f.online)
+										.map(f => (
+											<div key={f.id} className="creategame__player-row">
+												<span className="creategame__player-dot" />
+												<span className="creategame__player-name">{f.username}</span>
+												<button
+													className="creategame__invite-friend"
+													onClick={() => handleInviteFriend(f)}
+													disabled={inviting === f.id}
+													title={`Invite ${f.username} to this room`}
+												>
+													{inviting === f.id ? '✓' : '✉'}
+												</button>
+											</div>
+										))
+								)}
+								{friends.filter(f => f.online).length === 0 && friends.length > 0 && (
+									<p className="creategame__waiting">no friends online.</p>
+								)}
+							</div>
+						</div>
 					</div>
-					<div className="creategame__chat-input-row">
-						<input
-							value={input}
-							onChange={(e) => setInput(e.target.value)}
-							onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-							placeholder="Type a message..."
-						/>
-						<button onClick={handleSend}>→</button>
-					</div>
-				</div>
-			</div>
-
-			<div className="creategame__actions">
-				<button className="creategame__btn creategame__btn--leave" onClick={() => navigate('/game')}>
-					✕ leave room
-				</button>
-				{isHost ? (
-					<button
-						className="creategame__btn creategame__btn--start"
-						onClick={handleStartGame}
-						disabled={players.length < 3 || isStarting}
-					>
-						{isStarting ? '🤖 starting...' : '🤖 start AI game'}
-					</button>
-				) : (
-					<button
-						className="creategame__btn creategame__btn--start"
-						disabled={true}
-					>
-						⧗ waiting for host
-					</button>
 				)}
 			</div>
-
-			{players.length < 3 && (
-				<p className="creategame__start-hint">
-					⚠ need at least 3 players to start.
-				</p>
-			)}
 		</div>
 	);
 };

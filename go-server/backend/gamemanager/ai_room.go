@@ -318,6 +318,7 @@ func (r *AIRoom) RunAIGameLoop(prompt string) {
 	<-r.VoteChan
 
 	results := r.ComputeResults()
+	fmt.Printf("Len Result = %d\n", len(results))
 
 	r.mu.Lock()
 	r.Status = StateAIFinished
@@ -358,6 +359,7 @@ func (r *AIRoom) ComputeResults() []AIResult {
 			Drawing:    d.Drawing,
 			Score:      avg,
 		})
+		fmt.Printf("DEBUG ComputeResults: %d drawings, %d votes\n", len(r.Drawings), len(r.Votes))
 	}
 	return results
 }

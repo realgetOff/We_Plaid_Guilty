@@ -106,9 +106,7 @@ func (d *Dispatcher) HandleLeaveAIGame(ctx *WSContext, msg Message) {
 
 	RoomIA := ctx.CurrentRoom.(*gamemanager.AIRoom)
 	del := RoomIA.LeaveGame(*ctx.CurrUsrID)
-	if AIRoom, ok := ctx.CurrentRoom.(*gamemanager.AIRoom); ok {
-		AIRoom.SendSystemMsg(fmt.Sprintf("%s leave the lobby !", *ctx.CurrUsrName))
-	}
+	fmt.Printf("DEBUG: %s leave game", *ctx.CurrUsrName)
 	if del {
 		ctx.Hub.DeleteRoom(msg.Code)
 		fmt.Printf("DEBUG: Delete ROOM everybody quit\n")

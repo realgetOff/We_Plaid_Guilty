@@ -25,11 +25,11 @@ func (b *BaseRoom) listenForNotifaction() {
 		player, ok := b.Players[notification.PlayerID]
 		b.mu.Unlock()
 
-		if !ok {
-			b.mu.Unlock()
+		if !ok || player == nil || player.Conn == nil{
 			continue
 		}
 		conn := player.Conn
+		// b.mu.Unlock()
 
 		player.WriteMu.Lock()
 		err := conn.WriteJSON(notification.Data)

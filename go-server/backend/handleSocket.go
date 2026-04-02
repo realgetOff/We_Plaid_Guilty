@@ -181,7 +181,7 @@ func (d *Dispatcher) HandleStartAIGame(ctx *WSContext, msg Message) {
 	})
 	fmt.Printf("DEBUG: %s\n", msg.Type)
 	if RoomIA, ok := ctx.CurrentRoom.(*gamemanager.AIRoom); ok {
-		fmt.Printf("DEBUG: RunLoopAI")
+		fmt.Printf("DEBUG: RunLoopAI\n")
 		go RoomIA.RunAIGameLoop(prompt)
 	}
 }

@@ -279,6 +279,7 @@ func (r *AIRoom) RunAIGameLoop(prompt string) {
 	r.mu.Lock()
 	r.Status = StateAIVoting
 	roomID := r.ID
+	fmt.Printf("DEBUG: Etape2\n")
 	allDrawings := make([]*AIDrawing, 0, len(r.Drawings))
 	for _, d := range r.Drawings {
 		allDrawings = append(allDrawings, d)
@@ -289,6 +290,7 @@ func (r *AIRoom) RunAIGameLoop(prompt string) {
 	}
 	r.mu.Unlock()
 
+	fmt.Printf("DEBUG: Etape3\n")
 	for _, pID := range playerIDs {
 		filteredList := make([]map[string]interface{}, 0)
 		for _, d := range allDrawings {
@@ -312,6 +314,7 @@ func (r *AIRoom) RunAIGameLoop(prompt string) {
 		}
 	}
 
+	fmt.Printf("DEBUG: Etape4\n")
 	<-r.VoteChan
 
 	results := r.ComputeResults()
@@ -320,7 +323,7 @@ func (r *AIRoom) RunAIGameLoop(prompt string) {
 	r.Status = StateAIFinished
 	r.mu.Unlock()
 
-	fmt.Printf("DEBUG: gallery")
+	fmt.Printf("DEBUG: gallery\n")
 	r.BroadcastToAll(map[string]interface{}{
 		"type":    "ai_results",
 		"phase":   "gallery",

@@ -126,6 +126,25 @@ func (d *Dispatcher) HandleGetFriend(ctx *WSContext, msg Message) {
 	}
 }
 
+func (d* Dispatcher) HandleRemoveFriend(ctx *WSContext, msg Message) {
+	fmt.Println("DEBUG: HandleRemoveFriend triggered!")
+	if (!RunPipeLine(ctx, msg, d.PipeIsAuth)) {
+		return
+	}
+
+	query := `
+	DELETE FROM friends 
+	WHERE (requester_id = $1 AND addressee_id = (SELECT id FROM users WHERE username = $2))
+   		OR (requester_id = (SELECT id FROM users WHERE username = $2) AND addressee_id = $1);
+	`
+
+	_, err := ctx.Db.Exec(context.Background(), query, ctx.CurrUsrID, msg.Username)
+	if (err != nil) {
+		fmt.Printf("Friend remove failed :: %v\n", err)
+		return
+	}
+}
+
 func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 	fmt.Println("DEBUG: HandleAddFriend triggered!")
 	if (!RunPipeLine(ctx, msg, d.PipeIsAuth)) {
@@ -152,6 +171,7 @@ func NewDispatcher() *Dispatcher {
 	}
 	d.handlers["add_friend"] = d.HandleAddFriend
 	d.handlers["get_friends"] = d.HandleGetFriend
+	d.handlers["remove_friend"] = d.HandleRemoveFriend
 	d.handlers["authenticate"] = d.HandleAuth
 	d.handlers["create_room"] = d.HandleCreateRoom
 	d.handlers["join_room"] = d.HandleJoinRoom

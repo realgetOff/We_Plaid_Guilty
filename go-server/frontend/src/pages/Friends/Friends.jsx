@@ -91,12 +91,11 @@ const Friends = () =>
 
     addListener(onMessage);
 
-	const id = getIDFromToken()
-	console.log("I FUCKING HATE THIS DOGSHIT LANGUAGE", id)
+	// const id = getIDFromToken()
 
     send({
 			type: 'get_friends',
-			id: id
+			id: getIDFromToken()
 		});
 
     return () => removeListener(onMessage);
@@ -144,10 +143,11 @@ const Friends = () =>
   {
     if (!window.confirm(`Remove ${friend.username} from friends?`))
       return;
-
+	console.log("How did we get here?", friend.username)
     send({ 
-      type: 'remove_friend', 
-      friend_id: friend.id 
+      type: 'remove_friend',
+	  id: getIDFromToken(),
+      username: friend.username 
     });
   };
 

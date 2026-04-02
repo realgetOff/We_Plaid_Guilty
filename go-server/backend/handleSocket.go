@@ -80,9 +80,10 @@ type Friend struct {
 
 type FriendsListResponse struct {
 		Type string `json:"type"`
-		Friends []Friend `json:"friends"`
+		Friends []Friend `json:"friends,omitempty"`
 		Friend Friend `json:"friend,omitempty"`
 		Success bool `json:"success,omitempty"`
+		FriendID string `json:"friend_id,omitempty"`
 }
 
 
@@ -137,13 +138,25 @@ func (d* Dispatcher) HandleRemoveFriend(ctx *WSContext, msg Message) {
 	query := `
 	DELETE FROM friends 
 	WHERE (requester_id = $1 AND addressee_id = (SELECT id FROM users WHERE username = $2))
-   		OR (requester_id = (SELECT id FROM users WHERE username = $2) AND addressee_id = $1);
+   		OR (requester_id = (SELECT id FROM users WHERE username = $2) AND addressee_id = $1)
+	RETURNING (SELECT id FROM users WHERE username = $2);
 	`
 
-	_, err := ctx.Db.Exec(context.Background(), query, ctx.CurrUsrID, msg.Username)
+	var friend_id string
+	err := ctx.Db.QueryRow(context.Background(), query, ctx.CurrUsrID, msg.Username).Scan(&friend_id)
 	if (err != nil) {
 		fmt.Printf("Friend remove failed :: %v\n", err)
 		return
+	}
+
+	response := FriendsListResponse {
+		Type: "friend_removed",
+		FriendID: friend_id,
+	}
+
+	err = ctx.Conn.WriteJSON(response)
+	if err != nil {
+		fmt.Printf("Failed to send friend_id on removal: %v", err)
 	}
 }
 

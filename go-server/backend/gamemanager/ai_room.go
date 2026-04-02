@@ -329,6 +329,7 @@ func (r *AIRoom) RunAIGameLoop(prompt string) {
 		"phase":   "gallery",
 		"results": results,
 	})
+	fmt.Printf("DEBUG: Etape5\n")
 }
 
 

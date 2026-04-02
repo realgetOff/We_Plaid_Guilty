@@ -31,18 +31,3 @@ type AIResult struct {
 	Drawing    string  `json:"drawing"`
 	Score      float64 `json:"score"`
 }
-
-// type AIRoom struct {
-	// ID           string
-	// Status       GameStates
-	// Prompt       string
-	// Players      map[string]*Player
-	// Drawings     map[string]*AIDrawing
-	// Votes        []AIVote
-	// DrawingsDone int
-	// VotesDone    int
-	// DrawChan     chan bool
-	// VoteChan     chan bool
-	// MessageChan  chan Notification
-	// mu           sync.Mutex
-// }

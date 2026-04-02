@@ -29,7 +29,6 @@ func (b *BaseRoom) listenForNotifaction() {
 			continue
 		}
 		conn := player.Conn
-		// b.mu.Unlock()
 
 		player.WriteMu.Lock()
 		err := conn.WriteJSON(notification.Data)
@@ -40,24 +39,6 @@ func (b *BaseRoom) listenForNotifaction() {
 		}
 	}
 }
-
-// func (r *Room) listenForNotifaction() {
-	// for notification := range r.MessageChan {
-		// r.mu.Lock()
-		// player, ok := r.Players[notification.PlayerID]
-		// r.mu.Unlock()
-// 
-		// if !ok {
-			// continue
-		// }
-		// player.WriteMu.Lock()
-		// err := player.Conn.WriteJSON(notification.Data)
-		// player.WriteMu.Unlock()
-		// if err != nil {
-			// fmt.Printf("DEBUG: Erreur WriteJSON: %v\n", err)
-		// }
-	// }
-// }
 
 func (r *Room) RunGameLoop() {
 	TotalRound := len(r.Players)

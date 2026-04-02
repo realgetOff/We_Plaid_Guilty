@@ -57,8 +57,8 @@ resource "aws_iam_role_policy" "k3s_kms" {
         Resource = "*"
       },
       {
-        Effect = "Allow"
-        Action = ["ecr:GetAuthorizationToken"]
+        Effect   = "Allow"
+        Action   = ["ecr:GetAuthorizationToken"]
         Resource = "*"
       }
     ]
@@ -123,9 +123,9 @@ resource "aws_iam_instance_profile" "vault_kms" {
 
 
 resource "aws_iam_role_policy_attachment" "ecr_read_only" {
-  role = aws_iam_role.k3s.name
+  role       = aws_iam_role.k3s.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-  depends_on = [ aws_iam_role.k3s ]
+  depends_on = [aws_iam_role.k3s]
 }
 
 resource "aws_iam_instance_profile" "k3s" {

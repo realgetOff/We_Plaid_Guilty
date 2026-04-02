@@ -1,4 +1,4 @@
-.PHONY: help bootstrap init init-upgrade fmt validate plan show output packer deploy deploy-ci deploy-debug ansible kubectl destroy destroy-full clean
+.PHONY: help bootstrap init init-upgrade fmt validate plan show output packer deploy deploy-ci deploy-debug ansible kubectl destroy destroy-full clean plan-all
 
 # ─── Colors ──────────────────────────────────────────────────────────────────
 GREEN  := \033[0;32m
@@ -136,14 +136,14 @@ deploy: ## Deploy full infrastructure (interactive)
 	@echo "$(YELLOW)Uploading secrets to S3...$(RESET)"
 	@aws s3 cp $(ANSIBLE_DIR)/secrets.yml s3://$(BUCKET)/secrets.yml
 	@echo "$(YELLOW)--- Step 3/3: Terraform Vault (policies + roles) ---$(RESET)"
-	@VAULT_ROOT_TOKEN=$$(ansible-vault decrypt \
-	  --vault-password-file $(VAULT_FILE) \
-	  --output - $(ANSIBLE_DIR)/secrets.yml \
-	  | grep vault_root_token \
-	  | awk '{print $$2}' \
-	  | tr -d '"') && \
-	  cd $(TF_VAULT_DIR) && terraform init && \
-	  TF_VAR_vault_root_token=$$VAULT_ROOT_TOKEN terraform apply -auto-approve
+	@cd $(TF_VAULT_DIR) && terraform init && \
+	TF_VAR_vault_root_token=$$(ansible-vault decrypt \
+		--vault-password-file $(VAULT_FILE) \
+		--output - ../../$(ANSIBLE_DIR)/secrets.yml \
+		| grep vault_root_token \
+		| awk '{print $$2}' \
+		| tr -d '"') \
+	terraform apply -auto-approve
 	@echo "$(GREEN)Deployed by $(DEPLOY_USER) — done!$(RESET)"
 
 # CI/CD deployment without prompts — requires ANSIBLE_VAULT_PASSWORD env var
@@ -174,14 +174,14 @@ deploy-ci: bootstrap ## Deploy infrastructure (CI/CD, no prompt)
 	@echo "$(YELLOW)Uploading secrets to S3...$(RESET)"
 	@aws s3 cp $(ANSIBLE_DIR)/secrets.yml s3://$(BUCKET)/secrets.yml
 	@echo "$(YELLOW)--- Step 3/3: Terraform Vault (policies + roles) ---$(RESET)"
-	@VAULT_ROOT_TOKEN=$$(ansible-vault decrypt \
-	  --vault-password-file $(VAULT_FILE) \
-	  --output - $(ANSIBLE_DIR)/secrets.yml \
-	  | grep vault_root_token \
-	  | awk '{print $$2}' \
-	  | tr -d '"') && \
-	  cd $(TF_VAULT_DIR) && terraform init && \
-	  TF_VAR_vault_root_token=$$VAULT_ROOT_TOKEN terraform apply -auto-approve
+	@cd $(TF_VAULT_DIR) && terraform init && \
+	TF_VAR_vault_root_token=$$(ansible-vault decrypt \
+		--vault-password-file $(VAULT_FILE) \
+		--output - ../../$(ANSIBLE_DIR)/secrets.yml \
+		| grep vault_root_token \
+		| awk '{print $$2}' \
+		| tr -d '"') \
+	terraform apply -auto-approve
 	@echo "$(GREEN)Deployed by $$DEPLOY_USER — done!$(RESET)"
 
 # Run Ansible playbook only in verbose mode (-vvv) for debugging
@@ -273,3 +273,9 @@ clean: ## Remove local temporary files
 	@echo "$(YELLOW)Cleaning up temporary files...$(RESET)"
 	@rm -f $(VAULT_FILE) $(ANSIBLE_DIR)/secrets.yml
 	@echo "$(GREEN)Cleanup done.$(RESET)"
+
+plan-all:
+	@echo "--- Planning Infra ---"
+	cd $(TF_INFRA_DIR) && terraform plan -out=infra.tfplan
+	@echo "--- Planning Vault (using remote state) ---"
+	cd $(TF_VAULT_DIR) && terraform plan

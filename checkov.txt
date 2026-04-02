@@ -1,0 +1,172 @@
+terraform scan results:
+
+Passed checks: 35, Failed checks: 18, Skipped checks: 0
+
+Check: CKV_AWS_355: "Ensure no IAM policies documents allow "*" as a statement's resource for restrictable actions"
+	FAILED for resource: aws_iam_role_policy.k3s_kms
+	File: /terraform/infra/iam.tf:39-66
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/bc-aws-355
+Check: CKV_AWS_23: "Ensure every security group and rule has a description"
+	FAILED for resource: aws_security_group.master_sg
+	File: /terraform/infra/networking.tf:1-101
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/networking-31
+Check: CKV_AWS_382: "Ensure no security groups allow egress from 0.0.0.0:0 to port -1"
+	FAILED for resource: aws_security_group.master_sg
+	File: /terraform/infra/networking.tf:1-101
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/bc-aws-382
+Check: CKV_AWS_24: "Ensure no security groups allow ingress from 0.0.0.0:0 to port 22"
+	FAILED for resource: aws_security_group.master_sg
+	File: /terraform/infra/networking.tf:1-101
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/networking-1-port-security
+Check: CKV_AWS_260: "Ensure no security groups allow ingress from 0.0.0.0:0 to port 80"
+	FAILED for resource: aws_security_group.master_sg
+	File: /terraform/infra/networking.tf:1-101
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/ensure-aws-security-groups-do-not-allow-ingress-from-00000-to-port-80
+Check: CKV_AWS_23: "Ensure every security group and rule has a description"
+	FAILED for resource: aws_security_group.worker_sg
+	File: /terraform/infra/networking.tf:103-190
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/networking-31
+Check: CKV_AWS_382: "Ensure no security groups allow egress from 0.0.0.0:0 to port -1"
+	FAILED for resource: aws_security_group.worker_sg
+	File: /terraform/infra/networking.tf:103-190
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/bc-aws-382
+Check: CKV_AWS_24: "Ensure no security groups allow ingress from 0.0.0.0:0 to port 22"
+	FAILED for resource: aws_security_group.worker_sg
+	File: /terraform/infra/networking.tf:103-190
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/networking-1-port-security
+Check: CKV_AWS_126: "Ensure that detailed monitoring is enabled for EC2 instances"
+	FAILED for resource: module.master.aws_instance.name
+	File: /terraform/modules/compute/main.tf:1-16
+	Calling File: /terraform/infra/main.tf:18-29
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-logging-policies/ensure-that-detailed-monitoring-is-enabled-for-ec2-instances
+Check: CKV_AWS_135: "Ensure that EC2 is EBS optimized"
+	FAILED for resource: module.master.aws_instance.name
+	File: /terraform/modules/compute/main.tf:1-16
+	Calling File: /terraform/infra/main.tf:18-29
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/ensure-that-ec2-is-ebs-optimized
+Check: CKV_AWS_79: "Ensure Instance Metadata Service Version 1 is not enabled"
+	FAILED for resource: module.master.aws_instance.name
+	File: /terraform/modules/compute/main.tf:1-16
+	Calling File: /terraform/infra/main.tf:18-29
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/bc-aws-general-31
+Check: CKV_AWS_126: "Ensure that detailed monitoring is enabled for EC2 instances"
+	FAILED for resource: module.worker1.aws_instance.name
+	File: /terraform/modules/compute/main.tf:1-16
+	Calling File: /terraform/infra/main.tf:31-42
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-logging-policies/ensure-that-detailed-monitoring-is-enabled-for-ec2-instances
+Check: CKV_AWS_135: "Ensure that EC2 is EBS optimized"
+	FAILED for resource: module.worker1.aws_instance.name
+	File: /terraform/modules/compute/main.tf:1-16
+	Calling File: /terraform/infra/main.tf:31-42
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/ensure-that-ec2-is-ebs-optimized
+Check: CKV_AWS_79: "Ensure Instance Metadata Service Version 1 is not enabled"
+	FAILED for resource: module.worker1.aws_instance.name
+	File: /terraform/modules/compute/main.tf:1-16
+	Calling File: /terraform/infra/main.tf:31-42
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/bc-aws-general-31
+Check: CKV_AWS_126: "Ensure that detailed monitoring is enabled for EC2 instances"
+	FAILED for resource: module.worker2.aws_instance.name
+	File: /terraform/modules/compute/main.tf:1-16
+	Calling File: /terraform/infra/main.tf:44-55
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-logging-policies/ensure-that-detailed-monitoring-is-enabled-for-ec2-instances
+Check: CKV_AWS_135: "Ensure that EC2 is EBS optimized"
+	FAILED for resource: module.worker2.aws_instance.name
+	File: /terraform/modules/compute/main.tf:1-16
+	Calling File: /terraform/infra/main.tf:44-55
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/ensure-that-ec2-is-ebs-optimized
+Check: CKV_AWS_79: "Ensure Instance Metadata Service Version 1 is not enabled"
+	FAILED for resource: module.worker2.aws_instance.name
+	File: /terraform/modules/compute/main.tf:1-16
+	Calling File: /terraform/infra/main.tf:44-55
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/bc-aws-general-31
+Check: CKV2_AWS_64: "Ensure KMS key Policy is defined"
+	FAILED for resource: aws_kms_key.vault_unseal
+	File: /terraform/infra/kms.tf:1-6
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/bc-aws-2-64
+terraform_plan scan results:
+
+Passed checks: 0, Failed checks: 0, Skipped checks: 0, Parsing errors: 1
+
+dockerfile scan results:
+
+Passed checks: 131, Failed checks: 4, Skipped checks: 0
+
+Check: CKV_DOCKER_2: "Ensure that HEALTHCHECK instructions have been added to container images"
+	FAILED for resource: /go-server/Dockerfile.
+	File: /go-server/Dockerfile:1-92
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/docker-policies/docker-policy-index/ensure-that-healthcheck-instructions-have-been-added-to-container-images
+Check: CKV_DOCKER_3: "Ensure that a user for the container has been created"
+	FAILED for resource: /go-server/Dockerfile.
+	File: /go-server/Dockerfile:1-92
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/docker-policies/docker-policy-index/ensure-that-a-user-for-the-container-has-been-created
+Check: CKV_DOCKER_2: "Ensure that HEALTHCHECK instructions have been added to container images"
+	FAILED for resource: /go-server/test_server/Dockerfile.
+	File: /go-server/test_server/Dockerfile:1-12
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/docker-policies/docker-policy-index/ensure-that-healthcheck-instructions-have-been-added-to-container-images
+Check: CKV_DOCKER_3: "Ensure that a user for the container has been created"
+	FAILED for resource: /go-server/test_server/Dockerfile.
+	File: /go-server/test_server/Dockerfile:1-12
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/docker-policies/docker-policy-index/ensure-that-a-user-for-the-container-has-been-created
+secrets scan results:
+
+Passed checks: 0, Failed checks: 2, Skipped checks: 0
+
+Check: CKV_SECRET_6: "Base64 High Entropy String"
+	FAILED for resource: fd29b30c6f1f89ac904569d60982118bfb16c4c7
+	File: /ansible/roles/go-server/defaults/main.yml:7-8
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/secrets-policies/secrets-policy-index/git-secrets-6
+Check: CKV_SECRET_6: "Base64 High Entropy String"
+	FAILED for resource: bcc4fdac4c691108e28af07ef9759c684a8ea72f
+	File: /helm/app/templates/deployment.yaml:19-20
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/secrets-policies/secrets-policy-index/git-secrets-6
+github_actions scan results:
+
+Passed checks: 42, Failed checks: 2, Skipped checks: 0
+
+Check: CKV_GHA_7: "The build output cannot be affected by user parameters other than the build entry point and the top-level source location. GitHub Actions workflow_dispatch inputs MUST be empty. "
+	FAILED for resource: on(Deploy)
+	File: /.github/workflows/deploy.yml:7-16
+Check: CKV2_GHA_1: "Ensure top-level permissions are not set to write-all"
+	FAILED for resource: on(Deploy)
+	File: /.github/workflows/deploy.yml:0-1
+ansible scan results:
+
+Passed checks: 38, Failed checks: 9, Skipped checks: 0
+
+Check: CKV2_ANSIBLE_1: "Ensure that HTTPS url is used with uri"
+	FAILED for resource: tasks.uri.Wait for Vault API
+	File: /ansible/roles/security_vault/tasks/main.yml:23-34
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/ansible-policies/ansible-networking-policies/ansible-2-1
+Check: CKV2_ANSIBLE_1: "Ensure that HTTPS url is used with uri"
+	FAILED for resource: tasks.uri.Init Vault
+	File: /ansible/roles/security_vault/tasks/main.yml:39-53
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/ansible-policies/ansible-networking-policies/ansible-2-1
+Check: CKV2_ANSIBLE_1: "Ensure that HTTPS url is used with uri"
+	FAILED for resource: tasks.uri.Check init of Vault
+	File: /ansible/roles/security_vault/tasks/main.yml:33-40
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/ansible-policies/ansible-networking-policies/ansible-2-1
+Check: CKV2_ANSIBLE_1: "Ensure that HTTPS url is used with uri"
+	FAILED for resource: tasks.uri.Check if KV v2 is enabled
+	File: /ansible/roles/security_vault/tasks/main.yml:94-104
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/ansible-policies/ansible-networking-policies/ansible-2-1
+Check: CKV2_ANSIBLE_1: "Ensure that HTTPS url is used with uri"
+	FAILED for resource: tasks.uri.Feed Vault for db
+	File: /ansible/roles/security_vault/tasks/main.yml:117-133
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/ansible-policies/ansible-networking-policies/ansible-2-1
+Check: CKV2_ANSIBLE_1: "Ensure that HTTPS url is used with uri"
+	FAILED for resource: tasks.uri.Enable KV v2
+	File: /ansible/roles/security_vault/tasks/main.yml:103-118
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/ansible-policies/ansible-networking-policies/ansible-2-1
+Check: CKV2_ANSIBLE_1: "Ensure that HTTPS url is used with uri"
+	FAILED for resource: tasks.uri.Feed Vault for app
+	File: /ansible/roles/security_vault/tasks/main.yml:132-150
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/ansible-policies/ansible-networking-policies/ansible-2-1
+Check: CKV2_ANSIBLE_1: "Ensure that HTTPS url is used with uri"
+	FAILED for resource: tasks.uri.Feed Vault for elk
+	File: /ansible/roles/security_vault/tasks/main.yml:149-165
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/ansible-policies/ansible-networking-policies/ansible-2-1
+Check: CKV2_ANSIBLE_1: "Ensure that HTTPS url is used with uri"
+	FAILED for resource: tasks.uri.Feed Vault for grafana
+	File: /ansible/roles/security_vault/tasks/main.yml:164-177
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/ansible-policies/ansible-networking-policies/ansible-2-1
+

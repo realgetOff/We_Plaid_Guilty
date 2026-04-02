@@ -86,45 +86,62 @@ type FriendsListResponse struct {
 
 func (d *Dispatcher) HandleGetFriend(ctx *WSContext, msg Message) {
 	fmt.Println("DEBUG: HandleGetFriend triggered!")
-	
 	if (!RunPipeLine(ctx, msg, d.PipeIsAuth)) { 
 		return
 	}
 
-	friend := Friend {
-		ID:	"1",
-		Username: "george",
-		Online: false,
+	query := `	SELECT users.id, users.username, users.is_online 
+				FROM users
+				JOIN friends ON (users.id = friends.requester_id OR users.id = friends.addressee_id)
+				WHERE
+    			(friends.requester_id = $1 OR friends.addressee_id = $1)
+    			AND users.id != $1
+			`
+
+	rows, err := ctx.Db.Query(context.Background(), query, msg.ID)
+	if err != nil {
+		fmt.Printf("Failed to open rows :: %v\n", err)
+		return
 	}
+	defer rows.Close()
 
 	friends := make([]Friend, 0)
-	friends = append(friends, friend)
+	for rows.Next() {
+		var f Friend
+		if err := rows.Scan(&f.ID, &f.Username, &f.Online); err != nil {
+			fmt.Printf("Error scanning friends row :: %v\n", err)
+			continue 
+		}
+		friends = append(friends, f)
+	}
 
 	response := FriendsListResponse {
 		Type: "friends_list",
 		Friends: friends, 
 	}
 
-	err := ctx.Conn.WriteJSON(response)
+	err = ctx.Conn.WriteJSON(response)
 	if err != nil {
 		fmt.Printf("failed to send friends list: %v", err)
 	}
 }
 
 func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
+	fmt.Println("DEBUG: HandleAddFriend triggered!")
 	if (!RunPipeLine(ctx, msg, d.PipeIsAuth)) {
 		return
 	}
 
 	query := `
-		INSERT INTO friendships (requester_id, addressee_id, status)
-		SELECT $1, id, $2
+		INSERT INTO friends (requester_id, addressee_id)
+		SELECT $1, id
 		FROM users
-		WHERE username = $3
+		WHERE username = $2
 	`
-	_, err := ctx.Db.Exec(context.Background(), query, ctx.CurrUsrID, "pending", msg.Username)
+
+	_, err := ctx.Db.Exec(context.Background(), query, ctx.CurrUsrID, msg.Username)
 	if (err != nil) {
-		fmt.Println("Friend invite failed :: Server couldn't create the friendship row in the database")
+		fmt.Printf("Friend invite failed :: %v\n", err)
 		return
 	}
 }

@@ -1,18 +1,13 @@
 package main
 
 import (
-	//"encoding/json"
 	"context"
 	"log"
 	"os"
 	"fmt"
 	"main.go/gamemanager"
-	// following two are for lobby generation
-	//"math/rand/v2"
-	// "sync"
 
 	"github.com/gin-gonic/gin"
-	//"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -23,7 +18,7 @@ func connectToDatabase () (*pgxpool.Pool, error) {
 	db_port := os.Getenv("DB_PORT")
 	db_user := os.Getenv("DB_USER")
 	db_password := os.Getenv("DB_PASSWORD")
-	db_name := os.Getenv("DB_NAME")
+	db_name     := os.Getenv("DB_NAME")
 
 	connection_url := "postgres://" + db_user + ":" + db_password + "@" + db_host + ":" + db_port + "/" + db_name
 
@@ -35,7 +30,6 @@ func connectToDatabase () (*pgxpool.Pool, error) {
 	}
 
 	fmt.Println("Connection to PostgreSQL database successful")
-
 	return db, nil
 }
 
@@ -103,8 +97,6 @@ func main() {
 	serverVars.router.POST("/api/auth/player", func (c *gin.Context){
 		handleGuestAuth(c, serverVars.db)
 	})
-
-	// get the port defined in the environment variables, if theres fuckall, 8080
 
 	port := os.Getenv("PORT")
 	if port == "" {

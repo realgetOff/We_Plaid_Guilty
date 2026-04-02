@@ -64,6 +64,13 @@
       # ignore_errors: true
       when: lookup('fileglob', playbook_dir + '/secrets.yml') != []
 
+    - name: "K3s master"
+      include_role:
+        name: k3s_master
+        apply:
+          tags: k3s_master
+      tags: k3s_master
+
     - name: "Vault"
       include_role:
         name: security_vault
@@ -71,17 +78,40 @@
           tags: security_vault
       tags: security_vault
 
-    - name: "K3s master"
-      include_role: 
-        name: k3s_master
+    - name: "start DB"
+      include_role:
+        name: db
         apply:
-          tags: k3s_master
-      tags: k3s_master
+          tags: db
+      tags: db
+
+    - name: "Wait for Vault Agent Injector"
+      shell: |
+        /usr/local/bin/kubectl wait --for=condition=ready pod \
+          -l app.kubernetes.io/name=vault-agent-injector \
+          -n vault --timeout=120s
+      environment:
+        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+    - name: "Deploy app Go"
+      shell: |
+        /usr/local/bin/helm upgrade --install gartic-app /tmp/gartic-app \
+          --namespace default \
+          --timeout 120s
+      environment:
+        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
 
 - name: "Worker nodes"
   hosts: WORKERS
   become: true
   tasks:
+    - name: "wiat node-token from Master"
+      wait_for:
+        path: /var/lib/rancher/k3s/server/node-token
+        state: present
+        timeout: 60 #j'ai eu un crash par manque de temps
+      delegate_to: "{{ groups['MASTER'][0] }}" #il doit pas le chercher de lui-meme
+
     - name: "Get K3s token from master"
       slurp:
         src: /var/lib/rancher/k3s/server/node-token

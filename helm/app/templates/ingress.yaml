@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gartic-app
+  annotations:
+    nginx.ingress.kubernetes.io/enable-modsecurity: "true"
+    nginx.ingress.kubernetes.io/enable-owasp-modsecurity-crs: "true"
+    # nginx.ingress.kubernetes.io/modsecurity-snippet: |
+      # SecRuleEngine On
+      # SecRequestBodyAccess On
+      # SecAuditLog /var/log/modsec_audit.log
+spec:
+  ingressClassName: nginx
+  rules:
+    # - host: {{ .Values.ingress.host }}
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gartic-app
+                port:
+                  number: {{ .Values.service.port }}

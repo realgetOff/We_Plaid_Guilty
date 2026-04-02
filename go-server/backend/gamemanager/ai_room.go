@@ -205,7 +205,7 @@ func (r *AIRoom) BroadcastChat(playerID string, content string) {
 	var isSystem bool
 
 	if (playerID == "SYSTEM") {
-		userName = "📢 Système"
+		userName = "📢 System"
 		messageId = fmt.Sprintf("%d", time.Now().UnixNano())
 		isSystem = true
 	} else {

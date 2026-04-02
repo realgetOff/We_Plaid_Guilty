@@ -12,10 +12,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { send, addListener, removeListener } from '../../socket';
 import './Profile.css';
-
-const API_URL    = 'https://<host>/api';
-const MOCK_ME    = 'mforest-'; // todo: remplacer par GET /api/auth/me
 
 const FONT_STYLES = ['normal', 'bold', 'italic'];
 const COLORS      =
@@ -24,39 +22,15 @@ const COLORS      =
   '#884400', '#aa00aa', '#008888', '#555555',
 ];
 
-// todo: remplacer par les donnees de l api
-const MOCK_USERS =
-{
-  'mforest-':
-  {
-    id:         1,
-    username:   'mforest-',
-    email:      'mforest@42.fr',
-    online:     true,
-    avatar_url: null,
-    style:      { color: '#000000', font: 'normal' },
-  },
-  'lviravon':
-  {
-    id:         2,
-    username:   'lviravon',
-    email:      'lviravon@42.fr',
-    online:     true,
-    avatar_url: null,
-    style:      { color: '#aa0000', font: 'bold' },
-  },
-};
-
 const Profile = () =>
 {
   const { username } = useParams();
   const navigate     = useNavigate();
   const fileRef      = useRef(null);
 
-  const isMe = username === MOCK_ME; // todo: comparer avec GET /api/auth/me
-
   const [status,     setStatus]     = useState('loading');
   const [user,       setUser]       = useState(null);
+  const [isMe,       setIsMe]       = useState(false);
   const [error,      setError]      = useState('');
   const [editName,   setEditName]   = useState('');
   const [nameError,  setNameError]  = useState('');
@@ -67,28 +41,66 @@ const Profile = () =>
 
   useEffect(() =>
   {
-    const load = async () =>
+    const handler = (msg) =>
     {
-      // todo: remplacer par fetch(`${API_URL}/users/${username}`)
-      await new Promise((r) => setTimeout(r, 400));
-      const found = MOCK_USERS[username];
-
-      if (!found)
+      if (msg.type === 'profile_data')
       {
-        setError('user not found.');
-        setStatus('error');
-        return;
+        if (msg.success)
+        {
+          setUser(msg.user);
+          setIsMe(msg.is_me);
+          setEditName(msg.user.username);
+          setColor(msg.user.style?.color || '#000000');
+          setFont(msg.user.style?.font || 'normal');
+          setAvatarSrc(msg.user.avatar_url);
+          setStatus('ready');
+        }
+        else
+        {
+          setError(msg.error || 'User not found.');
+          setStatus('error');
+        }
       }
-
-      setUser(found);
-      setEditName(found.username);
-      setColor(found.style.color);
-      setFont(found.style.font);
-      setAvatarSrc(found.avatar_url);
-      setStatus('ready');
+      else if (msg.type === 'profile_updated')
+      {
+        if (msg.success)
+        {
+          setUser(prev => ({
+            ...prev,
+            username: msg.user.username,
+            style: msg.user.style,
+            avatar_url: msg.user.avatar_url
+          }));
+          setSaved(true);
+          setTimeout(() => setSaved(false), 2500);
+        }
+        else
+        {
+          setNameError(msg.error || 'Failed to update profile.');
+        }
+      }
+      else if (msg.type === 'avatar_uploaded')
+      {
+        if (msg.success)
+        {
+          setAvatarSrc(msg.avatar_url);
+          setUser(prev => ({ ...prev, avatar_url: msg.avatar_url }));
+        }
+        else
+        {
+          console.error('Avatar upload failed:', msg.error);
+        }
+      }
     };
 
-    load();
+    addListener(handler);
+    
+    send({ 
+      type: 'get_profile', 
+      username: username 
+    });
+
+    return () => removeListener(handler);
   }, [username]);
 
   const handleAvatarClick = () =>
@@ -107,7 +119,13 @@ const Profile = () =>
     const reader = new FileReader();
     reader.onload = (ev) =>
     {
-      setAvatarSrc(ev.target.result);
+      const base64 = ev.target.result;
+      setAvatarSrc(base64);
+      
+      send({
+        type: 'upload_avatar',
+        avatar_data: base64
+      });
     };
     reader.readAsDataURL(file);
   };
@@ -118,31 +136,31 @@ const Profile = () =>
 
     if (!name)
     {
-      setNameError('username cannot be empty.');
+      setNameError('Username cannot be empty.');
       return;
     }
     if (name.length < 2)
     {
-      setNameError('username must be at least 2 characters.');
+      setNameError('Username must be at least 2 characters.');
       return;
     }
     if (name.length > 32)
     {
-      setNameError('username must be under 32 characters.');
+      setNameError('Username must be under 32 characters.');
       return;
     }
 
     setNameError('');
 
-    // todo: remplacer par fetch(`${API_URL}/users/me`, {
-    //   method: 'PATCH',
-    //   body: JSON.stringify({ username: name, color, font, avatar_url: avatarSrc })
-    // })
-    await new Promise((r) => setTimeout(r, 400));
-
-    setUser((u) => ({ ...u, username: name, style: { color, font } }));
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+    send({
+      type: 'update_profile',
+      username: name,
+      style: {
+        color: color,
+        font: font
+      },
+      avatar_url: avatarSrc
+    });
   };
 
   if (status === 'loading')
@@ -172,9 +190,9 @@ const Profile = () =>
 
   let initials = user.username.slice(0, 2).toUpperCase();
 
-  let usernameStyle = { color: user.style.color };
-  if (user.style.font === 'bold')   usernameStyle.fontWeight = 'bold';
-  if (user.style.font === 'italic') usernameStyle.fontStyle  = 'italic';
+  let usernameStyle = { color: user.style?.color || '#000000' };
+  if (user.style?.font === 'bold')   usernameStyle.fontWeight = 'bold';
+  if (user.style?.font === 'italic') usernameStyle.fontStyle  = 'italic';
 
   return (
     <div className="profile">

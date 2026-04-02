@@ -59,7 +59,7 @@ const MacWindow = ({ children }) =>
 			</div>
 			<footer className="hc-footer">
 				<span className="hc-footer__left">
-					ft_transcendence v1.1 · AI Edition
+					ft_transcendence v1.1 · Slaves Edition
 				</span>
 				<div className="hc-footer__links">
 					<Link to="/credits" className="hc-footer__link">Credits</Link>

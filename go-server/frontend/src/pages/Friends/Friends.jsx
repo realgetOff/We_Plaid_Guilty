@@ -16,22 +16,6 @@ import { send, addListener, removeListener }   from '../../socket';
 import { useNotifications }                    from '../../components/common/NotificationContext';
 import './Friends.css';
 
-const API_URL = 'https://<host>/api';
-
-const MOCK_FRIENDS =
-[
-  { id: 2, username: 'lviravon', online: true  },
-  { id: 3, username: 'alice',    online: false },
-  { id: 4, username: 'bob',      online: true  },
-];
-
-// todo: remplacer par les rooms de l api
-const MOCK_ROOMS =
-{
-  'ABCDEF': { status: 'waiting' },
-  'ZZZZZZ': { status: 'started' },
-};
-
 const Friends = () =>
 {
   const navigate            = useNavigate();
@@ -48,80 +32,77 @@ const Friends = () =>
 
   useEffect(() =>
   {
-    const load = async () =>
-    {
-      // todo: remplacer par fetch(`${API_URL}/friends`, { credentials: 'include' })
-      await new Promise((r) => setTimeout(r, 400));
-      setFriends(MOCK_FRIENDS);
-      setLoading(false);
-    };
-
-    load();
-  }, []);
-
-  useEffect(() =>
-  {
     const onMessage = (msg) =>
     {
-      if (msg.type === 'player_joined')
+      if (msg.type === 'friends_list')
       {
-        setFriends((prev) =>
-          prev.map((f) =>
-            msg.players.find((p) => p.username === f.username)
-              ? { ...f, online: true }
-              : f
-          )
-        );
+        setFriends(msg.friends || []);
+        setLoading(false);
+      }
+      else if (msg.type === 'friend_added')
+      {
+        if (msg.success)
+        {
+          setFriends(prev => [...prev, msg.friend]);
+          setSuccess(`${msg.friend.username} added as friend.`);
+          setInput('');
+          setTimeout(() => setSuccess(''), 3000);
+        }
+        else
+          setAddError(msg.error || 'Failed to add friend.');
+      }
+      else if (msg.type === 'friend_removed')
+        setFriends(prev => prev.filter(f => f.id !== msg.friend_id));
+      else if (msg.type === 'friend_online_status')
+      {
+        setFriends(prev => prev.map(f => 
+          f.username === msg.username 
+            ? { ...f, online: msg.online }
+            : f
+        ));
+      }
+      else if (msg.type === 'invite_sent')
+      {
+        if (msg.success)
+          setTimeout(() => setInviting(null), 2000);
+        else
+        {
+          setInviteError(msg.error || 'Failed to send invite.');
+          setInviting(null);
+        }
+      }
+      else if (msg.type === 'room_validation')
+      {
+        if (!msg.valid)
+          setInviteError(msg.error || 'Invalid room code.');
+        else
+          setInviteError('');
+      }
+      else if (msg.type === 'game_invite')
+      {
+        push({
+          kind: 'invite',
+          from: msg.from,
+          code: msg.code,
+        });
       }
     };
 
     addListener(onMessage);
+    
+    send({ type: 'get_friends' });
+
     return () => removeListener(onMessage);
-  }, []);
+  }, [push]);
 
   const handleInviteCodeChange = (e) =>
   {
-    setInviteCode(e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 6));
+    const code = e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 6);
+    setInviteCode(code);
     setInviteError('');
-  };
-
-  const validateInviteCode = async () =>
-  {
-    const code = inviteCode.trim();
-
-    if (!code)
-    {
-      setInviteError('please enter a room code.');
-      return false;
-    }
-    if (!/^[A-Z]{6}$/.test(code))
-    {
-      setInviteError('room code must be exactly 6 letters.');
-      return false;
-    }
-
-    // todo: remplacer par fetch(`${API_URL}/rooms/${code}`)
-    await new Promise((r) => setTimeout(r, 300));
-    const room = MOCK_ROOMS[code];
-
-    if (!room)
-    {
-      setInviteError('room not found. check the code and try again.');
-      return false;
-    }
-    if (room.status === 'started')
-    {
-      setInviteError('this game has already started.');
-      return false;
-    }
-    if (room.status !== 'waiting')
-    {
-      setInviteError('this room is not available.');
-      return false;
-    }
-
-    setInviteError('');
-    return true;
+    
+    if (code.length === 6)
+      send({ type: 'validate_room', code: code });
   };
 
   const handleAdd = async () =>
@@ -130,62 +111,61 @@ const Friends = () =>
 
     if (!username)
     {
-      setAddError('please enter a username.');
+      setAddError('Please enter a username.');
       return;
     }
     if (username.length < 2)
     {
-      setAddError('username must be at least 2 characters.');
+      setAddError('Username must be at least 2 characters.');
       return;
     }
     if (friends.find((f) => f.username === username))
     {
-      setAddError('this user is already your friend.');
+      setAddError('This user is already your friend.');
       return;
     }
 
     setAddError('');
-
-    // todo: remplacer par fetch(`${API_URL}/friends`, {
-    //   method: 'POST',
-    //   credentials: 'include',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ username })
-    // })
-    await new Promise((r) => setTimeout(r, 400));
-
-    setFriends((f) => [...f, { id: Date.now(), username, online: false }]);
-    setSuccess(`${username} added as friend.`);
-    setInput('');
-    setTimeout(() => setSuccess(''), 3000);
+    
+    send({ 
+      type: 'add_friend', 
+      username: username 
+    });
   };
 
   const handleRemove = async (friend) =>
   {
-    if (!window.confirm(`remove ${friend.username} from friends ?`))
+    if (!window.confirm(`Remove ${friend.username} from friends?`))
       return;
 
-    // todo: remplacer par fetch(`${API_URL}/friends/${friend.id}`, {
-    //   method: 'DELETE',
-    //   credentials: 'include'
-    // })
-    await new Promise((r) => setTimeout(r, 300));
-
-    setFriends((f) => f.filter((fr) => fr.id !== friend.id));
+    send({ 
+      type: 'remove_friend', 
+      friend_id: friend.id 
+    });
   };
 
   const handleInvite = async (friend) =>
   {
-    const valid = await validateInviteCode();
-    if (!valid)
+    const code = inviteCode.trim();
+
+    if (!code)
+    {
+      setInviteError('Please enter a room code.');
       return;
+    }
+    if (!/^[A-Z]{6}$/.test(code))
+    {
+      setInviteError('Room code must be exactly 6 letters.');
+      return;
+    }
 
     setInviting(friend.id);
 
-    // todo: websocket send 'invite_friend'
-    send({ type: 'invite_friend', to: friend.username, code: inviteCode.trim() });
-
-    setTimeout(() => setInviting(null), 2000);
+    send({ 
+      type: 'invite_friend', 
+      to: friend.username, 
+      code: code 
+    });
   };
 
   const handleMockNotif = () =>

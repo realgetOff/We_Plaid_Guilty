@@ -8,6 +8,7 @@ services:
       - ./db_password.tpl:/vault/templates/db_password.tpl:ro
       - ./db_name.tpl:/vault/templates/db_name.tpl:ro
       - secrets:/secrets
+      - postg_socket:/var/run/postgresql
     restart: always
     networks:
       - security_net
@@ -23,6 +24,13 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - secrets:/secrets:ro
+      - postg_socket:/var/run/postgresql
+    command: >
+      postgres
+      -c ssl=on
+      -c ssl_cert_file=/secrets/tls-bundle
+      -c ssl_key_file=/secrets/tls-bundle
+      -c ssl_ca_file=/secrets/tls-bundle
     restart: always
     networks:
       - security_net
@@ -40,6 +48,12 @@ volumes:
       type: tmpfs
       device: tmpfs
       o: "size=10m,uid=0"
+  postg_socket:
+    driver: local
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+      o: "size=1m,uid=0"
 
 networks:
   security_net:

@@ -33,3 +33,14 @@ template {
   destination = "/secrets/db_user"
   perms = "0444"
 }
+
+template {
+  contents    = <<EOT
+{{ with pkiCert "pki/issue/db-pki" "common_name=postgres.transcendance.local" "ttl=24h" }}
+{{ .Cert }}{{ .CA }}{{ .Key }}
+{{ end }}
+EOT
+  destination = "/secrets/tls-bundle"
+  perms       = "0444"
+  command     = "psql -h /var/run/postgresql -c 'SELECT pg_reload_conf();' || true"
+}

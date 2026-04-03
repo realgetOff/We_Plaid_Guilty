@@ -56,6 +56,7 @@ module "vault_db" {
   aws_account_id    = data.terraform_remote_state.infra.outputs.aws_account_id
   token_ttl         = 40000
   token_max_ttl     = 86400
+  enable_pki = true
 }
 
 module "vault_nginx" {

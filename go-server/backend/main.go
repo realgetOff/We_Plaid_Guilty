@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
-	// "net/http"
+	"net/http"
 	"os"
 	"os/signal"
 	"sync"
@@ -73,6 +73,7 @@ func reloadConfig(sdb *DBSafe) {
 			Certificates: []tls.Certificate{cert},
 			RootCAs: rootCAs,
 			InsecureSkipVerify: false,
+			ServerName:			db_host,
 		}
 		fmt.Println("Attempting to connect to :" + connection_url)
 
@@ -127,6 +128,7 @@ func connectToDatabase () (*pgxpool.Pool, error) {
 				Certificates: []tls.Certificate{cert},
 				RootCAs:      rootCAs,
 				InsecureSkipVerify: false,
+				ServerName:			host,
 			}
 			fmt.Println("TLS configuration applied for first connection")
 
@@ -219,8 +221,40 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
-		
-	if err := serverVars.router.Run(":" + port); err != nil {
-		log.Fatalf("Failed to run server: %v", err)	
+
+	// -- OLD ROUTER CODE -- //
+
+	// if err := serverVars.router.Run(":" + port); err != nil {
+	// 	log.Fatalf("Failed to run server: %v", err)	
+	// }
+
+	tlsContent, err := os.ReadFile("/vault/secrets/tls")
+	if (err != nil) {
+		log.Fatalf("Failed to read TLS file for the server: %v", err)
+	}
+	serverCert, err := tls.X509KeyPair(tlsContent, tlsContent)
+	if (err != nil){
+		log.Fatalf("Failed to parse key pair: %v", err)
+	}
+
+	caCertPool := x509.NewCertPool()
+	caCertPool.AppendCertsFromPEM(tlsContent)
+
+	tlsConfig := &tls.Config {
+		Certificates:	[]tls.Certificate{serverCert},
+		ClientCAs:		caCertPool,
+		ClientAuth:		tls.RequireAndVerifyClientCert,
+	}
+
+	server := &http.Server{
+		Addr: ":" + port,
+		Handler: serverVars.router,
+		TLSConfig: tlsConfig,
+	}
+
+	fmt.Println(" ~~ Attempting to boot with mTLS on port ", port, " ~~")
+
+	if err := server.ListenAndServeTLS("", ""); err != nil && err != http.ErrServerClosed {
+		log.Fatalf("Failed to run server over mTLS: %v", err)
 	}
 }

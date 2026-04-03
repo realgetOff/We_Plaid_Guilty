@@ -86,20 +86,3 @@ type Room struct {
 	BaseRoom
 	Books map[string]*Book
 }
-
-/*
-* All the others structs are contained in the Room structure.
-*/
-// type Room struct {
-	// ID           string
-	// Phase        string
-	// TotalRound   int
-	// Players      map[string]*Player
-	// Books        map[string]*Book
-	// PlayerOrder  []string  
-	// FinishedChan chan bool
-	// Status       GameStates
-	// MessageChan  chan Notification
-	// 
-	// mu           sync.Mutex
-// }

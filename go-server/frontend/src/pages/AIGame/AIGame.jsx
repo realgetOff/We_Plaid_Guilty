@@ -141,7 +141,7 @@ return (
             </div>
         )}
         {phase === 'gallery' && (
-            <AIGallery chains={results} onBack={() => navigate('/game')} />
+            <AIGallery results={results} onBack={() => navigate('/game')} />
         )}
         {!phase && (
             <div className="game__waiting">

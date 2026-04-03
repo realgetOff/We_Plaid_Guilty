@@ -6,111 +6,6 @@ import (
 
 )
 
-// func (r *AIRoom) AddPlayer(playerID string, name string, conn *websocket.Conn) error {
-	// r.mu.Lock()
-	// defer r.mu.Unlock()
-// 
-	// if len(r.Players) >= 8 {
-		// return fmt.Errorf("Room is full")
-	// }
-// 
-	// newPlayer := &Player{
-		// ID:          playerID,
-		// Name:        name,
-		// Conn:        conn,
-		// IsHost:      len(r.Players) == 0,
-		// IsConnected: true,
-		// IsReady:     false,
-		// Score:       0,
-	// }
-// 
-	// r.Players[playerID] = newPlayer
-	// return nil
-// }
-
-// func (r *AIRoom) listenForNotification() {
-    // for notification := range r.MessageChan {
-        // r.mu.Lock()
-        // player, ok := r.Players[notification.PlayerID]
-        // if !ok {
-            // r.mu.Unlock()
-            // continue
-        // }
-        // conn := player.Conn
-        // writeMu := &player.WriteMu
-        // r.mu.Unlock()
-// 
-        // writeMu.Lock()
-        // err := conn.WriteJSON(notification.Data)
-        // writeMu.Unlock()
-        // if err != nil {
-            // fmt.Printf("AIRoom WriteJSON error: %v\n", err)
-        // }
-    // }
-// }
-
-// func (r *AIRoom) BroadcastToAll(data map[string]interface{}) {
-    // r.mu.Lock()
-    // ids := make([]string, 0, len(r.Players))
-    // for id := range r.Players {
-        // ids = append(ids, id)
-    // }
-    // roomID := r.ID
-    // r.mu.Unlock()
-// 
-    // for _, id := range ids {
-        // payload := make(map[string]interface{}, len(data)+1)
-        // for k, v := range data {
-            // payload[k] = v
-        // }
-        // payload["room"] = roomID
-		// payload["code"] = roomID
-        // r.MessageChan <- Notification{
-            // PlayerID: id,
-            // Data:     payload,
-        // }
-    // }
-// }
-
-// func (r *AIRoom) BroadcastLobbyState() {
-	// r.mu.Lock()
-	// type toNotify struct {
-		// id   string
-		// name string
-		// host bool
-	// }
-	// playerList := make([]map[string]interface{}, 0)
-	// targets    := make([]toNotify, 0)
-// 
-	// for _, p := range r.Players {
-		// playerList = append(playerList, map[string]interface{}{
-			// "id":     p.ID,
-			// "name":   p.Name,
-			// "host":   p.IsHost,
-			// "online": p.IsConnected,
-		// })
-		// targets = append(targets, toNotify{id: p.ID, name: p.Name, host: p.IsHost})
-	// }
-	// roomID := r.ID
-	// r.mu.Unlock()
-// 
-	// for _, target := range targets {
-		// r.MessageChan <- Notification{
-			// PlayerID: target.id,
-			// Data: map[string]interface{}{
-				// "type":    "lobby_state",
-				// "room":    roomID,
-				// "players": playerList,
-				// "me": map[string]interface{}{
-					// "id":   target.id,
-					// "name": target.name,
-					// "host": target.host,
-				// },
-			// },
-		// }
-	// }
-// }
-
 func (r *AIRoom) UpdatePlayerConn(playerID string, conn interface{}) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -123,28 +18,6 @@ func (r *AIRoom) UpdatePlayerConn(playerID string, conn interface{}) {
 	}
 	_ = playerID
 }
-
-// func (r *AIRoom) GetPlayer(playerID string) (*Player, bool) {
-	// r.mu.Lock()
-	// defer r.mu.Unlock()
-	// p, ok := r.Players[playerID]
-	// return p, ok
-// }
-
-// func (r *AIRoom) RemovePlayer(playerID string) {
-	// r.mu.Lock()
-	// defer r.mu.Unlock()
-	// delete(r.Players, playerID)
-// }
-
-// func (r *AIRoom) TransferHost() {
-	// r.mu.Lock()
-	// defer r.mu.Unlock()
-	// for _, p := range r.Players {
-		// p.IsHost = true
-		// break
-	// }
-// }
 
 func (r *AIRoom) SubmitDrawing(playerID string, drawing string, title string, description string) {
 	r.mu.Lock()
@@ -266,7 +139,6 @@ func (r *AIRoom) RunAIGameLoop(prompt string) {
 	r.VotesDone = 0
 	r.mu.Unlock()
 
-	fmt.Printf("DEBUG: Etape1")
 	r.BroadcastToAll(map[string]interface{}{
 		"type":   "ai_game_state",
 		"phase":  "draw",
@@ -275,7 +147,6 @@ func (r *AIRoom) RunAIGameLoop(prompt string) {
 
 	<-r.DrawChan
 
-	// PHASE DE VOTE : Envoi personnalisé à chaque joueur
 	r.mu.Lock()
 	r.Status = StateAIVoting
 	roomID := r.ID
@@ -283,6 +154,7 @@ func (r *AIRoom) RunAIGameLoop(prompt string) {
 	for _, d := range r.Drawings {
 		allDrawings = append(allDrawings, d)
 	}
+
 	playerIDs := make([]string, 0, len(r.Players))
 	for id := range r.Players {
 		playerIDs = append(playerIDs, id)
@@ -320,12 +192,13 @@ func (r *AIRoom) RunAIGameLoop(prompt string) {
 	r.Status = StateAIFinished
 	r.mu.Unlock()
 
-	fmt.Printf("DEBUG: gallery")
+	fmt.Printf("DEBUG: gallery\n")
 	r.BroadcastToAll(map[string]interface{}{
 		"type":    "ai_results",
 		"phase":   "gallery",
 		"results": results,
 	})
+	fmt.Printf("DEBUG: Etape5\n")
 }
 
 
@@ -354,6 +227,7 @@ func (r *AIRoom) ComputeResults() []AIResult {
 			Drawing:    d.Drawing,
 			Score:      avg,
 		})
+		fmt.Printf("DEBUG ComputeResults: %d drawings, %d votes\n", len(r.Drawings), len(r.Votes))
 	}
 	return results
 }

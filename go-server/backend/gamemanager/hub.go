@@ -49,7 +49,7 @@ func NewAIRoom(id string) *AIRoom {
 			ID:          id,
 			Status:      StateAIWaiting,
 			Players:     make(map[string]*Player),
-			MessageChan: make(chan Notification, 100),
+			MessageChan: make(chan Notification, 200),
 		},
 		Drawings:    make(map[string]*AIDrawing),
 		Votes:       []AIVote{},

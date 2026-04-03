@@ -16,7 +16,7 @@ func socketLogic(conn *websocket.Conn, serverVars *serverVarsStruct) {
 	dispatcher := NewDispatcher()
 
 	ctx := &WSContext{
-		Db: serverVars.db,
+		Db: serverVars.db.GetPool(),
 		Conn: conn,
 		Hub: serverVars.globalHub,
 	}

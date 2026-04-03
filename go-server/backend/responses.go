@@ -7,7 +7,7 @@ import (
 	"context"
 	"net/http"
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5/pgxpool"
+	// "github.com/jackc/pgx/v5/pgxpool"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -119,10 +119,10 @@ func generateJWT(userID string, guestName string) (string, error) {
 }
 
 
-func handleGuestAuth(c *gin.Context, db *pgxpool.Pool){
+func handleGuestAuth(c *gin.Context, dbs *DBSafe){
 	guestName := fmt.Sprintf("guest_%d%d", rand.Intn(99), time.Now().UnixNano()%1000)
 	var userID string
-
+	db := dbs.GetPool()	
 	query := "INSERT INTO users (username, is_guest) VALUES ($1, TRUE) RETURNING id;"
 	err := db.QueryRow(context.Background(), query, guestName).Scan(&userID);
 

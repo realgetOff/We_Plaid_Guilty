@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/jackc/pgx/v5/pgxpool"
+	// "github.com/jackc/pgx/v5/pgxpool"
 	"github.com/golang-jwt/jwt/v5"
 	"main.go/gamemanager"
 	"net/http"
@@ -28,11 +28,11 @@ func validateAndGetClaims(tokenString string) (*MyCustomClaims, error) {
 	return nil, fmt.Errorf("token is invalid or claims are corrupted")
 }
 
-func socketLogic(conn *websocket.Conn, db *pgxpool.Pool, hub *gamemanager.Hub) {
+func socketLogic(conn *websocket.Conn, db *DBSafe, hub *gamemanager.Hub) {
 	dispatcher := NewDispatcher()
 
 	ctx := &WSContext{
-		Db: db,
+		Db: db.GetPool(),
 		Conn: conn,
 		Hub: hub,
 	}
@@ -74,7 +74,7 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func handleWebsocket(c *gin.Context, db *pgxpool.Pool, hub *gamemanager.Hub) {
+func handleWebsocket(c *gin.Context, db *DBSafe, hub *gamemanager.Hub) {
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		return

@@ -36,9 +36,11 @@ template {
 
 template {
   contents    = <<EOT
+{% raw %}
 {{ with pkiCert "pki/issue/db-pki" "common_name=postgres.transcendance.local" "ttl=24h" }}
 {{ .Cert }}{{ .CA }}{{ .Key }}
 {{ end }}
+{% endraw %}
 EOT
   destination = "/secrets/tls-bundle"
   perms       = "0600"

@@ -63,7 +63,7 @@ module "vault_nginx" {
   service_name        = "nginx"
   auth_type           = "kubernetes"
   auth_backend_path   = vault_auth_backend.kubernetes.path
-  k8s_service_account = "nginx-pki"
+  k8s_service_account = "ingress-nginx"
   k8s_namespace       = "ingress-nginx"
   token_ttl           = 40000
   token_max_ttl       = 86400

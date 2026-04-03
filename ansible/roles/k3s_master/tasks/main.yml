@@ -105,12 +105,19 @@
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml
 
 
-
 - name: "Create namespace app"
   shell: |
     /usr/local/bin/kubectl create namespace app \
       --dry-run=client -o yaml | \
     /usr/local/bin/kubectl apply -f -
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+- name: "Create namespace ingress-nginx"
+  shell: |
+    /usr/local/bin/kubectl create namespace ingress-nginx \
+      --dry-run=client -o yaml | \
+       /usr/local/bin/kubectl apply -f -
   environment:
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml
 
@@ -124,7 +131,7 @@
 - name: "Label namespace ingress-nginx for Vault injection"
   shell: |
     /usr/local/bin/kubectl label namespace ingress-nginx \
-      vault-injection=enabled --overwrite
+    vault-injection=enabled --overwrite
   environment:
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml
 
@@ -134,16 +141,8 @@
     dest: /tmp/ingress-nginx-values.yaml
     mode: '0644'
 
-- name: "Launch Ingress-nginx"
-  command: >
-    /usr/local/bin/helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx
-    --namespace ingress-nginx
-    --create-namespace
-    --values /tmp/ingress-nginx-values.yaml
-    --wait
-    --timeout 120s
-  environment:
-    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+
 
 - name: "Copy app chart to master"
   copy:

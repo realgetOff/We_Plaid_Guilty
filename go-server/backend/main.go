@@ -183,7 +183,7 @@ func main() {
 
 	serverVars := NewServerStructure()
 
-	defer serverVars.db.Pool.Close()
+	defer serverVars.db.GetPool().Close()
 
 	// if err := loadSecretsFromVault(); err != nil {
 	// 	log.Fatalf("Failed to load secrets from Vault: %v", err)

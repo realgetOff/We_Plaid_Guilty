@@ -139,7 +139,6 @@ func (r *AIRoom) RunAIGameLoop(prompt string) {
 	r.VotesDone = 0
 	r.mu.Unlock()
 
-	fmt.Printf("DEBUG: Etape1")
 	r.BroadcastToAll(map[string]interface{}{
 		"type":   "ai_game_state",
 		"phase":  "draw",
@@ -148,22 +147,20 @@ func (r *AIRoom) RunAIGameLoop(prompt string) {
 
 	<-r.DrawChan
 
-	// PHASE DE VOTE : Envoi personnalisé à chaque joueur
 	r.mu.Lock()
 	r.Status = StateAIVoting
 	roomID := r.ID
-	fmt.Printf("DEBUG: Etape2\n")
 	allDrawings := make([]*AIDrawing, 0, len(r.Drawings))
 	for _, d := range r.Drawings {
 		allDrawings = append(allDrawings, d)
 	}
+
 	playerIDs := make([]string, 0, len(r.Players))
 	for id := range r.Players {
 		playerIDs = append(playerIDs, id)
 	}
 	r.mu.Unlock()
 
-	fmt.Printf("DEBUG: Etape3\n")
 	for _, pID := range playerIDs {
 		filteredList := make([]map[string]interface{}, 0)
 		for _, d := range allDrawings {
@@ -187,11 +184,9 @@ func (r *AIRoom) RunAIGameLoop(prompt string) {
 		}
 	}
 
-	fmt.Printf("DEBUG: Etape4\n")
 	<-r.VoteChan
 
 	results := r.ComputeResults()
-	fmt.Printf("Len Result = %d\n", len(results))
 
 	r.mu.Lock()
 	r.Status = StateAIFinished

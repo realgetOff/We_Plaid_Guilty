@@ -3,12 +3,16 @@ package main
 import (
 	//"encoding/json"
 	"context"
-	"log"
-	"os"
 	"fmt"
-	"strings"
-	"main.go/gamemanager"
+	"log"
 	"net/http"
+	"os"
+	// "os/signal"
+	"strings"
+	// "syscall"
+
+	"main.go/gamemanager"
+
 	// following two are for lobby generation
 	//"math/rand/v2"
 	// "sync"
@@ -25,6 +29,14 @@ code: room code
 omitempty: omits empty strings, lowering network traffic
 
 */
+
+func realoadConfig(*pgxpool.Pool) {
+	
+	ctx, stop :=
+	for {
+
+	}
+}
 
 var globalHub *gamemanager.Hub
 
@@ -43,7 +55,7 @@ func connectToDatabase () (*pgxpool.Pool, error) {
 	db, err := pgxpool.New(context.Background(), connection_url)
 	if err != nil {
 		return nil, err
-	}
+		}
 
 	fmt.Println("Connection to PostgreSQL database successful")
 

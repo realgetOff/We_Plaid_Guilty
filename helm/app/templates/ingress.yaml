@@ -9,9 +9,7 @@ metadata:
       # SecRuleEngine On
       # SecRequestBodyAccess On
       # SecAuditLog /var/log/modsec_audit.log
-    nginx.ingress.kubernetes.io/server-snippet: |
-      ssl_certificate /vault/secrets/tls-cert;
-      ssl_certificate_key /vault/secrets/tls-key;
+
 spec:
   ingressClassName: nginx
   rules:

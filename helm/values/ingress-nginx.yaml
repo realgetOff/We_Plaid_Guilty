@@ -9,24 +9,21 @@ controller:
     vault.hashicorp.com/agent-inject: "true"
     vault.hashicorp.com/agent-init-first: "true"
     vault.hashicorp.com/role: "nginx-role"
-    vault.hashicorp.com/agent-inject-secret-tls-cert: "pki/issue/nginx-pki"
-    vault.hashicorp.com/agent-inject-template-tls-cert: |
+    vault.hashicorp.com/agent-inject-secret-tls: "pki/issue/nginx-pki"
+    vault.hashicorp.com/agent-inject-template-tls: |
       {{`{{ with pkiCert "pki/issue/nginx-pki" "common_name=app.transcendance.local" "ttl=24h" }}`}}
-      {{`{{ .Cert }}{{ .CA }}{{ end }}`}}
-    vault.hashicorp.com/agent-inject-secret-tls-key: "pki/issue/nginx-pki"
-    vault.hashicorp.com/agent-inject-template-tls-key: |
-      {{`{{ with pkiCert "pki/issue/nginx-pki" "common_name=app.transcendance.local" "ttl=24h" }}`}}
-      {{`{{ .PrivateKey }}{{ end }}`}}
-    vault.hashicorp.com/agent-inject-command-tls-cert: |
+      {{`{{ .Cert }}{{ .CA }}{{ .Key }}`}}
+      {{`{{ end }}`}}
+    vault.hashicorp.com/agent-inject-command-tls: |
       kill -HUP $(pgrep -x nginx | head -1)
 
   config:
     enable-modsecurity: "true"
     enable-owasp-modsecurity-crs: "true"
     ssl-protocols: "TLSv1.2 TLSv1.3"
-
-  extraArgs:
-    default-ssl-certificate: ""
+    server-snippet: |
+      ssl_certificate /vault/secrets/tls;
+      ssl_certificate_key /vault/secrets/tls;
 
   allowSnippetAnnotations: true
 

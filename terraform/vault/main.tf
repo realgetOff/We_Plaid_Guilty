@@ -37,7 +37,7 @@ module "vault_app" {
   service_name        = "app"
   auth_type           = "kubernetes"
   auth_backend_path   = vault_auth_backend.kubernetes.path
-  k8s_service_account = "app-app"
+  k8s_service_account = "gartic-app"
   k8s_namespace       = "app"
   token_ttl           = 40000
   token_max_ttl       = 86400

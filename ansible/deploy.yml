@@ -96,8 +96,17 @@
     - name: "Deploy app Go"
       shell: |
         /usr/local/bin/helm upgrade --install gartic-app /tmp/gartic-app \
-          --namespace default \
+          --namespace app \
           --timeout 120s
+      environment:
+        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+    - name: "Launch Ingress-nginx"
+      command: >
+        /usr/local/bin/helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx
+        --namespace ingress-nginx
+        --values /tmp/ingress-nginx-values.yaml
+        --timeout 120s
       environment:
         KUBECONFIG: /etc/rancher/k3s/k3s.yaml
 

@@ -105,20 +105,44 @@
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml
 
 
-#WARN FAIRE LA CHART HELM ET DEGAGER LES --SET
-- name: "Lauch Ingress-nginx"
-  command: >
-    /usr/local/bin/helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx
-    --namespace ingress-nginx
-    --create-namespace
-    --set controller.config.enable-modsecurity=true
-    --set controller.config.enable-owasp-modsecurity-crs=true
-    --set controller.config.modsecurity-snippet="SecRuleEngine On"
-    --set controller.allowSnippetAnnotations=true
-    --wait
-    --timeout 120s
+- name: "Create namespace app"
+  shell: |
+    /usr/local/bin/kubectl create namespace app \
+      --dry-run=client -o yaml | \
+    /usr/local/bin/kubectl apply -f -
   environment:
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+- name: "Create namespace ingress-nginx"
+  shell: |
+    /usr/local/bin/kubectl create namespace ingress-nginx \
+      --dry-run=client -o yaml | \
+       /usr/local/bin/kubectl apply -f -
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+- name: "Label namespace app for Vault injection"
+  shell: |
+    /usr/local/bin/kubectl label namespace app \
+      vault-injection=enabled --overwrite
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+- name: "Label namespace ingress-nginx for Vault injection"
+  shell: |
+    /usr/local/bin/kubectl label namespace ingress-nginx \
+    vault-injection=enabled --overwrite
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+- name: "Copy ingress-nginx values"
+  copy:
+    src: "{{ playbook_dir }}/../helm/values/ingress-nginx.yaml"
+    dest: /tmp/ingress-nginx-values.yaml
+    mode: '0644'
+
+
+
 
 - name: "Copy app chart to master"
   copy:
@@ -133,7 +157,7 @@
       --docker-server=437836833311.dkr.ecr.eu-north-1.amazonaws.com \
       --docker-username=AWS \
       --docker-password=$TOKEN \
-      --namespace=default \
+      --namespace=app \
       --dry-run=client -o yaml | \
     /usr/local/bin/kubectl apply -f -
   environment:

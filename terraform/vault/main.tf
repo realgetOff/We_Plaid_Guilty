@@ -37,14 +37,14 @@ module "vault_app" {
   service_name        = "app"
   auth_type           = "kubernetes"
   auth_backend_path   = vault_auth_backend.kubernetes.path
-  k8s_service_account = "default"
-  k8s_namespace       = "default"
+  k8s_service_account = "gartic-app"
+  k8s_namespace       = "app"
   token_ttl           = 40000
   token_max_ttl       = 86400
   extra_paths         = ["secret/data/db/*"]
   enable_pki          = true
   pki_backend         = vault_mount.pki.path
-  allowed_domains     = ["transcendance.local", "svc.cluster.local", "default.svc.cluster.local"]
+  allowed_domains     = ["transcendance.local", "svc.cluster.local", "app.svc.cluster.local", "default.svc.cluster.local"]
 }
 
 module "vault_db" {
@@ -56,4 +56,18 @@ module "vault_db" {
   aws_account_id    = data.terraform_remote_state.infra.outputs.aws_account_id
   token_ttl         = 40000
   token_max_ttl     = 86400
+}
+
+module "vault_nginx" {
+  source              = "../modules/vault-config"
+  service_name        = "nginx"
+  auth_type           = "kubernetes"
+  auth_backend_path   = vault_auth_backend.kubernetes.path
+  k8s_service_account = "ingress-nginx"
+  k8s_namespace       = "ingress-nginx"
+  token_ttl           = 40000
+  token_max_ttl       = 86400
+  enable_pki          = true
+  pki_backend         = vault_mount.pki.path
+  allowed_domains     = ["transcendance.local", "ingress-nginx.svc.cluster.local"]
 }

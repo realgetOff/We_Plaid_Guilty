@@ -26,11 +26,20 @@ spec:
           JWT_SECRET={{`{{ .Data.data.jwt_secret }}`}}
           API_KEY={{`{{ .Data.data.api_key }}`}}
           {{`{{ end }}`}}
+        vault.hashicorp.com/agent-inject-secret-tls: "pki/issue/app-pki"
+        vault.hashicorp.com/agent-inject-template-tls: |
+          {{`{{ with pkiCert "pki/issue/app-pki" "common_name=gartic-app.app.svc.cluster.local" "ttl=24h" }}`}}
+          {{`{{ .Cert }}`}}
+          {{`{{ .CA }}`}}
+          {{`{{ .Key }}`}}
+          {{`{{ end }}`}}
+
     spec:
       # hostAliases:
         # - ip: "10.43.216.181"
       # hostnames:
         # - "vault"
+      serviceAccountName: gartic-app
       imagePullSecrets:
         - name: ecr-secret
       containers:

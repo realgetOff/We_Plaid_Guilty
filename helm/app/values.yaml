@@ -16,6 +16,9 @@ vault:
   role: "app-role"
   addr: "http://vault.vault.svc.cluster.local"
   port: "8200"
+  pki:
+    commonName: "gartic-app.app.svc.cluster.local"
+    ttl: "24h"
 
 db:
   host: "172.17.0.1"

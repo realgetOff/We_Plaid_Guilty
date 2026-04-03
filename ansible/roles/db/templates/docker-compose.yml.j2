@@ -1,6 +1,7 @@
 services:
   vault-agent:
     image: hashicorp/vault:{{ vault_version }}
+    user: "999:999"
     command: agent -config=/vault/config/agent.hcl
     volumes:
       - ./agent.hcl:/vault/config/agent.hcl:ro
@@ -47,13 +48,13 @@ volumes:
     driver_opts:
       type: tmpfs
       device: tmpfs
-      o: "size=10m,uid=0"
+      o: "size=10m,uid=999,gid=999"
   postg_socket:
     driver: local
     driver_opts:
       type: tmpfs
       device: tmpfs
-      o: "size=1m,uid=0"
+      o: "size=1m,uid=999,gid=999"
 
 networks:
   security_net:

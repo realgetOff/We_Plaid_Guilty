@@ -19,19 +19,19 @@ auto_auth {
 template {
   source = "/vault/templates/db_name.tpl"
   destination = "/secrets/db_name"
-  perms = "0444"
+  perms = "0600"
 }
 
 template {
   source = "/vault/templates/db_password.tpl"
   destination = "/secrets/db_password"
-  perms = "0444"
+  perms = "0600"
 }
 
 template {
   source = "/vault/templates/db_user.tpl"
   destination = "/secrets/db_user"
-  perms = "0444"
+  perms = "0600"
 }
 
 template {
@@ -41,6 +41,6 @@ template {
 {{ end }}
 EOT
   destination = "/secrets/tls-bundle"
-  perms       = "0444"
+  perms       = "0600"
   command     = "psql -h /var/run/postgresql -c 'SELECT pg_reload_conf();' || true"
 }

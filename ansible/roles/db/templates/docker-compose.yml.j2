@@ -3,6 +3,9 @@ services:
     image: hashicorp/vault:{{ vault_version }}
     user: "999:999"
     command: agent -config=/vault/config/agent.hcl
+    environment:
+      - SKIP_SETCAP=true
+      - SKIP_CHOWN=true
     volumes:
       - ./agent.hcl:/vault/config/agent.hcl:ro
       - ./db_user.tpl:/vault/templates/db_user.tpl:ro

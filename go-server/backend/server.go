@@ -20,13 +20,17 @@ func socketLogic(client *Client, serverVars *serverVarsStruct) {
 		chub: serverVars.ClientHub,
 	}
 
+	defer func() {
+		serverVars.ClientHub.mu.Lock()
+        delete(serverVars.ClientHub.Clients, *client.CurrUsrID)
+        serverVars.ClientHub.mu.Unlock()
+	} ()
 	for {
 		var msg Message
 		err := client.Conn.ReadJSON(&msg)
 		if err != nil {
 			break
 		}
-
 		dispatcher.Dispatch(&ctx, msg)
 	}
 
@@ -62,33 +66,17 @@ var upgrader = websocket.Upgrader{
 }
 
 func handleWebsocket(c *gin.Context, serverVars *serverVarsStruct) {
-
-	userID := c.GetString("userID")
-    userName := c.GetString("userName")
-
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		return
 	}
 
 	client := &Client{
-        CurrUsrID:   &userID,
-        CurrUsrName: &userName,
         Conn:        conn,
-        Hub:         serverVars.globalHub, // Your gamemanager.Hub
+        Hub:         serverVars.globalHub,
     }
-
-    // 4. Register the client in the Global Registry
-    serverVars.ClientHub.mu.Lock()
-    serverVars.ClientHub.Clients[userID] = client
-    serverVars.ClientHub.mu.Unlock()
 	
-	defer func() {
-		serverVars.ClientHub.mu.Lock()
-        delete(serverVars.ClientHub.Clients, userID)
-        serverVars.ClientHub.mu.Unlock()
-        conn.Close()
-	}()
+	defer conn.Close()
 
 	socketLogic(client, serverVars)
 }

@@ -191,7 +191,7 @@ func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 		SELECT $1, id
 		FROM users
 		WHERE username = $2
-		RETURNING id;
+		RETURNING addressee_id;
 	`
 
 	var addressee_id string
@@ -223,6 +223,23 @@ func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 	err = ctx.client.Conn.WriteJSON(response)
 	if err != nil {
 		fmt.Printf("failed to send friends list: %v", err)
+	}
+
+	response = FriendsListResponse {
+		Friend : Friend {
+			ID : *ctx.client.CurrUsrID,
+			Username : *ctx.client.CurrUsrName,
+			Online : true,
+		},
+		Type : "friend_added",
+		Success : true,
+	}
+
+	fmt.Printf("DEBUG: SENDING TYPE %v SUCCESS %v ID %v USERNAME %v ONLINE %v\n", "friend_added", true, addressee_id, msg.Username, false)
+
+	err = ctx.chub.Clients[addressee_id].Conn.WriteJSON(response)
+	if err != nil {
+		fmt.Printf("failed to send friends list to addressee: %v", err)
 	}
 }
 
@@ -423,8 +440,14 @@ func (d *Dispatcher) HandleAuth(ctx *WSContext, msg Message) {
 		websocket.FormatCloseMessage(4000, "token expired"))
 		return
 	}
+	
 	ctx.client.CurrUsrName = &claims.Username
 	ctx.client.CurrUsrID = &claims.UserID
+
+    ctx.chub.mu.Lock()
+    ctx.chub.Clients[claims.UserID] = ctx.client
+    ctx.chub.mu.Unlock()
+
 	fmt.Printf("WS Authenticated: %s (ID: %s)\n", *ctx.client.CurrUsrName, *ctx.client.CurrUsrID)
 }
 

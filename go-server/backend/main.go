@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/http"
+	"net/http" // UNCOMMENT FOR CI/CD DEPLOYMENT
 	"os"
 	"os/signal"
 	"sync"
@@ -31,6 +31,7 @@ type DBSafe struct {
 
 type serverVarsStruct struct { // the name is temporary
 	globalHub *gamemanager.Hub
+	ClientHub *ClientHub
 	router *gin.Engine
 	db DBSafe
 	//db *pgxpool.Pool
@@ -171,10 +172,18 @@ func NewServerStructure () *serverVarsStruct {
 	}
 	r := gin.Default();
 
+
+
+	chub := &ClientHub{
+        Clients: make(map[string]*Client), // Critical: initialize the map
+        Db:      dbPool,                  // Your pgxpool
+    }
+
 	return &serverVarsStruct{
 		globalHub:		hub,
 		router:			r,
 		db:				dbs,
+		ClientHub:		chub,
 	}
 }
 
@@ -223,10 +232,13 @@ func main() {
 	}
 
 	// -- OLD ROUTER CODE -- //
+	
 
 	// if err := serverVars.router.Run(":" + port); err != nil {
 	// 	log.Fatalf("Failed to run server: %v", err)	
 	// }
+
+	// UNCOMMENT NET/HTTP BEFORE DEPLOYING VIA CI/CD
 
 	tlsContent, err := os.ReadFile("/vault/secrets/tls")
 	if (err != nil) {

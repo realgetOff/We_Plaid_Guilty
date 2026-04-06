@@ -12,34 +12,34 @@ import (
 )
 
 
-func socketLogic(conn *websocket.Conn, serverVars *serverVarsStruct) {
+func socketLogic(client *Client, serverVars *serverVarsStruct) {
 	dispatcher := NewDispatcher()
 
-	ctx := &WSContext{
-		Db: serverVars.db.GetPool(),
-		Conn: conn,
-		Hub: serverVars.globalHub,
+	ctx := WSContext {
+		client: client,
+		chub: serverVars.ClientHub,
 	}
+
 	for {
 		var msg Message
-		err := conn.ReadJSON(&msg)
+		err := client.Conn.ReadJSON(&msg)
 		if err != nil {
 			break
 		}
 
-		dispatcher.Dispatch(ctx, msg)
+		dispatcher.Dispatch(&ctx, msg)
 	}
 
-	if ctx.CurrentRoom != nil && *ctx.CurrUsrID != "" {
+	if client.CurrentRoom != nil && *client.CurrUsrID != "" {
 		isHost := false
-		base := ctx.CurrentRoom.GetBase()
-		if p, err := base.GetPlayer(*ctx.CurrUsrID); err == nil {
+		base := client.CurrentRoom.GetBase()
+		if p, err := base.GetPlayer(*client.CurrUsrID); err == nil {
 			isHost = p.IsHost
 		}
 
-		base.RemovePlayer(*ctx.CurrUsrID)
-		if classicRoom, ok := ctx.CurrentRoom.(*gamemanager.Room); ok {
-			classicRoom.SendSystemMsg(fmt.Sprintf("%s leave the lobby !", *ctx.CurrUsrName))
+		base.RemovePlayer(*client.CurrUsrID)
+		if classicRoom, ok := client.CurrentRoom.(*gamemanager.Room); ok {
+			classicRoom.SendSystemMsg(fmt.Sprintf("%s leave the lobby !", *client.CurrUsrName))
 		}
 
 		if len(base.Players) == 0 {
@@ -62,10 +62,33 @@ var upgrader = websocket.Upgrader{
 }
 
 func handleWebsocket(c *gin.Context, serverVars *serverVarsStruct) {
+
+	userID := c.GetString("userID")
+    userName := c.GetString("userName")
+
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		return
 	}
-	defer conn.Close()
-	socketLogic(conn, serverVars)
+
+	client := &Client{
+        CurrUsrID:   &userID,
+        CurrUsrName: &userName,
+        Conn:        conn,
+        Hub:         serverVars.globalHub, // Your gamemanager.Hub
+    }
+
+    // 4. Register the client in the Global Registry
+    serverVars.ClientHub.mu.Lock()
+    serverVars.ClientHub.Clients[userID] = client
+    serverVars.ClientHub.mu.Unlock()
+	
+	defer func() {
+		serverVars.ClientHub.mu.Lock()
+        delete(serverVars.ClientHub.Clients, userID)
+        serverVars.ClientHub.mu.Unlock()
+        conn.Close()
+	}()
+
+	socketLogic(client, serverVars)
 }

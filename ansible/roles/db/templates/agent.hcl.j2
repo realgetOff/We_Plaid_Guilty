@@ -44,5 +44,5 @@ template {
 EOT
   destination = "/secrets/tls-bundle"
   perms       = "0600"
-  command     = "psql -h /var/run/postgresql -c 'SELECT pg_reload_conf();' || true"
+  command     = "pkill -HUP postgres || true"
 }

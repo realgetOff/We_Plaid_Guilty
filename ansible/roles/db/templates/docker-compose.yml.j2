@@ -1,7 +1,7 @@
 services:
   vault-agent:
     image: hashicorp/vault:{{ vault_version }}
-    user: "999:999"
+    user: "70:70"
     command: agent -config=/vault/config/agent.hcl
     environment:
       - SKIP_SETCAP=true
@@ -18,8 +18,11 @@ services:
       - security_net
     extra_hosts:
       - "vault:host-gateway"
+    entrypoint: >
+      sh -c "chmod 700 /secrets && vault agent -config=/vault/config/agent.hcl"
 
   db:
+    pid: service:vault-agent
     image: postgres:{{ db_version }}
     environment:
       - POSTGRES_USER_FILE=/secrets/db_user
@@ -51,13 +54,13 @@ volumes:
     driver_opts:
       type: tmpfs
       device: tmpfs
-      o: "size=10m,uid=999,gid=999,mode=700"
+      o: "size=10m,uid=70,gid=70,mode=700"
   postg_socket:
     driver: local
     driver_opts:
       type: tmpfs
       device: tmpfs
-      o: "size=1m,uid=999,gid=999,mode=750"
+      o: "size=1m,uid=70,gid=70,mode=750"
 
 networks:
   security_net:

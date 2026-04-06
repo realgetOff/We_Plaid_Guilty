@@ -7,6 +7,7 @@ import (
 	"net/http" // UNCOMMENT FOR CI/CD DEPLOYMENT
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"crypto/tls"
 	"crypto/x509"
@@ -188,6 +189,22 @@ func NewServerStructure () *serverVarsStruct {
 }
 
 
+func addnewlinestotls() {
+	filePath := "./tls"
+	delimiter := "-----END CERTIFICATE-----"
+	// We replace the delimiter with itself + a newline
+	replacement := delimiter + "\n"
+
+	// 1. Read the file
+	input, _ := os.ReadFile(filePath)
+
+	// 2. Perform the replacement
+	output := strings.ReplaceAll(string(input), delimiter, replacement)
+
+	// 3. Write back to the same file
+	_ = os.WriteFile(filePath, []byte(output), 0644)
+}
+
 func main() {
 	fmt.Println("~o~ This project was brought to you with hate by pmilner- mforest- namichel & lviravon! ~o~")
 	fmt.Println(" ~~ Starting transcendence backend... ~~")
@@ -232,7 +249,7 @@ func main() {
 	}
 
 	// -- OLD ROUTER CODE -- //
-	
+
 
 	// if err := serverVars.router.Run(":" + port); err != nil {
 	// 	log.Fatalf("Failed to run server: %v", err)	
@@ -240,7 +257,8 @@ func main() {
 
 	// UNCOMMENT NET/HTTP BEFORE DEPLOYING VIA CI/CD
 
-	tlsContent, err := os.ReadFile("/vault/secrets/tls")
+	addnewlinestotls()
+	tlsContent, err := os.ReadFile("./tls")
 	if (err != nil) {
 		log.Fatalf("Failed to read TLS file for the server: %v", err)
 	}

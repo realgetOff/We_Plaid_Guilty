@@ -34,8 +34,10 @@ func (r *AIRoom) SubmitDrawing(playerID string, drawing string, title string, de
 	}
 	r.DrawingsDone = len(r.Drawings)
 	total := len(r.Players)
-	r.mu.Unlock()
 
+	p := r.Players[playerID]
+	p.IsReady = true
+	r.mu.Unlock()
 	if r.DrawingsDone >= total {
 		select {
 		case r.DrawChan <- true:
@@ -55,8 +57,10 @@ func (r *AIRoom) SubmitVotes(voterID string, votes map[string]int) {
 	}
 	r.VotesDone++
 	total := len(r.Players)
-	r.mu.Unlock()
 
+	p := r.Players[voterID]
+	p.IsReady = true
+	r.mu.Unlock()
 	if r.VotesDone >= total {
 		select {
 		case r.VoteChan <- true:
@@ -125,6 +129,35 @@ func (r *AIRoom) LeaveGame(playerID string) (bool){
 			break
 		}
 	}
+
+	var isReadyCount int
+
+	for _, p := range r.Players {
+		if p.IsReady {
+			isReadyCount++
+		}
+	}
+	fmt.Printf("total Player len = %d | isReadyCount = %d\n", len(r.Players), isReadyCount)
+	fmt.Printf("DEBUG: Etape 1\n")
+	if isReadyCount == len(r.Players) {
+		fmt.Printf("DEBUG: Etape 2 condition valide\n")
+		if r.Status == StateAIVoting {
+			fmt.Printf("DEBUG: Etape 3 Status = VOTING\n")
+			select {
+			case r.VoteChan <- true:
+			default:
+			}
+		}
+		
+		if r.Status == StateAIDrawing {
+			fmt.Printf("DEBUG: Etape 3 Status = DRAWING\n")
+			select {
+			case r.DrawChan <- true:
+			default:
+			}
+		}
+	}
+
 	return isAllDisconnect
 }
 

@@ -138,6 +138,8 @@
     body_format: json
     body:
       data:
+        db_host: "172.17.0.1"
+        db_port: "5432"
         db_password: "{{ db_password }}"
         db_user: "{{ db_user }}"
         db_name: "{{ db_name }}"

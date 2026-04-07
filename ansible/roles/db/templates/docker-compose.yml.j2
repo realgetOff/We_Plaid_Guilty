@@ -24,7 +24,7 @@ services:
     image: postgres:{{ db_version }}
     pid: service:vault-agent
     ports:
-      - 172.17.0.1:5432
+      - 5432:5432
     networks:
       - security_net
     extra_hosts:

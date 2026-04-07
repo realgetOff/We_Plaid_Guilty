@@ -45,6 +45,14 @@ CREATE TABLE IF NOT EXISTS friends (
 		UNIQUE (requester_id, addressee_id)
 );
 
+CREATE TABLE IF NOT EXISTS profiles (
+	id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, -- using the UUID from users as the primary key for the profile
+	avatar_url VARCHAR(256), -- URL to the avatar image file
+	color VARCHAR(7) DEFAULT '#000000', -- Allows hexadecimal RGB colours like #008800 to be stored
+	font VARCHAR(6) DEFAULT 'normal' -- bold, italic, normal
+);
+
+
 -- INSERTION INTO FRIENDS
 -- INSERT INTO friends (requester_id, addressee_id, status) 
 -- VALUES (

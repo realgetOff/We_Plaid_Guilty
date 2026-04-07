@@ -30,6 +30,7 @@ controller:
       proxy_ssl_trusted_certificate /vault/secrets/tls;
       proxy_ssl_verify on;
       proxy_ssl_verify_depth 3;
+      proxy_ssl_name gartic-app.app.svc.cluster.local;
 
   allowSnippetAnnotations: true
 

@@ -12,7 +12,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { connect, send, addListener, removeListener } from '../../api/socket';
+import { connect, send, addListener, removeListener, getIDFromToken } from '../../api/socket';
 import './CreateGame.css';
 
 const CreateGame = () =>
@@ -164,7 +164,10 @@ const CreateGame = () =>
 		if (!showFriends && friends.length === 0)
 		{
 			setFriendsLoading(true);
-			send({ type: 'get_friends' });
+			send({
+					type: 'get_friends',
+					id: getIDFromToken()
+				});
 		}
 		setShowFriends(!showFriends);
 	};

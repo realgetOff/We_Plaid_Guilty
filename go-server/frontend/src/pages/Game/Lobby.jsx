@@ -12,7 +12,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { connect, send, addListener, removeListener } from '../../api/socket';
+import { connect, send, addListener, removeListener, getIDFromToken } from '../../api/socket';
 import { roomsApi } from '../../api/rooms';
 import '../Game/CreateGame.css';
 
@@ -183,7 +183,10 @@ const Lobby = () =>
 		if (!showFriends && friends.length === 0)
 		{
 			setFriendsLoading(true);
-			send({ type: 'get_friends' });
+			send({
+					type: 'get_friends',
+					id: getIDFromToken()
+				});
 		}
 		setShowFriends(!showFriends);
 	};

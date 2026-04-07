@@ -3,6 +3,7 @@ kind: Ingress
 metadata:
   name: gartic-app
   annotations:
+    nginx.ingress.kubernetes.io/proxy-ssl-name: "gartic-app.app.svc.cluster.local"
     nginx.ingress.kubernetes.io/enable-modsecurity: "true"
     nginx.ingress.kubernetes.io/enable-owasp-modsecurity-crs: "true"
     nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"

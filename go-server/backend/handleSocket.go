@@ -221,13 +221,6 @@ func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 	var addressee_online bool
 	addressee_online = (ctx.chub.Clients[addressee_id] != nil)
 
-
-	// friend_info := Friend {
-	// 		ID : addressee_id,
-	// 		Username : msg.Username,
-	// 		Online : false,
-	// 	}
-
 	response := FriendsListResponse {
 		Friend : Friend {
 			ID : addressee_id,
@@ -300,14 +293,8 @@ func (d* Dispatcher) HandleGetProfile(ctx *WSContext, msg Message) {
 	var response ProfileResponse
 	
 	response.Type = "profile_data"
-	//  = ProfileResponse {
-	// 		Type: "profile_data",
-	// 		User: user,
-	// 		Success: true,
-	// 		IsCaller: true, // placeholder, need to figure out the best way to do this
-	// 	}
 
-	user.Online = (ctx.chub.Clients[profileID] != nil) // temporary
+	user.Online = (ctx.chub.Clients[profileID] != nil) 
 
 	if (err != nil) {
 		response.Success = false
@@ -317,10 +304,8 @@ func (d* Dispatcher) HandleGetProfile(ctx *WSContext, msg Message) {
 		response.IsCaller = (profileID == *ctx.client.CurrUsrID)
 	}
 
-
-	fmt.Printf("REQUESTED USERNAME: %v\n", msg.Username)
-	fmt.Printf("USER USERNAME %v ONLINE %v COLOR %v FONT %v\n", user.Username, user.Online, user.Style.Color, user.Style.Font)
-
+	// fmt.Printf("REQUESTED USERNAME: %v\n", msg.Username)
+	// fmt.Printf("USER USERNAME %v ONLINE %v COLOR %v FONT %v\n", user.Username, user.Online, user.Style.Color, user.Style.Font)
 
 	err = ctx.client.Conn.WriteJSON(response)
 	if err != nil {

@@ -260,7 +260,8 @@ type ProfileUser struct {
 	Username string `json:"username,omitempty"`
 	Email string `json:"email,omitempty"`
 	Online bool `json:"online,omitempty"`
-
+	Color string `json:"color,omitempty"`
+	Font string `json:"font,omitempty"`
 }
 
 type ProfileResponse struct {
@@ -276,19 +277,28 @@ func (d* Dispatcher) HandleGetProfile(ctx *WSContext, msg Message) {
 		return
 	}
 
-	fmt.Printf("REQUESTED USERNAME: %v\n", msg.Username)
+	var user ProfileUser
+
+	query := `SELECT p.display_name, p.color, p.font 
+				FROM profiles p
+				INNER JOIN users u ON p.id = u.id
+				WHERE u.username = $1;`
+	err := ctx.chub.Db.QueryRow(context.Background(), query, msg.Username).Scan(&user.Username, &user.Color, &user.Font)
+
+	user.Online = true // temporary
 
 	response := ProfileResponse {
 		Type: "profile_data",
-		User: ProfileUser {
-			Username : "test string",
-			Online: true,
-		},
-		IsCaller: true,
+		User: user,
 		Success: true,
+		IsCaller: true, // placeholder, need to figure out the best way to do this
 	}
 
-	err := ctx.client.Conn.WriteJSON(response)
+	fmt.Printf("REQUESTED USERNAME: %v\n", msg.Username)
+	fmt.Printf("USER USERNAME %v COLOR %v FONT %v\n", user.Username, user.Color, user.Font)
+
+
+	err = ctx.client.Conn.WriteJSON(response)
 	if err != nil {
 		fmt.Printf("failed to send profile data: %v", err)
 	}
@@ -322,7 +332,6 @@ func NewDispatcher() *Dispatcher {
 	d.handlers["start_ai_game"] = d.HandleStartAIGame
 	d.handlers["ai_drawing_submitted"] = d.HandleAIDraw
 	d.handlers["ai_votes_submitted"] = d.HandleAIVote
-
 
 	return d
 }

@@ -113,7 +113,7 @@ func (d *Dispatcher) HandleGetFriend(ctx *WSContext, msg Message) {
 		return
 	}
 
-	query := `	SELECT users.id, users.username, users.is_online 
+	query := `	SELECT users.id, users.username
 				FROM users
 				JOIN friends ON (users.id = friends.requester_id OR users.id = friends.addressee_id)
 				WHERE
@@ -131,9 +131,12 @@ func (d *Dispatcher) HandleGetFriend(ctx *WSContext, msg Message) {
 	friends := make([]Friend, 0)
 	for rows.Next() {
 		var f Friend
-		if err := rows.Scan(&f.ID, &f.Username, &f.Online); err != nil {
+		if err := rows.Scan(&f.ID, &f.Username); err != nil {
 			fmt.Printf("Error scanning friends row :: %v\n", err)
 			continue 
+		}
+		if (ctx.chub.Clients[f.ID] != nil) {
+			f.Online = true
 		}
 		friends = append(friends, f)
 	}
@@ -215,6 +218,10 @@ func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 		return
 	}
 
+	var addressee_online bool
+	addressee_online = (ctx.chub.Clients[addressee_id] != nil)
+
+
 	// friend_info := Friend {
 	// 		ID : addressee_id,
 	// 		Username : msg.Username,
@@ -225,7 +232,7 @@ func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 		Friend : Friend {
 			ID : addressee_id,
 			Username : msg.Username,
-			Online : false,
+			Online : addressee_online,
 		},
 		Type : "friend_added",
 		Success : true,

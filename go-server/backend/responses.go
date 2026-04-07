@@ -146,7 +146,7 @@ func handleGuestAuth(c *gin.Context, dbs *DBSafe){
 	err := db.QueryRow(context.Background(), query, guestName).Scan(&userID);
 
 	if (err != nil) {
-		fmt.Println("Guest creation failed")
+		fmt.Println("Guest creation failed", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Server couldn't create a guest user in the database."})
 		return

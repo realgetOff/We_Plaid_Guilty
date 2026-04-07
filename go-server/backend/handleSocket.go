@@ -256,10 +256,49 @@ func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 	}
 }
 
+type ProfileUser struct {
+	Username string `json:"username,omitempty"`
+	Email string `json:"email,omitempty"`
+	Online bool `json:"online,omitempty"`
+
+}
+
+type ProfileResponse struct {
+	Type string `json:"type"`
+	User ProfileUser `json:"user,omitempty"`
+	Success bool `json:"success,omitempty"`
+	IsCaller bool `json:"is_me,omitempty"`
+}
+
+func (d* Dispatcher) HandleGetProfile(ctx *WSContext, msg Message) {
+	fmt.Println("DEBUG: HandleGetProfile triggered!")
+	if (!RunPipeLine(ctx, msg, d.PipeIsAuth)) {
+		return
+	}
+
+	fmt.Printf("REQUESTED USERNAME: %v\n", msg.Username)
+
+	response := ProfileResponse {
+		Type: "profile_data",
+		User: ProfileUser {
+			Username : "test string",
+			Online: true,
+		},
+		IsCaller: true,
+		Success: true,
+	}
+
+	err := ctx.client.Conn.WriteJSON(response)
+	if err != nil {
+		fmt.Printf("failed to send profile data: %v", err)
+	}
+}
+
 func NewDispatcher() *Dispatcher {
 	d:= &Dispatcher{
 		handlers: make(map[string]HandleFunc),
 	}
+	d.handlers["get_profile"] = d.HandleGetProfile
 	d.handlers["add_friend"] = d.HandleAddFriend
 	d.handlers["get_friends"] = d.HandleGetFriend
 	d.handlers["remove_friend"] = d.HandleRemoveFriend

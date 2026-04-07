@@ -178,6 +178,19 @@ func (d* Dispatcher) HandleRemoveFriend(ctx *WSContext, msg Message) {
 	if err != nil {
 		fmt.Printf("Failed to send friend_id on removal: %v", err)
 	}
+
+	response = FriendsListResponse {
+		Type: "friend_removed",
+		FriendID: *ctx.client.CurrUsrID,
+	}
+
+	fmt.Println("TRYING TO REMOVE SENDER FROM ADDRESSEE FRIENDLIST")
+
+	err = ctx.chub.Clients[friend_id].Conn.WriteJSON(response)
+	if err != nil {
+		fmt.Printf("Failed to send friend_id to addressee on removal: %v", err)
+	}
+
 }
 
 func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {

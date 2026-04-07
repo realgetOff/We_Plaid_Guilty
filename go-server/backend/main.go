@@ -51,7 +51,7 @@ func reloadConfig(sdb *DBSafe) {
 	for {
 		<-c
 		oldpool := sdb.Pool
-		myMap, _ := godotenv.Read("/vault/data/app/config")
+		myMap, _ := godotenv.Read("/vault/secrets/app/config")
 		db_host := myMap["DB_HOST"]
 		db_port := myMap["DB_PORT"]
 		db_user := myMap["DB_USER"]
@@ -95,7 +95,7 @@ func reloadConfig(sdb *DBSafe) {
 
 func connectToDatabase () (*pgxpool.Pool, error) {
 
-	myMap, err := godotenv.Read("/vault/data/app/config")
+	myMap, err := godotenv.Read("/vault/secrets/app/config")
 
 	var host, port, user, pass, name string
 
@@ -188,9 +188,18 @@ func NewServerStructure () *serverVarsStruct {
 	}
 }
 
-
+func addnewlinestotls() []byte {
+    content, err := os.ReadFile("/vault/secrets/tls")
+    if err != nil {
+        return nil
+    }
+    delimiter := "-----END CERTIFICATE-----"
+    replacement := delimiter + "\n"
+    return []byte(strings.ReplaceAll(string(content), delimiter, replacement))
+}
+/*
 func addnewlinestotls() {
-	filePath := "./tls"
+	filePath := "/vault/secrets/tls"
 	delimiter := "-----END CERTIFICATE-----"
 	// We replace the delimiter with itself + a newline
 	replacement := delimiter + "\n"
@@ -203,7 +212,7 @@ func addnewlinestotls() {
 
 	// 3. Write back to the same file
 	_ = os.WriteFile(filePath, []byte(output), 0644)
-}
+}*/
 
 func main() {
 	fmt.Println("~o~ This project was brought to you with hate by pmilner- mforest- namichel & lviravon! ~o~")
@@ -257,10 +266,9 @@ func main() {
 
 	// UNCOMMENT NET/HTTP BEFORE DEPLOYING VIA CI/CD
 
-	addnewlinestotls()
-	tlsContent, err := os.ReadFile("./tls")
-	if (err != nil) {
-		log.Fatalf("Failed to read TLS file for the server: %v", err)
+	tlsContent := addnewlinestotls()
+	if tlsContent == nil {
+		log.Fatalf("Failed to read TLS file")
 	}
 	serverCert, err := tls.X509KeyPair(tlsContent, tlsContent)
 	if (err != nil){

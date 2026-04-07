@@ -2,12 +2,10 @@ services:
   vault-agent:
     image: hashicorp/vault:{{ vault_version }}
     user: "70:70"
-    networks:
-      - security_net
-    extra_hosts:
-      - "vault:host-gateway"
-    entrypoint: >
-      sh -c "chmod 700 /secrets && exec vault agent -config=/vault/config/agent.hcl"
+    command: agent -config=/vault/config/agent.hcl
+    environment:
+      - SKIP_SETCAP=true
+      - SKIP_CHOWN=true
     volumes:
       - ./agent.hcl:/vault/config/agent.hcl:ro
       - ./db_user.tpl:/vault/templates/db_user.tpl:ro
@@ -15,43 +13,35 @@ services:
       - ./db_name.tpl:/vault/templates/db_name.tpl:ro
       - secrets:/secrets
       - postg_socket:/var/run/postgresql
-    environment:
-      - SKIP_SETCAP=true
-      - SKIP_CHOWN=true
     restart: always
-
-  db:
-    image: postgres:{{ db_version }}
-    pid: service:vault-agent
-    ports:
-      - 5432:5432
     networks:
       - security_net
     extra_hosts:
-      - "169.254.169.254:127.0.0.1"
+      - "vault:host-gateway"
+    entrypoint: >
+      sh -c "chmod 700 /secrets && vault agent -config=/vault/config/agent.hcl"
+
+  db:
+    pid: service:vault-agent
+    image: postgres:{{ db_version }}
     environment:
       - POSTGRES_USER_FILE=/secrets/db_user
       - POSTGRES_PASSWORD_FILE=/secrets/db_password
       - POSTGRES_DB_FILE=/secrets/db_name
-      - PGDATA=/var/lib/postgresql/data
+      #- POSTGRES_INITDB_ARGS=--auth-local=peer
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - secrets:/secrets:ro
       - postg_socket:/var/run/postgresql
       - ./postgresql.conf:/etc/postgresql/postgresql.conf:ro
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
-    command: >
-      sh -c "
-      echo 'DB Waiting for Vault secrets...';
-      until [ -s /secrets/db_password ]; do
-        sleep 2;
-      done;
-      echo 'Secrets found! Launching PostgreSQL...';
-      exec docker-entrypoint.sh postgres -c config_file=/etc/postgresql/postgresql.conf
-      "
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
     restart: always
+    networks:
+      - security_net
     depends_on:
       - vault-agent
+    extra_hosts:
+      - "169.254.169.254:127.0.0.1"
 
 volumes:
   postgres_data:

@@ -86,6 +86,13 @@ resource "aws_security_group" "master_sg" {
     to_port     = 8200
   }
   ingress {
+    description = "DB"
+    cidr_blocks = ["10.42.0.0/24"]
+    from_port   = 5432
+    protocol    = "tcp"
+    to_port     = 5432
+  }
+  ingress {
     description = "Node exporter"
     cidr_blocks = ["0.0.0.0/0"]
     from_port   = 9100

@@ -24,6 +24,12 @@ controller:
     server-snippet: |
       ssl_certificate /vault/secrets/tls;
       ssl_certificate_key /vault/secrets/tls;
+    http-snippet: |
+      proxy_ssl_certificate /vault/secrets/tls;
+      proxy_ssl_certificate_key /vault/secrets/tls;
+      proxy_ssl_trusted_certificate /vault/secrets/tls;
+      proxy_ssl_verify on;
+      proxy_ssl_verify_depth 3;
 
   allowSnippetAnnotations: true
 

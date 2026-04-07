@@ -39,19 +39,19 @@ omitempty: omits empty strings, lowering network traffic
 
 
 type Message struct {
-    Type    string         `json:"type"`
-	Text    string         `json:"text,omitempty"`
-    Token   string         `json:"token,omitempty"`
-    Code    string         `json:"code,omitempty"`
-    Reason  string         `json:"reason,omitempty"`
-    Prompt  string         `json:"prompt,omitempty"`
-    Drawing string         `json:"drawing,omitempty"`
-    Guess   string         `json:"guess,omitempty"`
-    Votes   map[string]int `json:"votes,omitempty"`
-	Title       string `json:"title,omitempty"`
-    Description string `json:"description,omitempty"`
-	Username string `json:username,omitempty`
-	ID string `json:id,omitempty`
+	Type	string			`json:"type"`
+	Text	string			`json:"text,omitempty"`
+	Token	string			`json:"token,omitempty"`
+	Code	string			`json:"code,omitempty"`
+	Reason	string			`json:"reason,omitempty"`
+	Prompt	string			`json:"prompt,omitempty"`
+	Drawing	string			`json:"drawing,omitempty"`
+	Guess	string			`json:"guess,omitempty"`
+	Votes	map[string]int	`json:"votes,omitempty"`
+	Title		string		`json:"title,omitempty"`
+	Description string		`json:"description,omitempty"`
+	Username string			`json:username,omitempty`
+	ID string				`json:id,omitempty`
 }
 
 type AuthResponse struct {
@@ -167,7 +167,7 @@ func handleGuestAuth(c *gin.Context, dbs *DBSafe){
 }
 
 func findRoom(c *gin.Context, serverVars *serverVarsStruct){
-    code := strings.ToUpper(c.Param("code"))
+	code := strings.ToUpper(c.Param("code"))
 	room, err := serverVars.globalHub.GetRoom(code)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Couldn't find the room"})

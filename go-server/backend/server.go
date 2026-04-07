@@ -22,8 +22,8 @@ func socketLogic(client *Client, serverVars *serverVarsStruct) {
 
 	defer func() {
 		serverVars.ClientHub.mu.Lock()
-        delete(serverVars.ClientHub.Clients, *client.CurrUsrID)
-        serverVars.ClientHub.mu.Unlock()
+		delete(serverVars.ClientHub.Clients, *client.CurrUsrID)
+		serverVars.ClientHub.mu.Unlock()
 	} ()
 	for {
 		var msg Message
@@ -72,9 +72,9 @@ func handleWebsocket(c *gin.Context, serverVars *serverVarsStruct) {
 	}
 
 	client := &Client{
-        Conn:        conn,
-        Hub:         serverVars.globalHub,
-    }
+		Conn:	conn,
+		Hub:	serverVars.globalHub,
+	}
 	
 	defer conn.Close()
 

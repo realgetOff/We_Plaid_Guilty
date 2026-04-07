@@ -18,18 +18,18 @@ import (
 )
 
 type Config struct {
-	APIKey     string `json:"api_key"`
-	DBPassword string `json:"db_password"`
-	JWTSecret  string `json:"jwt_secret"`
+	APIKey		string `json:"api_key"`
+	DBPassword	string `json:"db_password"`
+	JWTSecret	string `json:"jwt_secret"`
 }
 
 var config Config
 
 func vaultstatus(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
-		"api_key_loaded":     config.APIKey != "",
-		"db_password_loaded": config.DBPassword != "",
-		"jwt_secret_loaded":  config.JWTSecret != "",
+		"api_key_loaded":		config.APIKey != "",
+		"db_password_loaded":	config.DBPassword != "",
+		"jwt_secret_loaded":	config.JWTSecret != "",
 	})
 }
 
@@ -51,7 +51,7 @@ func loadSecrets() error {
 		return fmt.Errorf("failed to load secrets from %s: %w", secretsFile, err)
 	}
 
-	config.APIKey     = os.Getenv("API_KEY")
+	config.APIKey	 = os.Getenv("API_KEY")
 	config.DBPassword = os.Getenv("DB_PASSWORD")
 	config.JWTSecret  = os.Getenv("JWT_SECRET")
 
@@ -94,7 +94,7 @@ func loadSecrets() error {
 // 	if err != nil {
 // 		return fmt.Errorf("failed to read secrets: %w", err)
 // 	}
-// 	config.APIKey     = kv.Data["api_key"].(string)
+// 	config.APIKey	 = kv.Data["api_key"].(string)
 // 	config.DBPassword = kv.Data["db_password"].(string)
 // 	config.JWTSecret  = kv.Data["jwt_secret"].(string)
 // 	log.Println("Secrets loaded from Vault successfully")

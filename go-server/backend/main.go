@@ -127,9 +127,9 @@ func connectToDatabase () (*pgxpool.Pool, error) {
 			rootCAs.AppendCertsFromPEM(content)
 
 			cfg.ConnConfig.TLSConfig = &tls.Config{
-				Certificates: []tls.Certificate{cert},
-				RootCAs:      rootCAs,
-				InsecureSkipVerify: false,
+				Certificates:		[]tls.Certificate{cert},
+				RootCAs:		 	rootCAs,
+				InsecureSkipVerify:	false,
 				ServerName:			host,
 			}
 			fmt.Println("TLS configuration applied for first connection")
@@ -173,12 +173,10 @@ func NewServerStructure () *serverVarsStruct {
 	}
 	r := gin.Default();
 
-
-
 	chub := &ClientHub{
-        Clients: make(map[string]*Client), // Critical: initialize the map
-        Db:      dbPool,                  // Your pgxpool
-    }
+		Clients:	make(map[string]*Client),
+		Db:			dbPool,
+	}
 
 	return &serverVarsStruct{
 		globalHub:		hub,
@@ -189,30 +187,14 @@ func NewServerStructure () *serverVarsStruct {
 }
 
 func addnewlinestotls() []byte {
-    content, err := os.ReadFile("/vault/secrets/tls")
-    if err != nil {
-        return nil
-    }
-    delimiter := "-----END CERTIFICATE-----"
-    replacement := delimiter + "\n"
-    return []byte(strings.ReplaceAll(string(content), delimiter, replacement))
-}
-/*
-func addnewlinestotls() {
-	filePath := "/vault/secrets/tls"
+	content, err := os.ReadFile("/vault/secrets/tls")
+	if err != nil {
+		return nil
+	}
 	delimiter := "-----END CERTIFICATE-----"
-	// We replace the delimiter with itself + a newline
 	replacement := delimiter + "\n"
-
-	// 1. Read the file
-	input, _ := os.ReadFile(filePath)
-
-	// 2. Perform the replacement
-	output := strings.ReplaceAll(string(input), delimiter, replacement)
-
-	// 3. Write back to the same file
-	_ = os.WriteFile(filePath, []byte(output), 0644)
-}*/
+	return []byte(strings.ReplaceAll(string(content), delimiter, replacement))
+}
 
 func main() {
 	fmt.Println("~o~ This project was brought to you with hate by pmilner- mforest- namichel & lviravon! ~o~")
@@ -258,7 +240,6 @@ func main() {
 	}
 
 	// -- OLD ROUTER CODE -- //
-
 
 	// if err := serverVars.router.Run(":" + port); err != nil {
 	// 	log.Fatalf("Failed to run server: %v", err)	

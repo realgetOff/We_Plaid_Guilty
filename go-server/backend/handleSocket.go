@@ -352,10 +352,10 @@ func (d *Dispatcher) HandleJoinAIGame(ctx *WSContext, msg Message) {
 		base.MessageChan <- gamemanager.Notification{
 			PlayerID: *ctx.client.CurrUsrID,
 			Data: map[string]interface{}{
-				"type":   "ai_game_state",
-				"phase":  "draw",
-				"prompt": RoomIA.Prompt,
-				"room":   base.ID,
+				"type":		"ai_game_state",
+				"phase":	"draw",
+				"prompt":	RoomIA.Prompt,
+				"room":		base.ID,
 			},
 		}
 	}
@@ -496,9 +496,9 @@ func (d *Dispatcher) HandleAuth(ctx *WSContext, msg Message) {
 	ctx.client.CurrUsrName = &claims.Username
 	ctx.client.CurrUsrID = &claims.UserID
 
-    ctx.chub.mu.Lock()
-    ctx.chub.Clients[claims.UserID] = ctx.client
-    ctx.chub.mu.Unlock()
+	ctx.chub.mu.Lock()
+	ctx.chub.Clients[claims.UserID] = ctx.client
+	ctx.chub.mu.Unlock()
 
 	fmt.Printf("WS Authenticated: %s (ID: %s)\n", *ctx.client.CurrUsrName, *ctx.client.CurrUsrID)
 }

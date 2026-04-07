@@ -289,12 +289,13 @@ func (d* Dispatcher) HandleGetProfile(ctx *WSContext, msg Message) {
 	}
 
 	var user ProfileUser
+	var profileID string
 
-	query := `SELECT p.display_name, p.color, p.font 
+	query := `SELECT p.id, p.display_name, p.color, p.font 
 				FROM profiles p
 				INNER JOIN users u ON p.id = u.id
 				WHERE u.username = $1;`
-	err := ctx.chub.Db.QueryRow(context.Background(), query, msg.Username).Scan(&user.Username, &user.Style.Color, &user.Style.Font)
+	err := ctx.chub.Db.QueryRow(context.Background(), query, msg.Username).Scan(&profileID, &user.Username, &user.Style.Color, &user.Style.Font)
 
 	var response ProfileResponse
 	
@@ -306,18 +307,19 @@ func (d* Dispatcher) HandleGetProfile(ctx *WSContext, msg Message) {
 	// 		IsCaller: true, // placeholder, need to figure out the best way to do this
 	// 	}
 
+	user.Online = (ctx.chub.Clients[profileID] != nil) // temporary
+
 	if (err != nil) {
 		response.Success = false
 	} else {
 		response.Success = true
 		response.User = user
-		response.IsCaller = true
+		response.IsCaller = (profileID == *ctx.client.CurrUsrID)
 	}
 
-	user.Online = true // temporary
 
 	fmt.Printf("REQUESTED USERNAME: %v\n", msg.Username)
-	fmt.Printf("USER USERNAME %v COLOR %v FONT %v\n", user.Username, user.Style.Color, user.Style.Font)
+	fmt.Printf("USER USERNAME %v ONLINE %v COLOR %v FONT %v\n", user.Username, user.Online, user.Style.Color, user.Style.Font)
 
 
 	err = ctx.client.Conn.WriteJSON(response)

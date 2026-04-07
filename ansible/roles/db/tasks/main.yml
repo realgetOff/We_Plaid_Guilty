@@ -46,6 +46,12 @@
     dest: "{{ db_path }}/postgresql.conf"
     mode: '0644'
 
+- name: "Copy init.sql"
+  copy:
+    src: "{{ playbook_dir }}/../go-server/backend/init.sql"
+    dest: "{{ db_path }}/init.sql"
+    mode: '0644'
+
 - name: "Pull and start containers"
   shell: "docker compose up -d --pull always"
   args:

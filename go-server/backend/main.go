@@ -189,12 +189,14 @@ func NewServerStructure () *serverVarsStruct {
 }
 
 func addnewlinestotls() []byte {
-    content, _ := os.ReadFile("/vault/secrets/tls")
+    content, err := os.ReadFile("/vault/secrets/tls")
+    if err != nil {
+        return nil
+    }
     delimiter := "-----END CERTIFICATE-----"
     replacement := delimiter + "\n"
     return []byte(strings.ReplaceAll(string(content), delimiter, replacement))
 }
-
 /*
 func addnewlinestotls() {
 	filePath := "/vault/secrets/tls"
@@ -264,10 +266,9 @@ func main() {
 
 	// UNCOMMENT NET/HTTP BEFORE DEPLOYING VIA CI/CD
 
-	addnewlinestotls()
-	tlsContent, err := os.ReadFile("/vault/secrets/tls")
-	if (err != nil) {
-		log.Fatalf("Failed to read TLS file for the server: %v", err)
+	tlsContent := addnewlinestotls()
+	if tlsContent == nil {
+		log.Fatalf("Failed to read TLS file")
 	}
 	serverCert, err := tls.X509KeyPair(tlsContent, tlsContent)
 	if (err != nil){

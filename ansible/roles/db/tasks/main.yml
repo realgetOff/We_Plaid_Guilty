@@ -48,7 +48,7 @@
 
 - name: "Copy init.sql"
   copy:
-    src: "{{ playbook_dir }}/../go-server/backend/init.sql"
+    src: "{{ playbook_dir }}/../go-server/init.sql"
     dest: "{{ db_path }}/init.sql"
     mode: '0644'
 

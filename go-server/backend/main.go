@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/http" // UNCOMMENT FOR CI/CD DEPLOYMENT
+	// "net/http" // UNCOMMENT FOR CI/CD DEPLOYMENT
 	"os"
 	"os/signal"
 	"strings"
@@ -148,18 +148,20 @@ func NewServerStructure () *serverVarsStruct {
 	
 	var dbs DBSafe
 
-	// db, err := connectToDatabase()
+	db, err := connectToDatabase()
 	
-	// dbs.Pool = db
-	// go reloadConfig(&dbs)
-	// if err != nil {
-	// 	log.Fatalf("Couldn't connect to the PostgreSQL database: %v", err)
-	// }
-	// defer db.Close()
+	dbs.Pool = db
+	go reloadConfig(&dbs)
+	if err != nil {
+		log.Fatalf("Couldn't connect to the PostgreSQL database: %v", err)
+	}
+	defer db.Close()
 
-	// globalHub = &gamemanager.Hub{
-	// 	Rooms: make(map[string]gamemanager.GameRoom),
+	// globalHub := &gamemanager.Hub{
+		// Rooms: make(map[string]gamemanager.GameRoom),
 	// }
+
+
 
 	
 	dbPool, err := connectToDatabase()
@@ -223,11 +225,11 @@ func main() {
 	defer serverVars.db.GetPool().Close()
 
 	// if err := loadSecretsFromVault(); err != nil {
-	// 	log.Fatalf("Failed to load secrets from Vault: %v", err)
+		// log.Fatalf("Failed to load secrets from Vault: %v", err)
 	// }
 	// Gin router with default "middleware"
 	
-	// gin.SetMode(gin.ReleaseMode)
+	gin.SetMode(gin.ReleaseMode)
 	// https://github.com/gin-gonic/gin/blob/master/docs/doc.md#dont-trust-all-proxies 
 
 	serverVars.router.Static("/assets", "./static/assets")
@@ -239,9 +241,9 @@ func main() {
 	serverVars.router.GET("/api/rooms/:code", func(c *gin.Context) {
 		findRoom(c, serverVars)
 	})
-	// 	serverVars.router.GET("/api/ai-rooms/:code", func(c *gin.Context) {
-	// 	findRoom(c, serverVars)
-	// })
+		serverVars.router.GET("/api/ai-rooms/:code", func(c *gin.Context) {
+		findRoom(c, serverVars)
+	})
 	serverVars.router.GET("/ping", pong)
 	serverVars.router.GET("/health", health)
 	serverVars.router.GET("/api/config", vaultstatus)
@@ -260,39 +262,39 @@ func main() {
 	// -- OLD ROUTER CODE -- //
 
 
-	// if err := serverVars.router.Run(":" + port); err != nil {
-	// 	log.Fatalf("Failed to run server: %v", err)	
-	// }
+	if err := serverVars.router.Run(":" + port); err != nil {
+		log.Fatalf("Failed to run server: %v", err)	
+	 }
 
 	// UNCOMMENT NET/HTTP BEFORE DEPLOYING VIA CI/CD
 
-	tlsContent := addnewlinestotls()
-	if tlsContent == nil {
-		log.Fatalf("Failed to read TLS file")
-	}
-	serverCert, err := tls.X509KeyPair(tlsContent, tlsContent)
-	if (err != nil){
-		log.Fatalf("Failed to parse key pair: %v", err)
-	}
-
-	caCertPool := x509.NewCertPool()
-	caCertPool.AppendCertsFromPEM(tlsContent)
-
-	tlsConfig := &tls.Config {
-		Certificates:	[]tls.Certificate{serverCert},
-		ClientCAs:		caCertPool,
-		ClientAuth:		tls.RequireAndVerifyClientCert,
-	}
-
-	server := &http.Server{
-		Addr: ":" + port,
-		Handler: serverVars.router,
-		TLSConfig: tlsConfig,
-	}
-
-	fmt.Println(" ~~ Attempting to boot with mTLS on port ", port, " ~~")
-
-	if err := server.ListenAndServeTLS("", ""); err != nil && err != http.ErrServerClosed {
-		log.Fatalf("Failed to run server over mTLS: %v", err)
-	}
+	// tlsContent := addnewlinestotls()
+	// if tlsContent == nil {
+		// log.Fatalf("Failed to read TLS file")
+	// }
+	// serverCert, err := tls.X509KeyPair(tlsContent, tlsContent)
+	// if (err != nil){
+		// log.Fatalf("Failed to parse key pair: %v", err)
+	// }
+// 
+	// caCertPool := x509.NewCertPool()
+	// caCertPool.AppendCertsFromPEM(tlsContent)
+// 
+	// tlsConfig := &tls.Config {
+		// Certificates:	[]tls.Certificate{serverCert},
+		// ClientCAs:		caCertPool,
+		// ClientAuth:		tls.RequireAndVerifyClientCert,
+	// }
+// 
+	// server := &http.Server{
+		// Addr: ":" + port,
+		// Handler: serverVars.router,
+		// TLSConfig: tlsConfig,
+	// }
+// 
+	// fmt.Println(" ~~ Attempting to boot with mTLS on port ", port, " ~~")
+// 
+	// if err := server.ListenAndServeTLS("", ""); err != nil && err != http.ErrServerClosed {
+		// log.Fatalf("Failed to run server over mTLS: %v", err)
+	// }
 }

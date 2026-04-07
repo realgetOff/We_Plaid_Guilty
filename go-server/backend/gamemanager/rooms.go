@@ -120,6 +120,20 @@ func (r *Room) LeaveGame(playerID string) (bool){
 			break
 		}
 	}
+	var isReadyCount int
+	for _, p := range r.Players {
+		if p.IsReady {
+			isReadyCount++
+		}
+	}
+
+	if isReadyCount == len(r.Players) {
+		select {
+		case r.FinishedChan <- true:
+		default:
+		}
+	}
+		
 	return isAllDisconnect
 }
 

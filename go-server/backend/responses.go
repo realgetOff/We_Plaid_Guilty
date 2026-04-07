@@ -142,9 +142,9 @@ func handleGuestAuth(c *gin.Context, dbs *DBSafe){
 	guestName := fmt.Sprintf("guest_%d%d", rand.Intn(99), time.Now().UnixNano()%1000)
 	var userID string
 	db := dbs.GetPool()	
-	query := "INSERT INTO users (username, is_guest) VALUES ($1, TRUE) RETURNING id;"
-	err := db.QueryRow(context.Background(), query, guestName).Scan(&userID);
-
+	
+	userQuery := "INSERT INTO users (username, is_guest) VALUES ($1, TRUE) RETURNING id;"
+	err := db.QueryRow(context.Background(), userQuery, guestName).Scan(&userID);
 	if (err != nil) {
 		fmt.Println("Guest creation failed", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -152,6 +152,16 @@ func handleGuestAuth(c *gin.Context, dbs *DBSafe){
 		return
 	}
 	fmt.Println("Guest name: " + guestName + " guest ID = " + userID)
+
+	profileQuery := "INSERT INTO profiles (id, display_name) VALUES ($1, $2)"
+	_, err = db.Exec(context.Background(), profileQuery, userID, guestName)
+		if (err != nil) {
+		fmt.Println("Guest profile creation failed", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Server couldn't create a guest profile in the database."})
+		return
+	}
+
 
 	var SignedString string
 	SignedString, err = generateJWT(userID, guestName)

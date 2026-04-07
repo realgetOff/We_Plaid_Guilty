@@ -12,7 +12,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { send, addListener, removeListener } from '../../api/socket';
+import { connect, send, addListener, removeListener } from '../../api/socket';
 import './Profile.css';
 
 const FONT_STYLES = ['normal', 'bold', 'italic'];
@@ -41,6 +41,7 @@ const Profile = () =>
 
   useEffect(() =>
   {
+	connect();
     const handler = (msg) =>
     {
       if (msg.type === 'profile_data')

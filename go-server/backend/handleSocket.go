@@ -289,14 +289,25 @@ func (d* Dispatcher) HandleGetProfile(ctx *WSContext, msg Message) {
 				WHERE u.username = $1;`
 	err := ctx.chub.Db.QueryRow(context.Background(), query, msg.Username).Scan(&user.Username, &user.Style.Color, &user.Style.Font)
 
-	user.Online = true // temporary
+	var response ProfileResponse
+	
+	response.Type = "profile_data"
+	//  = ProfileResponse {
+	// 		Type: "profile_data",
+	// 		User: user,
+	// 		Success: true,
+	// 		IsCaller: true, // placeholder, need to figure out the best way to do this
+	// 	}
 
-	response := ProfileResponse {
-		Type: "profile_data",
-		User: user,
-		Success: true,
-		IsCaller: true, // placeholder, need to figure out the best way to do this
+	if (err != nil) {
+		response.Success = false
+	} else {
+		response.Success = true
+		response.User = user
+		response.IsCaller = true
 	}
+
+	user.Online = true // temporary
 
 	fmt.Printf("REQUESTED USERNAME: %v\n", msg.Username)
 	fmt.Printf("USER USERNAME %v COLOR %v FONT %v\n", user.Username, user.Style.Color, user.Style.Font)
@@ -315,10 +326,28 @@ func (d* Dispatcher) HandleProfileUpdate(ctx *WSContext, msg Message) {
 	}
 
 	query := `UPDATE profiles
-				SET color = $2, font = $3
-				FROM users
-				WHERE users.id = profiles.id AND users.username = $1;`
-	_, err := ctx.chub.Db.Exec(context.Background(), query, msg.Username, msg.Style.Color, msg.Style.Font)
+				SET color = $2, font = $3, display_name = $4
+				WHERE id = $1`
+	_, err := ctx.chub.Db.Exec(context.Background(), query, ctx.client.CurrUsrID, msg.Style.Color, msg.Style.Font, msg.Username)
+
+	if (err != nil ) { // need to eventually use database transactions
+		fmt.Printf("FAILED TO UPDATE THE PROFILE TABLE FOR USER %v : %v\n", *ctx.client.CurrUsrName, err)
+		return
+	}
+
+	usrnmQuery := ` UPDATE users
+					SET username = $2
+					WHERE id = $1;
+	`
+
+	_, err = ctx.chub.Db.Exec(context.Background(), usrnmQuery, ctx.client.CurrUsrID, msg.Username)
+
+	if (err != nil ) { 
+		fmt.Printf("FAILED TO UPDATE THE USERNAME FOR USER %v : %v\n", *ctx.client.CurrUsrName, err)
+		return
+	}
+
+	*ctx.client.CurrUsrName = msg.Username
 
 	var response ProfileResponse
 
@@ -328,7 +357,7 @@ func (d* Dispatcher) HandleProfileUpdate(ctx *WSContext, msg Message) {
 		response.Success = false
 	} else {
 		response.Success = true
-		response.User.Username = msg.Username
+		response.User.Username = *ctx.client.CurrUsrName
 		response.User.Style.Color = msg.Style.Color
 		response.User.Style.Font = msg.Style.Font
 	}

@@ -74,3 +74,45 @@ module "vault_nginx" {
   pki_backend         = vault_mount.pki.path
   allowed_domains     = ["transcendance.local", "ingress-nginx.svc.cluster.local"]
 }
+
+module "vault_monitoring" {
+  source              = "../modules/vault-config"
+  service_name        = "monitoring"
+  auth_type           = "kubernetes"
+  auth_backend_path   = vault_auth_backend.kubernetes.path
+  k8s_service_account = "node-exporter"
+  k8s_namespace       = "monitoring"
+  token_ttl           = 40000
+  token_max_ttl       = 86400
+  enable_pki          = true
+  pki_backend         = vault_mount.pki.path
+  allowed_domains     = ["transcendance.local", "monitoring.svc.cluster.local"]
+}
+
+module "vault_grafana" {
+  source              = "../modules/vault-config"
+  service_name        = "grafana"
+  auth_type           = "kubernetes"
+  auth_backend_path   = vault_auth_backend.kubernetes.path
+  k8s_service_account = "grafana"
+  k8s_namespace       = "monitoring"
+  token_ttl           = 40000
+  token_max_ttl       = 86400
+  enable_pki          = true
+  pki_backend         = vault_mount.pki.path
+  allowed_domains     = ["transcendance.local", "monitoring.svc.cluster.local"]
+}
+
+module "vault_elk" {
+  source              = "../modules/vault-config"
+  service_name        = "elk"
+  auth_type           = "kubernetes"
+  auth_backend_path   = vault_auth_backend.kubernetes.path
+  k8s_service_account = "elk"
+  k8s_namespace       = "logging"
+  token_ttl           = 40000
+  token_max_ttl       = 86400
+  enable_pki          = true
+  pki_backend         = vault_mount.pki.path
+  allowed_domains     = ["transcendance.local", "elk.svc.cluster.local"]
+}

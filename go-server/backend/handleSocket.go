@@ -256,12 +256,16 @@ func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 	}
 }
 
+type ProfileStyle struct {
+	Color string `json:"color,omitempty"`
+	Font string `json:"font,omitempty"`
+}
+
 type ProfileUser struct {
 	Username string `json:"username,omitempty"`
 	Email string `json:"email,omitempty"`
 	Online bool `json:"online,omitempty"`
-	Color string `json:"color,omitempty"`
-	Font string `json:"font,omitempty"`
+	Style ProfileStyle `json:"style,omitempty"`
 }
 
 type ProfileResponse struct {
@@ -283,7 +287,7 @@ func (d* Dispatcher) HandleGetProfile(ctx *WSContext, msg Message) {
 				FROM profiles p
 				INNER JOIN users u ON p.id = u.id
 				WHERE u.username = $1;`
-	err := ctx.chub.Db.QueryRow(context.Background(), query, msg.Username).Scan(&user.Username, &user.Color, &user.Font)
+	err := ctx.chub.Db.QueryRow(context.Background(), query, msg.Username).Scan(&user.Username, &user.Style.Color, &user.Style.Font)
 
 	user.Online = true // temporary
 
@@ -295,8 +299,39 @@ func (d* Dispatcher) HandleGetProfile(ctx *WSContext, msg Message) {
 	}
 
 	fmt.Printf("REQUESTED USERNAME: %v\n", msg.Username)
-	fmt.Printf("USER USERNAME %v COLOR %v FONT %v\n", user.Username, user.Color, user.Font)
+	fmt.Printf("USER USERNAME %v COLOR %v FONT %v\n", user.Username, user.Style.Color, user.Style.Font)
 
+
+	err = ctx.client.Conn.WriteJSON(response)
+	if err != nil {
+		fmt.Printf("failed to send profile data: %v", err)
+	}
+}
+
+func (d* Dispatcher) HandleProfileUpdate(ctx *WSContext, msg Message) {
+	fmt.Println("DEBUG: HandleProfileUpdate triggered!")
+	if (!RunPipeLine(ctx, msg, d.PipeIsAuth)) {
+		return
+	}
+
+	query := `UPDATE profiles
+				SET color = $2, font = $3
+				FROM users
+				WHERE users.id = profiles.id AND users.username = $1;`
+	_, err := ctx.chub.Db.Exec(context.Background(), query, msg.Username, msg.Style.Color, msg.Style.Font)
+
+	var response ProfileResponse
+
+	response.Type = "profile_updated"
+
+	if (err != nil) {
+		response.Success = false
+	} else {
+		response.Success = true
+		response.User.Username = msg.Username
+		response.User.Style.Color = msg.Style.Color
+		response.User.Style.Font = msg.Style.Font
+	}
 
 	err = ctx.client.Conn.WriteJSON(response)
 	if err != nil {
@@ -309,6 +344,7 @@ func NewDispatcher() *Dispatcher {
 		handlers: make(map[string]HandleFunc),
 	}
 	d.handlers["get_profile"] = d.HandleGetProfile
+	d.handlers["update_profile"] = d.HandleProfileUpdate
 	d.handlers["add_friend"] = d.HandleAddFriend
 	d.handlers["get_friends"] = d.HandleGetFriend
 	d.handlers["remove_friend"] = d.HandleRemoveFriend

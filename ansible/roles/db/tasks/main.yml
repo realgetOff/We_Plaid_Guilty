@@ -40,6 +40,12 @@
     mode: '0644'
   notify: "Restart db"
 
+- name: "Copy postgresql.conf"
+  template:
+    src: postgresql.conf.j2
+    dest: "{{ db_path }}/postgresql.conf"
+    mode: '0644'
+
 - name: "Pull and start containers"
   shell: "docker compose up -d --pull always"
   args:

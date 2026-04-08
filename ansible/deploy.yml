@@ -150,6 +150,17 @@
           tags: k3s_worker
       tags: k3s_worker
 
+    - name: "Trust K3s network interfaces"
+      firewalld:
+        zone: trusted
+        interface: "{{ item }}"
+        permanent: yes
+        immediate: yes
+        state: enabled
+      loop:
+        - cni0
+        - flannel-wg
+      ignore_errors: true
 
 
 - name: "Monitoring"

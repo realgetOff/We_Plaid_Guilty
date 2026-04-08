@@ -17,11 +17,9 @@ podAnnotations:
 extraArgs:
   - --web.config.file=/etc/node-exporter/web-config.yml
 
-extraConfigmapMounts:
-  - name: web-config
+configmaps:
+  - name: node-exporter-web-config
     mountPath: /etc/node-exporter/
-    configMap: node-exporter-web-config
-    readOnly: true
 
 tolerations:
   - effect: NoSchedule
@@ -32,6 +30,7 @@ nodeSelector:
 
 hostNetwork: true
 hostPID: true
+dnsPolicy: ClusterFirstWithHostNet
 
 hostRootFsMount:
   enabled: true

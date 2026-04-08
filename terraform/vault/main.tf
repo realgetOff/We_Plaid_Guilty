@@ -57,8 +57,8 @@ module "vault_db" {
   token_ttl         = 40000
   token_max_ttl     = 86400
   enable_pki        = true
-  pki_backend         = vault_mount.pki.path
-  allowed_domains = ["transcendance.local", "postgres.transcendance.local"]
+  pki_backend       = vault_mount.pki.path
+  allowed_domains   = ["transcendance.local", "postgres.transcendance.local"]
 }
 
 module "vault_nginx" {
@@ -81,6 +81,20 @@ module "vault_monitoring" {
   auth_type           = "kubernetes"
   auth_backend_path   = vault_auth_backend.kubernetes.path
   k8s_service_account = "node-exporter"
+  k8s_namespace       = "monitoring"
+  token_ttl           = 40000
+  token_max_ttl       = 86400
+  enable_pki          = true
+  pki_backend         = vault_mount.pki.path
+  allowed_domains     = ["transcendance.local", "monitoring.svc.cluster.local"]
+}
+
+module "vault_monitoring" {
+  source              = "../modules/vault-config"
+  service_name        = "prometheus"
+  auth_type           = "kubernetes"
+  auth_backend_path   = vault_auth_backend.kubernetes.path
+  k8s_service_account = "prometheus"
   k8s_namespace       = "monitoring"
   token_ttl           = 40000
   token_max_ttl       = 86400

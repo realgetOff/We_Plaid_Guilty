@@ -401,10 +401,8 @@ func (d *Dispatcher) HandleLeaveAIGame(ctx *WSContext, msg Message) {
 
 	RoomIA := ctx.client.CurrentRoom.(*gamemanager.AIRoom)
 	del := RoomIA.LeaveGame(*ctx.client.CurrUsrID)
-	fmt.Printf("DEBUG: %s leave game\n", *ctx.client.CurrUsrName)
 	if del {
 		ctx.client.Hub.DeleteRoom(msg.Code)
-		fmt.Printf("DEBUG: Delete ROOM everybody quit\n")
 	}
 }
 

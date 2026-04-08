@@ -137,12 +137,8 @@ func (r *AIRoom) LeaveGame(playerID string) (bool){
 			isReadyCount++
 		}
 	}
-	fmt.Printf("total Player len = %d | isReadyCount = %d\n", len(r.Players), isReadyCount)
-	fmt.Printf("DEBUG: Etape 1\n")
 	if isReadyCount == len(r.Players) {
-		fmt.Printf("DEBUG: Etape 2 condition valide\n")
 		if r.Status == StateAIVoting {
-			fmt.Printf("DEBUG: Etape 3 Status = VOTING\n")
 			select {
 			case r.VoteChan <- true:
 			default:
@@ -150,7 +146,6 @@ func (r *AIRoom) LeaveGame(playerID string) (bool){
 		}
 		
 		if r.Status == StateAIDrawing {
-			fmt.Printf("DEBUG: Etape 3 Status = DRAWING\n")
 			select {
 			case r.DrawChan <- true:
 			default:

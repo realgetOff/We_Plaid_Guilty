@@ -21,10 +21,13 @@ func socketLogic(client *Client, serverVars *serverVarsStruct) {
 	}
 
 	defer func() {
+		if client.CurrUsrID == nil || *client.CurrUsrID == "" {
+			return
+		}
 		serverVars.ClientHub.mu.Lock()
 		delete(serverVars.ClientHub.Clients, *client.CurrUsrID)
 		serverVars.ClientHub.mu.Unlock()
-	} ()
+	}()
 	for {
 		var msg Message
 		err := client.Conn.ReadJSON(&msg)
@@ -34,7 +37,7 @@ func socketLogic(client *Client, serverVars *serverVarsStruct) {
 		dispatcher.Dispatch(&ctx, msg)
 	}
 
-	if client.CurrentRoom != nil && *client.CurrUsrID != "" {
+	if client.CurrentRoom != nil && client.CurrUsrID != nil && *client.CurrUsrID != "" {
 		isHost := false
 		base := client.CurrentRoom.GetBase()
 		if p, err := base.GetPlayer(*client.CurrUsrID); err == nil {

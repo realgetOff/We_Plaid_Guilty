@@ -74,11 +74,11 @@ const Profile = () =>
           }));
           setSaved(true);
           setTimeout(() => setSaved(false), 2500);
+		  if (msg.user.username !== username)
+      		navigate(`/profile/${msg.user.username}`, { replace: true });
         }
         else
-        {
           setNameError(msg.error || 'Failed to update profile.');
-        }
       }
       else if (msg.type === 'avatar_uploaded')
       {
@@ -88,9 +88,7 @@ const Profile = () =>
           setUser(prev => ({ ...prev, avatar_url: msg.avatar_url }));
         }
         else
-        {
           console.error('Avatar upload failed:', msg.error);
-        }
       }
     };
 
@@ -106,7 +104,7 @@ const Profile = () =>
 
   const handleAvatarClick = () =>
   {
-    if (!isMe)
+    if (!isMe || user?.is_guest)
       return;
     fileRef.current?.click();
   };
@@ -134,7 +132,7 @@ const Profile = () =>
   const handleSave = async () =>
   {
     const name = editName.trim();
-
+	
     if (!name)
     {
       setNameError('Username cannot be empty.');
@@ -195,24 +193,42 @@ const Profile = () =>
   if (user.style?.font === 'bold')   usernameStyle.fontWeight = 'bold';
   if (user.style?.font === 'italic') usernameStyle.fontStyle  = 'italic';
 
+  const isGuestProfile = !!user.is_guest;
+  const canEditProfile = isMe && !isGuestProfile;
+
   return (
     <div className="profile">
+
+      {isGuestProfile && (
+        <p className="profile__guest-banner" style={{
+          margin: '0 0 1rem',
+          padding: '0.75rem 1rem',
+          background: '#f5f0e0',
+          border: '1px solid #ccb',
+          borderRadius: '8px',
+          fontSize: '0.95rem',
+        }}>
+          {isMe
+            ? 'You are on a guest account. Profile editing is disabled.'
+            : 'This is a guest account.'}
+        </p>
+      )}
 
       <div className="profile__header">
 
         <div
-          className={`profile__avatar${isMe ? ' profile__avatar--editable' : ''}`}
+          className={`profile__avatar${canEditProfile ? ' profile__avatar--editable' : ''}`}
           onClick={handleAvatarClick}
-          title={isMe ? 'click to change avatar' : ''}
+          title={canEditProfile ? 'click to change avatar' : ''}
         >
           {avatarSrc
             ? <img src={avatarSrc} alt="avatar" className="profile__avatar-img" />
             : <span>{initials}</span>
           }
-          {isMe && <span className="profile__avatar-overlay">✎</span>}
+          {canEditProfile && <span className="profile__avatar-overlay">✎</span>}
         </div>
 
-        {isMe && (
+        {canEditProfile && (
           <input
             ref={fileRef}
             type="file"
@@ -232,13 +248,15 @@ const Profile = () =>
           </span>
         </div>
 
-        <Link to="/friends" className="profile__friends-btn">
-          👥 friends
-        </Link>
+        {!isGuestProfile && (
+          <Link to="/friends" className="profile__friends-btn">
+            👥 friends
+          </Link>
+        )}
 
       </div>
 
-      {isMe && (
+      {canEditProfile && (
         <div className="profile__card">
           <div className="profile__card-header">✎ edit profile</div>
           <div className="profile__edit-body">

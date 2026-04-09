@@ -78,3 +78,8 @@ CREATE TABLE IF NOT EXISTS profiles (
 -- DELETE FROM friendships 
 -- WHERE (requester_id = 'user_a_uuid' AND addressee_id = 'user_b_uuid')
 --    OR (requester_id = 'user_b_uuid' AND addressee_id = 'user_a_uuid');
+
+-- if you already had a DB populated before friend requests used status = 'accepted'
+-- in queries, existing rows may still be 'pending'. To keep them as accepted friends
+-- after pulling this schema behavior, run manually once:
+--   UPDATE friends SET status = 'accepted';

@@ -20,7 +20,7 @@ const AIVotePanel = ({ drawings, myId, onDone }) =>
 	const votableDrawings = (drawings || [])
 		.map((d, index) => ({
 			...d,
-			uniqueId: d.playerId || d.PlayerID || `draw-${index}`
+			uniqueId: d.player_id || d.playerId || d.PlayerID || `draw-${index}`
 		}))
 		.filter(d => d.uniqueId !== myId);
 

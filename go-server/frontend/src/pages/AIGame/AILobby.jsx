@@ -85,7 +85,8 @@ const AILobby = () =>
 		};
 
 		addListener(handler);
-		send({ type: 'join_ai_room', code: normalized });
+		if (normalized && /^[A-Z]{6}$/.test(normalized))
+			send({ type: 'join_ai_room', code: normalized });
 		return () =>
 		{
 			removeListener(handler);
@@ -101,13 +102,6 @@ const AILobby = () =>
 			return;
 		send({ type: 'ai_chat_message', code: normalized, text: input.trim() });
 		setInput('');
-	};
-
-	const handleCopy = () =>
-	{
-		navigator.clipboard.writeText(roomCode);
-		setCopied(true);
-		setTimeout(() => setCopied(false), 2000);
 	};
 
 	const handleStartGame = () =>
@@ -137,7 +131,8 @@ const AILobby = () =>
 		send({
 			type: 'invite_friend',
 			to: friend.username,
-			code: normalized
+			code: normalized,
+			is_ai: true,
 		});
 	};
 

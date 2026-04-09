@@ -40,18 +40,23 @@ export const NotificationProvider = ({ children }) =>
   {
     const onMessage = (msg) =>
     {
-      if (msg.type === 'room_invite')
+      if (msg.type === 'game_invite' || msg.type === 'room_invite')
       {
+        const from = msg.from;
+        const code = msg.code;
+        if (!from || !code)
+          return;
         const now = Date.now();
-        const last = cooldowns.current[msg.from] || 0;
+        const last = cooldowns.current[from] || 0;
 
         if (now - last < 10000)
-          return ;
-        cooldowns.current[msg.from] = now;
+          return;
+        cooldowns.current[from] = now;
         push({
           kind:  'invite',
-          from:  msg.from,
-          code:  msg.code,
+          from,
+          code,
+          isAI: !!msg.is_ai,
           timer: 15,
         });
       }

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/http" // UNCOMMENT FOR CI/CD DEPLOYMENT
+	// "net/http" // UNCOMMENT FOR CI/CD DEPLOYMENT
 	"os"
 	"os/signal"
 	"strings"
@@ -217,6 +217,8 @@ func main() {
 	serverVars.router.Static("/assets", "./static/assets")
 	serverVars.router.StaticFile("/favicon.ico", "./static/favicon.ico")
 	serverVars.router.NoRoute(func(c *gin.Context) {
+		c.Header("Cache-Control", "no-store, no-cache, must-revalidate")
+		c.Header("Pragma", "no-cache")
 		c.File("./static/index.html")
 	})
 
@@ -243,39 +245,39 @@ func main() {
 
 	// -- OLD ROUTER CODE -- //
 
-	// if err := serverVars.router.Run(":" + port); err != nil {
-	// 	log.Fatalf("Failed to run server: %v", err)	
-	// }
+	if err := serverVars.router.Run(":" + port); err != nil {
+		log.Fatalf("Failed to run server: %v", err)	
+	}
 
 	// UNCOMMENT NET/HTTP BEFORE DEPLOYING VIA CI/CD
 
-	tlsContent := addnewlinestotls()
-	if tlsContent == nil {
-		log.Fatalf("Failed to read TLS file")
-	}
-	serverCert, err := tls.X509KeyPair(tlsContent, tlsContent)
-	if (err != nil){
-		log.Fatalf("Failed to parse key pair: %v", err)
-	}
-
-	caCertPool := x509.NewCertPool()
-	caCertPool.AppendCertsFromPEM(tlsContent)
-
-	tlsConfig := &tls.Config {
-		Certificates:	[]tls.Certificate{serverCert},
-		ClientCAs:		caCertPool,
-		ClientAuth:		tls.RequireAndVerifyClientCert,
-	}
-
-	server := &http.Server{
-		Addr: ":" + port,
-		Handler: serverVars.router,
-		TLSConfig: tlsConfig,
-	}
-
-	fmt.Println(" ~~ Attempting to boot with mTLS on port ", port, " ~~")
-
-	if err := server.ListenAndServeTLS("", ""); err != nil && err != http.ErrServerClosed {
-		log.Fatalf("Failed to run server over mTLS: %v", err)
-	}
+	// tlsContent := addnewlinestotls()
+	// if tlsContent == nil {
+		// log.Fatalf("Failed to read TLS file")
+	// }
+	// serverCert, err := tls.X509KeyPair(tlsContent, tlsContent)
+	// if (err != nil){
+		// log.Fatalf("Failed to parse key pair: %v", err)
+	// }
+// 
+	// caCertPool := x509.NewCertPool()
+	// caCertPool.AppendCertsFromPEM(tlsContent)
+// 
+	// tlsConfig := &tls.Config {
+		// Certificates:	[]tls.Certificate{serverCert},
+		// ClientCAs:		caCertPool,
+		// ClientAuth:		tls.RequireAndVerifyClientCert,
+	// }
+// 
+	// server := &http.Server{
+		// Addr: ":" + port,
+		// Handler: serverVars.router,
+		// TLSConfig: tlsConfig,
+	// }
+// 
+	// fmt.Println(" ~~ Attempting to boot with mTLS on port ", port, " ~~")
+// 
+	// if err := server.ListenAndServeTLS("", ""); err != nil && err != http.ErrServerClosed {
+		// log.Fatalf("Failed to run server over mTLS: %v", err)
+	// }
 }

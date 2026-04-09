@@ -31,7 +31,7 @@ resource "aws_security_group" "master_sg" {
   }
   ingress {
     description = "Kubelet"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["172.31.0.0/16"]
     from_port   = 10250
     protocol    = "tcp"
     to_port     = 10250
@@ -94,7 +94,7 @@ resource "aws_security_group" "master_sg" {
   }
   ingress {
     description = "Node exporter"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["172.31.0.0/16"]
     from_port   = 9100
     protocol    = "tcp"
     to_port     = 9100
@@ -119,7 +119,7 @@ resource "aws_security_group" "worker_sg" {
   }
   ingress {
     description = "Kubelet"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["172.31.0.0/16"]
     from_port   = 10250
     protocol    = "tcp"
     to_port     = 10250
@@ -183,7 +183,7 @@ resource "aws_security_group" "worker_sg" {
   }*/
   ingress {
     description = "Node exporter"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["172.31.0.0/16"]
     from_port   = 9100
     protocol    = "tcp"
     to_port     = 9100

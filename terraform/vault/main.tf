@@ -89,7 +89,7 @@ module "vault_monitoring" {
   allowed_domains     = ["transcendance.local", "monitoring.svc.cluster.local"]
 }
 
-module "vault_monitoring" {
+module "vault_prometheus" {
   source              = "../modules/vault-config"
   service_name        = "prometheus"
   auth_type           = "kubernetes"

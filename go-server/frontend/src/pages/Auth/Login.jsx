@@ -61,16 +61,76 @@ const Login = () =>
 		}
 	};
 
-	const handleIntra = () =>
+	const handleIntra = async() =>
 	{
 		setError('');
 		setOauthHint('to do');
+		if (hasToken)
+		{
+			navigate(redirect, { replace: true });
+			return;
+		}
+		setLoading(true);
+		try
+		{
+			const res = await fetch('/login/42', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+			});
+			if (!res.ok)
+				throw new Error('Server error');
+			const data = await res.json();
+			window.location.href = data.url;
+			// if (!data.token)
+				// throw new Error('No token');
+			// localStorage.setItem('authToken', data.token);
+			window.dispatchEvent(new CustomEvent('userDataUpdated'));
+			navigate(redirect, { replace: true });
+		}
+		catch (e)
+		{
+			setError('Could not start a 42 session. Try again later.');
+		}
+		finally
+		{
+			setLoading(false);
+		}
 	};
 
-	const handleGoogle = () =>
+	const handleGoogle = async() =>
 	{
 		setError('');
 		setOauthHint('to do');
+		if (hasToken)
+		{
+			navigate(redirect, { replace: true });
+			return;
+		}
+		setLoading(true);
+		try
+		{
+			const res = await fetch('/login/google', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+			});
+			if (!res.ok)
+				throw new Error('Server error');
+			const data = await res.json();
+			window.location.href = data.authUrl;
+			if (!data.token)
+				throw new Error('No token');
+			localStorage.setItem('authToken', data.token);
+			window.dispatchEvent(new CustomEvent('userDataUpdated'));
+			navigate(redirect, { replace: true });
+		}
+		catch (e)
+		{
+			setError('Could not start a google session. Try again later.');
+		}
+		finally
+		{
+			setLoading(false);
+		}
 	};
 
 	const handleSignOut = () =>

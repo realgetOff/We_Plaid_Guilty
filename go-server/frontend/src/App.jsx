@@ -46,7 +46,6 @@ import Game from './pages/Game/Game';
 import Profile from './pages/Profile/Profile';
 import Friends from './pages/Friends/Friends';
 import Credits from './pages/Legal/Credits';
-import Logout from './pages/Auth/Logout';
 import AICreateGame from './pages/AIGame/AICreateGame';
 import AIJoinGame from './pages/AIGame/AIJoinGame';
 import AILobby from './pages/AIGame/AILobby';
@@ -100,7 +99,6 @@ const App = () =>
 							<Route path="/tos" element={<Tos />} />
 							<Route path="/credits" element={<Credits />} />
 							<Route path="/login" element={<Login />} />
-							<Route path="/logout" element={<Logout />} />
 							<Route path="/game" element={<HomeGame />} />
 							<Route path="/game/create" element={<CreateGame />} />
 							<Route path="/game/join/:code" element={<JoinGame />} />

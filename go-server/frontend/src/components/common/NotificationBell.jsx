@@ -27,7 +27,8 @@ const NotificationBell = () =>
   {
     dismiss(notif.id);
     setOpen(false);
-    navigate(`/game/join/${notif.code}`);
+    const path = notif.isAI ? `/aigame/join/${notif.code}` : `/game/join/${notif.code}`;
+    navigate(path);
   };
 
   const handleRefuse = (notif) =>

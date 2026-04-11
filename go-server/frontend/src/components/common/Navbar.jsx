@@ -11,12 +11,10 @@
 /* ************************************************************************** */
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
 import '../../styles/hypercard.css';
-import { getUsernameFromToken } from '../../api/socket';
-
-const username = getUsernameFromToken();
+import { getLocalAuth, isGuestUser } from '../../api/socket';
 
 const Clock = () =>
 {
@@ -44,25 +42,28 @@ const Clock = () =>
 const Navbar = () =>
 {
 	const navigate = useNavigate();
-	const [isLogged, setIsLogged] = useState(!!localStorage.getItem("authToken"));
+	const location = useLocation();
+	const [isLogged, setIsLogged] = useState(() => !!localStorage.getItem('authToken'));
+	const [username, setUsername] = useState(() => getLocalAuth().username || '');
+	const [guest, setGuest] = useState(() => isGuestUser());
 
 	useEffect(() =>
 	{
 		const checkAuth = () =>
 		{
-			setIsLogged(!!localStorage.getItem("authToken"));
+			const token = localStorage.getItem('authToken');
+			const auth = getLocalAuth();
+			setIsLogged(!!token);
+			setUsername(auth.username || '');
+			setGuest(isGuestUser());
 		};
-
-		window.addEventListener('storage', checkAuth);
-		
-		const interval = setInterval(checkAuth, 100);
-
+		window.addEventListener('userDataUpdated', checkAuth);
+		checkAuth();
 		return () =>
 		{
-			window.removeEventListener('storage', checkAuth);
-			clearInterval(interval);
+			window.removeEventListener('userDataUpdated', checkAuth);
 		};
-	}, []);
+	}, [location.pathname]);
 
 	return (
 		<nav className="hc-menubar" role="menubar" aria-label="System menu">
@@ -83,17 +84,13 @@ const Navbar = () =>
 
 			<div className="hc-menubar__spacer" />
 			
-		{isLogged ?(
-			<div className="hc-menubar__username" 
-			role="menuitem"
-			>
-			{username}
-			</div>
-
-		):(<div></div>)}
+			{isLogged && (
+				<div className="hc-menubar__username" role="menuitem">
+					{username}
+				</div>
+			)}
 
 			<div className="hc-menubar__spacer" />
-
 
 			{isLogged ? (
 				<div
@@ -116,17 +113,19 @@ const Navbar = () =>
 			<div
 				className="hc-menubar__item_useful"
 				role="menuitem"
-				onClick={() => navigate('/profile/mforest-')}
+				onClick={() => { if (username) navigate(`/profile/${username}`); }}
 			>
 				Profile
 			</div>
-			<div
-				className="hc-menubar__item_useful"
-				role="menuitem"
-				onClick={() => navigate('/friends')}
-			>
-				Friends
-			</div>
+			{!guest && (
+				<div
+					className="hc-menubar__item_useful"
+					role="menuitem"
+					onClick={() => navigate('/friends')}
+				>
+					Friends
+				</div>
+			)}
 			<NotificationBell />
 			<Clock />
 		</nav>

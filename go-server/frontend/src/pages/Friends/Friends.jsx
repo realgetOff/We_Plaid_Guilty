@@ -12,40 +12,52 @@
 
 import React, { useState, useEffect }          from 'react';
 import { useNavigate, Link }                   from 'react-router-dom';
-import { connect, send, addListener, removeListener, getUsernameFromToken, getIDFromToken }   from '../../api/socket';
-import { useNotifications }                    from '../../components/common/NotificationContext';
+import { connect, send, addListener, removeListener, getIDFromToken } from '../../api/socket';
 import './Friends.css';
 
 const Friends = () =>
 {
   const navigate            = useNavigate();
-  const { push }            = useNotifications();
 
-  const [friends,    setFriends]    = useState([]);
-  const [input,      setInput]      = useState('');
-  const [addError,   setAddError]   = useState('');
-  const [success,    setSuccess]    = useState('');
-  const [loading,    setLoading]    = useState(true);
-  const [inviteCode, setInviteCode] = useState('');
-  const [inviteError,setInviteError]= useState('');
-  const [inviting,   setInviting]   = useState(null);
+  const [friends,     setFriends]     = useState([]);
+  const [pendingIn,   setPendingIn]   = useState([]);
+  const [pendingOut,  setPendingOut]  = useState([]);
+  const [input,       setInput]       = useState('');
+  const [addError,    setAddError]    = useState('');
+  const [success,     setSuccess]     = useState('');
+  const [loading,     setLoading]     = useState(true);
+  const [guestBlock,  setGuestBlock]  = useState(false);
+  const [inviteCode,  setInviteCode]  = useState('');
+  const [inviteError, setInviteError] = useState('');
+  const [inviting,    setInviting]    = useState(null);
 
   useEffect(() =>
   {
-	connect();
+    connect();
     const onMessage = (msg) =>
     {
       if (msg.type === 'friends_list')
       {
         setFriends(msg.friends || []);
+        setPendingIn(msg.pending_in || []);
+        setPendingOut(msg.pending_out || []);
+        if (msg.guest_no_friends)
+          setGuestBlock(true);
         setLoading(false);
       }
       else if (msg.type === 'friend_added')
       {
-        if (msg.success)
+        if (msg.success && msg.friend)
         {
-          setFriends(prev => [...prev, msg.friend]);
-          setSuccess(`${msg.friend.username} added as friend.`);
+          setFriends((prev) =>
+          {
+            if (prev.some((f) => f.id === msg.friend.id))
+              return prev;
+            return [...prev, msg.friend];
+          });
+          setPendingIn((prev) => prev.filter((p) => p.id !== msg.friend.id));
+          setPendingOut((prev) => prev.filter((p) => p.id !== msg.friend.id));
+          setSuccess(`${msg.friend.username} is now your friend.`);
           setInput('');
           setTimeout(() => setSuccess(''), 3000);
         }
@@ -53,14 +65,20 @@ const Friends = () =>
           setAddError(msg.error || 'Failed to add friend.');
       }
       else if (msg.type === 'friend_removed')
-        setFriends(prev => prev.filter(f => f.id !== msg.friend_id));
+      {
+        setFriends((prev) => prev.filter((f) => f.id !== msg.friend_id));
+        setPendingIn((prev) => prev.filter((p) => p.id !== msg.friend_id));
+        setPendingOut((prev) => prev.filter((p) => p.id !== msg.friend_id));
+      }
       else if (msg.type === 'friend_online_status')
       {
-        setFriends(prev => prev.map(f => 
-          f.username === msg.username 
-            ? { ...f, online: msg.online }
-            : f
-        ));
+        const patch = (list) =>
+          list.map((f) =>
+            f.username === msg.username ? { ...f, online: msg.online } : f
+          );
+        setFriends(patch);
+        setPendingIn(patch);
+        setPendingOut(patch);
       }
       else if (msg.type === 'invite_sent')
       {
@@ -72,46 +90,48 @@ const Friends = () =>
           setInviting(null);
         }
       }
-      else if (msg.type === 'room_validation')
+      else if (msg.type === 'friend_request' && msg.user)
       {
-        if (!msg.valid)
-          setInviteError(msg.error || 'Invalid room code.');
-        else
-          setInviteError('');
-      }
-      else if (msg.type === 'game_invite')
-      {
-        push({
-          kind: 'invite',
-          from: msg.from,
-          code: msg.code,
+        setPendingIn((prev) =>
+        {
+          if (prev.some((p) => p.id === msg.user.id))
+            return prev;
+          return [...prev, msg.user];
         });
+      }
+      else if (msg.type === 'friend_request_sent' && msg.user)
+      {
+        setPendingOut((prev) =>
+        {
+          if (prev.some((p) => p.id === msg.user.id))
+            return prev;
+          return [...prev, msg.user];
+        });
+      }
+      else if (msg.type === 'friend_add_failed' || msg.type === 'friend_accept_failed')
+      {
+        setAddError(msg.error || 'Friend request failed.');
       }
     };
 
     addListener(onMessage);
 
-	// const id = getIDFromToken()
-
     send({
-			type: 'get_friends',
-			id: getIDFromToken()
-		});
+      type: 'get_friends',
+      id: getIDFromToken()
+    });
 
     return () => removeListener(onMessage);
-  }, [push]);
+  }, []);
 
   const handleInviteCodeChange = (e) =>
   {
     const code = e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 6);
     setInviteCode(code);
     setInviteError('');
-    
-    if (code.length === 6)
-      send({ type: 'validate_room', code: code });
   };
 
-  const handleAdd = async () =>
+  const handleAdd = () =>
   {
     const username = input.trim();
 
@@ -130,12 +150,46 @@ const Friends = () =>
       setAddError('This user is already your friend.');
       return;
     }
+    if (pendingOut.find((p) => p.username === username))
+    {
+      setAddError('You already have a pending request to this user.');
+      return;
+    }
+    if (pendingIn.find((p) => p.username === username))
+    {
+      setAddError('This user already sent you a request — accept it below.');
+      return;
+    }
 
     setAddError('');
-    
-    send({ 
-      type: 'add_friend', 
-      username: username 
+
+    send({
+      type: 'add_friend',
+      username: username
+    });
+  };
+
+  const handleAccept = (p) =>
+  {
+    setAddError('');
+    send({ type: 'accept_friend', username: p.username });
+  };
+
+  const handleRejectIncoming = (p) =>
+  {
+    send({
+      type: 'remove_friend',
+      id: getIDFromToken(),
+      username: p.username
+    });
+  };
+
+  const handleCancelOutgoing = (p) =>
+  {
+    send({
+      type: 'remove_friend',
+      id: getIDFromToken(),
+      username: p.username
     });
   };
 
@@ -143,11 +197,10 @@ const Friends = () =>
   {
     if (!window.confirm(`Remove ${friend.username} from friends?`))
       return;
-	console.log("How did we get here?", friend.username)
-    send({ 
+    send({
       type: 'remove_friend',
-	  id: getIDFromToken(),
-      username: friend.username 
+      id: getIDFromToken(),
+      username: friend.username
     });
   };
 
@@ -168,19 +221,10 @@ const Friends = () =>
 
     setInviting(friend.id);
 
-    send({ 
-      type: 'invite_friend', 
-      to: friend.username, 
-      code: code 
-    });
-  };
-
-  const handleMockNotif = () =>
-  {
-    push({
-      kind: 'invite',
-      from: 'lviravon',
-      code: 'ABCDEF',
+    send({
+      type: 'invite_friend',
+      to: friend.username,
+      code: code
     });
   };
 
@@ -196,21 +240,22 @@ const Friends = () =>
     );
   }
 
-  return (
-    <div className="friends">
-
-      <div className="friends__card">
-        <div className="friends__card-header">test notification</div>
-        <div className="friends__card-body">
-          <p className="friends__hint">simule une invite de lviravon - ABCDEF.</p>
-          <button
-            className="friends__btn friends__btn--primary"
-            onClick={handleMockNotif}
-          >
-            ▶ trigger invite notif
+  if (guestBlock)
+  {
+    return (
+      <div className="friends">
+        <div className="friends__guard-card" style={{ margin: '2rem auto', maxWidth: '420px', textAlign: 'center' }}>
+          <p className="friends__guard-msg">Guest accounts cannot use friends or invites.</p>
+          <button className="friends__btn friends__btn--primary" onClick={() => navigate('/')}>
+            ← back to home
           </button>
         </div>
       </div>
+    );
+  }
+
+  return (
+    <div className="friends">
 
       <div className="friends__card">
         <div className="friends__card-header">🎮 invite to a game</div>
@@ -255,6 +300,45 @@ const Friends = () =>
           {success    && <p className="friends__success">✓ {success}</p>}
         </div>
       </div>
+
+      {(pendingIn.length > 0 || pendingOut.length > 0) && (
+        <div className="friends__card">
+          <div className="friends__card-header">⏳ pending requests</div>
+          <div className="friends__card-body">
+            {pendingIn.length > 0 && (
+              <>
+                <p className="friends__hint">wants to be your friend:</p>
+                <div className="friends__list">
+                  {pendingIn.map((p) => (
+                    <div key={p.id} className="friends__row">
+                      <span className={`friends__dot${p.online ? ' friends__dot--online' : ''}`} />
+                      <Link to={`/profile/${p.username}`} className="friends__username">{p.username}</Link>
+                      <div className="friends__actions">
+                        <button type="button" className="friends__btn friends__btn--primary" onClick={() => handleAccept(p)}>✓ accept</button>
+                        <button type="button" className="friends__btn friends__btn--remove" onClick={() => handleRejectIncoming(p)}>✕</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+            {pendingOut.length > 0 && (
+              <>
+                <p className="friends__hint" style={{ marginTop: pendingIn.length ? '1rem' : 0 }}>waiting for response:</p>
+                <div className="friends__list">
+                  {pendingOut.map((p) => (
+                    <div key={p.id} className="friends__row">
+                      <span className={`friends__dot${p.online ? ' friends__dot--online' : ''}`} />
+                      <span className="friends__username">{p.username}</span>
+                      <button type="button" className="friends__btn friends__btn--remove" onClick={() => handleCancelOutgoing(p)}>cancel</button>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="friends__card">
         <div className="friends__card-header">

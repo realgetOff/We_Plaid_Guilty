@@ -1,34 +1,32 @@
-// // ************************************************************************** //
-// //                                                                            //
-// //                                                        :::      ::::::::   //
-// //   socket.js                                          :+:      :+:    :+:   //
-// //                                                    +:+ +:+         +:+     //
-// //   By: mforest- <mforest-@student.42angouleme.fr  +#+  +:+       +#+        //
-// //                                                +#+#+#+#+#+   +#+           //
-// //   Created: 2026/02/26 00:09:36 by mforest-          #+#    #+#             //
-// //   Updated: 2026/02/26 00:53:58 by mforest-         ###   ########.fr       //
-// //                                                                            //
-// // ************************************************************************** //
+// ************************************************************************** //
+//                                                                            //
+//                                                        :::      ::::::::   //
+//   socket.js                                          :+:      :+:    :+:   //
+//                                                    +:+ +:+         +:+     //
+//   By: mforest- <mforest-@student.42angouleme.fr  +#+  +:+       +#+        //
+//                                                +#+#+#+#+#+   +#+           //
+//   Created: 2026/02/26 00:09:36 by mforest-          #+#    #+#             //
+//   Updated: 2026/02/26 00:53:58 by mforest-         ###   ########.fr       //
+//                                                                            //
+// ************************************************************************** //
 
 const getWsUrl = () =>
 {
 	const env = import.meta.env.VITE_WS_URL;
-
 	if (env && typeof env === 'string' && env.trim() !== '')
 		return env;
-
 	if (typeof window !== 'undefined' && window.location)
 	{
 		const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 		return `${proto}//${window.location.host}/ws`;
 	}
-
 	return 'ws://localhost:8080/ws';
 };
 
 let socket = null;
 let listeners = [];
 let pending = [];
+let wsAuthReady = false;
 
 export const getUsernameFromToken = () =>
 {
@@ -62,14 +60,36 @@ export const getIDFromToken = () =>
     }
 };
 
+export const updateLocalAuth = (userData) =>
+{
+    if (userData.username)
+        localStorage.setItem('username', userData.username);
+    if (userData.token)
+        localStorage.setItem('authToken', userData.token);
+    if (userData.id)
+        localStorage.setItem('userID', userData.id);
+	window.dispatchEvent(new CustomEvent('userDataUpdated'));
+};
+
+export const isGuestUser = () => localStorage.getItem('isGuest') === '1';
+
+export const getLocalAuth = () =>
+{
+	const token = localStorage.getItem('authToken');
+	const nameFromJwt = getUsernameFromToken();
+	const idFromJwt = getIDFromToken();
+	return {
+		username: nameFromJwt || localStorage.getItem('username'),
+		token,
+		id: idFromJwt || localStorage.getItem('userID')
+	};
+};
 
 const getAuthToken = async() =>
 {
     const localToken = localStorage.getItem("authToken");
-
     if (localToken)
         return localToken;
-
     console.log("[getAuthToken] no token found");
     window.location.href = "/login";
     return null;
@@ -77,37 +97,86 @@ const getAuthToken = async() =>
 
 const send = (payload) =>
 {
-    const    data = JSON.stringify(payload);
+	const data = JSON.stringify(payload);
+	if (payload.type === 'authenticate')
+	{
+		if (socket && socket.readyState === WebSocket.OPEN)
+			socket.send(data);
+		return;
+	}
+	if (!socket || socket.readyState !== WebSocket.OPEN)
+	{
+		pending.push(data);
+		return;
+	}
+	if (!wsAuthReady)
+	{
+		pending.push(data);
+		return;
+	}
+	socket.send(data);
+};
 
-    if (socket && socket.readyState === WebSocket.OPEN)
-    {
-        socket.send(data);
-        return ;
-    }
-    pending.push(data);
+const flushPendingAfterAuth = () =>
+{
+	if (!socket || socket.readyState !== WebSocket.OPEN)
+		return;
+	const batch = pending;
+	pending = [];
+	for (const data of batch)
+	{
+		try
+		{
+			socket.send(data);
+		}
+		catch (e)
+		{
+			console.error('ws flush pending send failed', e);
+		}
+	}
 };
 
 const setupSocketHandlers = (token) =>
 {
 	socket.onopen = () =>
 	{
-		send({type: 'authenticate', token: token});
-		pending.forEach((data) =>
-			{
-				try
-				{
-					socket.send(data);
-				}
-				catch (e) {}
-			});
-		pending = [];
+		wsAuthReady = false;
+		socket.send(JSON.stringify({ type: 'authenticate', token: token }));
 	};
+
 	socket.onmessage = (event) =>
 	{
-		const    msg = JSON.parse(event.data);
+		const msg = JSON.parse(event.data);
+
+		if (msg.type === 'auth_ok')
+		{
+			wsAuthReady = true;
+			flushPendingAfterAuth();
+			if (msg.is_guest)
+				localStorage.setItem('isGuest', '1');
+			else
+				localStorage.removeItem('isGuest');
+			window.dispatchEvent(new CustomEvent('userDataUpdated'));
+		}
+
+		if (msg.type === 'profile_updated' && msg.success && msg.token)
+		{
+			updateLocalAuth({
+				username: msg.user.username,
+				token: msg.token
+			});
+		}
+
 		listeners.forEach((fn) =>
 		{
-			fn(msg);
+			try
+			{
+				fn(msg);
+			}
+			catch (e)
+			{
+				console.error('socket listener error', e);
+			}
 		});
 	};
 	socket.onclose = (event) =>
@@ -115,6 +184,8 @@ const setupSocketHandlers = (token) =>
 		if(event.code == 4000)
 			window.location.href = "/logout";
 		console.warn("event: ", event.msg);
+		wsAuthReady = false;
+		pending = [];
     	socket = null;
 	};
 	socket.onerror = (err) =>
@@ -125,19 +196,22 @@ const setupSocketHandlers = (token) =>
 
 const connect = async () =>
 {
-	const    token = await getAuthToken();
-
-	if (socket && (socket.readyState === WebSocket.OPEN
-		|| socket.readyState === WebSocket.CONNECTING))
+    const token = await getAuthToken();
+    if (!token)
+		return;
+    if (socket && socket.readyState === WebSocket.OPEN)
 	{
-		return ;
-	}
-	if (!token)
+		wsAuthReady = false;
+		socket.send(JSON.stringify({ type: 'authenticate', token: token }));
+        return;
+    }
+    if (socket && socket.readyState === WebSocket.CONNECTING)
 	{
-		return ;
-	}
-	socket = new WebSocket(getWsUrl());
-	setupSocketHandlers(token);
+        return;
+    }
+    
+    socket = new WebSocket(getWsUrl());
+    setupSocketHandlers(token);
 };
 
 const disconnect = () =>
@@ -146,6 +220,8 @@ const disconnect = () =>
 	{
 		socket.close();
 	}
+	wsAuthReady = false;
+	pending = [];
 	socket = null;
 	listeners = [];
 };

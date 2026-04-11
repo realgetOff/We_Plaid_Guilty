@@ -28,6 +28,7 @@ export const roomsApi = {
 		const res = await fetch(getApiBaseUrl() + '/api/rooms/' + encodeURIComponent(code), {
 			method: 'GET',
 			credentials: 'include',
+			cache: 'no-store',
 		});
 
 		if (res.status === 404)
@@ -45,6 +46,7 @@ export const roomsApi = {
 		const res = await fetch(getApiBaseUrl() + '/api/ai-rooms/' + encodeURIComponent(code), {
 			method: 'GET',
 			credentials: 'include',
+			cache: 'no-store',
 		});
 
 		if (res.status === 404)

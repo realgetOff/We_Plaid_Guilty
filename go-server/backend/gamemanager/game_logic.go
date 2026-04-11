@@ -101,7 +101,7 @@ func (r *Room) SubmiteAction(playerID string, data map[string]interface{}, isFin
 	if !ok {
 		return fmt.Errorf("Player not found!")
 	}
-	fmt.Printf("%s valid round\n", player.Name)
+	fmt.Printf("action_submited for player = %s\n", player.Name)
 
 	var content string
 	if val, ok := data["prompt"].(string); ok {
@@ -141,9 +141,11 @@ func (r *Room) SubmiteAction(playerID string, data map[string]interface{}, isFin
 			readyCount++
 		}
 	}
+	fmt.Printf("%s valid round\n", player.Name)
 	if readyCount == len(r.Players) {
 		select {
 		case r.FinishedChan <- true:
+			fmt.Printf("Signa to chan good\n")
 		default:
 		}
 	}
@@ -224,6 +226,7 @@ func (r *Room) StartGame() error {
 		r.PlayerOrder[i], r.PlayerOrder[j] = r.PlayerOrder[j], r.PlayerOrder[i]
 	})
 
+	fmt.Printf("Start Game, RoomID = %s\n", r.ID)
 	go r.RunGameLoop()
 
 	return nil

@@ -698,7 +698,6 @@ func (d *Dispatcher) HandlePrompt(ctx *WSContext, msg Message) {
 }
 
 func (d *Dispatcher) HandleDraw(ctx *WSContext, msg Message) {
-	fmt.Printf("DEBUG: draw_submitted code = %s\n", msg.Code)
 	if (!RunPipeLine(ctx, msg, d.PipeIsAuth, d.PipeRoomExist)) { return }
 
 	data := map[string]interface{}{
@@ -707,6 +706,7 @@ func (d *Dispatcher) HandleDraw(ctx *WSContext, msg Message) {
 	}
 	fmt.Printf("DEGUB: %s\n", msg.Type)
 	if classicRoom, ok := ctx.client.CurrentRoom.(*gamemanager.Room); ok {
+		fmt.Printf("DEBUG: draw_submitted code = %s\n", msg.Code)
 		err := classicRoom.SubmiteAction(*ctx.client.CurrUsrID, data, true);
 		if (err != nil) {
 			fmt.Printf("Error: Submited draw: %v\n", err);

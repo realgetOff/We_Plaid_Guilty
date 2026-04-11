@@ -244,7 +244,7 @@ func main() {
 	// -- OLD ROUTER CODE -- //
 
 	// if err := serverVars.router.Run(":" + port); err != nil {
-	// 	log.Fatalf("Failed to run server: %v", err)	
+		// log.Fatalf("Failed to run server: %v", err)	
 	// }
 
 	// UNCOMMENT NET/HTTP BEFORE DEPLOYING VIA CI/CD

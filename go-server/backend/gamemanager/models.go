@@ -46,7 +46,6 @@ type Player struct {
 	Score       int             `json:"score"`
 	Name        string          `json:"name"`
 	Conn        *websocket.Conn `json:"-"`
-	LastDraft   string          `json:"lastDraft"`
 	IsHost      bool            `json:"isHost"`
 	IsReady     bool            `json:"isReady"`
 	WriteMu     sync.Mutex      `json:"-"`

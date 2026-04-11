@@ -11,11 +11,11 @@ podAnnotations:
   vault.hashicorp.com/role: "grafana-role"
   vault.hashicorp.com/agent-inject-secret-tls: "pki/issue/grafana-pki"
   vault.hashicorp.com/agent-inject-template-tls: |
-    {{`{{ with pkiCert "pki/issue/grafana-pki" "common_name=grafana.monitoring.svc.cluster.local" "ttl=24h" }}`}}
-    {{`{{ .Cert }}`}}
-    {{`{{ .CA }}`}}
-    {{`{{ .Key }}`}}
-    {{`{{ end }}`}}
+    {{ with pkiCert "pki/issue/grafana-pki" "common_name=grafana.monitoring.svc.cluster.local" "ttl=24h" }}
+    {{ .Cert }}
+    {{ .CA }}
+    {{ .Key }}
+    {{ end }}
   vault.hashicorp.com/agent-inject-secret-config: "secret/data/grafana/config"
   vault.hashicorp.com/agent-inject-template-config: |
     {{`{{ with secret "secret/data/grafana/config" }}`}}

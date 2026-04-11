@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
-	// "net/http" // UNCOMMENT FOR CI/CD DEPLOYMENT
+	"net/http" // UNCOMMENT FOR CI/CD DEPLOYMENT
 	"os"
 	"os/signal"
 	"strings"

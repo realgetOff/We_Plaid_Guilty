@@ -39,6 +39,9 @@ import AIGame from './pages/AIGame/AIGame';
 import './styles/global.css';
 import './styles/hypercard.css';
 
+const isMobile  = /mobile/i.test(userAgent);
+console.log("Is Mobile:", isMobile);
+
 const App = () =>
 {
 	return (

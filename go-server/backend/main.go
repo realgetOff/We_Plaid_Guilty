@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
-	// "net/http" // UNCOMMENT FOR CI/CD DEPLOYMENT
+	"net/http" // UNCOMMENT FOR CI/CD DEPLOYMENT
 	"os"
 	"os/signal"
 	"strings"
@@ -23,6 +23,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
+
 )
 
 type DBSafe struct {
@@ -161,9 +165,6 @@ func NewServerStructure () *serverVarsStruct {
 		// Rooms: make(map[string]gamemanager.GameRoom),
 	// }
 
-
-
-	
 	dbPool, err := connectToDatabase()
 	dbs.Pool = dbPool
 	go reloadConfig(&dbs)
@@ -197,6 +198,35 @@ func addnewlinestotls() []byte {
 	replacement := delimiter + "\n"
 	return []byte(strings.ReplaceAll(string(content), delimiter, replacement))
 }
+
+// https://api.intra.42.fr/apidoc/guides/web_application_flow#exchange-your-code-for-an-access-token
+// https://pkg.go.dev/golang.org/x/oauth2#Endpoint
+
+var (
+	fortyTwoOauthConfig = &oauth2.Config {
+		RedirectURL: "http://localhost:8080/api/auth/42/callback",
+		ClientID: "u-s4t2ud-a03d8fc82a14a0f36fb4c5e26b33b5414ad93d52a73918090f17c8aa4a9f6364",
+		ClientSecret: "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",
+		Scopes: []string{"public"},
+		Endpoint:	oauth2.Endpoint {
+			AuthURL: "https://api.intra.42.fr/oauth/authorize",
+			TokenURL: "https://api.intra.42.fr/oauth/token",
+		},
+	}
+
+	googleOauthConfig = &oauth2.Config{
+		RedirectURL:  "http://localhost:8080/auth/google/callback", // change this to whatever it should be IN HTTPS
+		ClientID:     "578705584934-5ea9rigvgndb3u1nfm22krmhra3mp9hl.apps.googleusercontent.com", // google client ID from console.cloud.google.com
+		ClientSecret: "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", // ditto for client secret
+		Scopes: []string{
+			"https://www.googleapis.com/auth/userinfo.email", 
+			"https://www.googleapis.com/auth/userinfo.profile",
+		},
+		Endpoint: google.Endpoint,
+	}
+	// this should be turned into a randomly generated string
+	oauthStateString = "pseudo-random-state"
+)
 
 func main() {
 	fmt.Println("~o~ This project was brought to you with hate by pmilner- mforest- namichel & lviravon! ~o~")
@@ -238,6 +268,22 @@ func main() {
 		handleGuestAuth(c, &serverVars.db)
 	})
 
+	serverVars.router.GET("/login/google", func (c *gin.Context){
+		url := googleOauthConfig.AuthCodeURL(oauthStateString)
+		c.Redirect(http.StatusTemporaryRedirect, url)
+	})
+
+	serverVars.router.GET("/login/42", func (c *gin.Context){
+		url := fortyTwoOauthConfig.AuthCodeURL(oauthStateString)
+		c.Redirect(http.StatusTemporaryRedirect, url)
+	})
+
+	
+
+	// need callback functions but im lost at the moment
+	// serverVars.router.GET("/auth/42/callback", ...)
+	// serverVars.router.GET("/auth/google/callback", ...) 
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
@@ -245,39 +291,39 @@ func main() {
 
 	// -- OLD ROUTER CODE -- //
 
-	if err := serverVars.router.Run(":" + port); err != nil {
-		log.Fatalf("Failed to run server: %v", err)	
-	}
+	// if err := serverVars.router.Run(":" + port); err != nil {
+	// 	log.Fatalf("Failed to run server: %v", err)	
+	// }
 
 	// UNCOMMENT NET/HTTP BEFORE DEPLOYING VIA CI/CD
 
-	// tlsContent := addnewlinestotls()
-	// if tlsContent == nil {
-		// log.Fatalf("Failed to read TLS file")
-	// }
-	// serverCert, err := tls.X509KeyPair(tlsContent, tlsContent)
-	// if (err != nil){
-		// log.Fatalf("Failed to parse key pair: %v", err)
-	// }
-// 
-	// caCertPool := x509.NewCertPool()
-	// caCertPool.AppendCertsFromPEM(tlsContent)
-// 
-	// tlsConfig := &tls.Config {
-		// Certificates:	[]tls.Certificate{serverCert},
-		// ClientCAs:		caCertPool,
-		// ClientAuth:		tls.RequireAndVerifyClientCert,
-	// }
-// 
-	// server := &http.Server{
-		// Addr: ":" + port,
-		// Handler: serverVars.router,
-		// TLSConfig: tlsConfig,
-	// }
-// 
-	// fmt.Println(" ~~ Attempting to boot with mTLS on port ", port, " ~~")
-// 
-	// if err := server.ListenAndServeTLS("", ""); err != nil && err != http.ErrServerClosed {
-		// log.Fatalf("Failed to run server over mTLS: %v", err)
-	// }
+	tlsContent := addnewlinestotls()
+	if tlsContent == nil {
+		log.Fatalf("Failed to read TLS file")
+	}
+	serverCert, err := tls.X509KeyPair(tlsContent, tlsContent)
+	if (err != nil){
+		log.Fatalf("Failed to parse key pair: %v", err)
+	}
+
+	caCertPool := x509.NewCertPool()
+	caCertPool.AppendCertsFromPEM(tlsContent)
+
+	tlsConfig := &tls.Config {
+		Certificates:	[]tls.Certificate{serverCert},
+		ClientCAs:		caCertPool,
+		ClientAuth:		tls.RequireAndVerifyClientCert,
+	}
+
+	server := &http.Server{
+		Addr: ":" + port,
+		Handler: serverVars.router,
+		TLSConfig: tlsConfig,
+	}
+
+	fmt.Println(" ~~ Attempting to boot with mTLS on port ", port, " ~~")
+
+	if err := server.ListenAndServeTLS("", ""); err != nil && err != http.ErrServerClosed {
+		log.Fatalf("Failed to run server over mTLS: %v", err)
+	}
 }

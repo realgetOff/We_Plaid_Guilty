@@ -5,10 +5,11 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile_local
     ports:
       - "8080:8080"
     environment:
+      - LOCAL=true
       - DB_HOST=db
       - DB_PORT=5432
       - DB_USER=admin

@@ -1,0 +1,67 @@
+serviceAccount:
+  create: true
+  name: node-exporter
+  automountServiceAccountToken: true
+
+podAnnotations:
+  cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+  vault.hashicorp.com/agent-inject: "true"
+  vault.hashicorp.com/agent-init-first: "true"
+  vault.hashicorp.com/role: "monitoring-role"
+  vault.hashicorp.com/agent-inject-secret-tls: "pki/issue/monitoring-pki"
+  vault.hashicorp.com/agent-inject-template-tls: |
+    {{ with pkiCert "pki/issue/monitoring-pki" "common_name=node-exporter.monitoring.svc.cluster.local" "ttl=24h" }}
+    {{ .Cert }}{{ .CA }}{{ .Key }}
+    {{ end }}
+
+extraArgs:
+  - --web.config.file=/etc/node-exporter/web-config.yml
+
+configmaps:
+  - name: node-exporter-web-config
+    mountPath: /etc/node-exporter/
+
+tolerations:
+  - effect: NoSchedule
+    operator: Exists
+
+nodeSelector:
+  kubernetes.io/os: linux
+
+hostNetwork: true
+hostPID: true
+dnsPolicy: ClusterFirstWithHostNet
+
+hostRootFsMount:
+  enabled: true
+  mountPropagation: HostToContainer
+
+service:
+  port: 9100
+  targetPort: 9100
+  portName: metrics
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/scheme: "https"
+
+livenessProbe:
+  failureThreshold: 3
+  httpGet:
+    httpHeaders: []
+    scheme: HTTPS
+    path: /
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  successThreshold: 1
+  timeoutSeconds: 1
+
+readinessProbe:
+  failureThreshold: 3
+  httpGet:
+    httpHeaders: []
+    scheme: HTTPS
+    path: /
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  successThreshold: 1
+  timeoutSeconds: 1

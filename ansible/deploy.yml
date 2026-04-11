@@ -110,6 +110,8 @@
       environment:
         KUBECONFIG: /etc/rancher/k3s/k3s.yaml
 
+
+
 - name: "Worker nodes"
   hosts: WORKERS
   become: true
@@ -147,3 +149,87 @@
         apply:
           tags: k3s_worker
       tags: k3s_worker
+
+    - name: "Trust K3s network interfaces"
+      firewalld:
+        zone: trusted
+        interface: "{{ item }}"
+        permanent: yes
+        immediate: yes
+        state: enabled
+      loop:
+        - cni0
+        - flannel-wg
+      ignore_errors: true
+
+
+- name: "Monitoring"
+  hosts: MASTER
+  become: true
+  tasks:
+    - name: "Wait for workers to join"
+      shell: |
+        /usr/local/bin/kubectl wait node \
+          --for=condition=ready \
+          --all \
+          --timeout=120s
+      environment:
+        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+    - name: "Create namespace monitoring"
+      shell: |
+        /usr/local/bin/kubectl create namespace monitoring \
+          --dry-run=client -o yaml | \
+        /usr/local/bin/kubectl apply -f -
+      environment:
+        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+    - name: "Label namespace monitoring"
+      shell: |
+        /usr/local/bin/kubectl label namespace monitoring \
+          vault-injection=enabled --overwrite
+      environment:
+        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+    - name: "Copy node-exporter values"
+      copy:
+        src: "{{ playbook_dir }}/../helm/values/node-exporter.yaml"
+        dest: /tmp/node-exporter-values.yaml
+        mode: '0644'
+
+    - name: "Apply node-exporter web-config ConfigMap"
+      copy:
+        src: "{{ playbook_dir }}/../helm/values/node-exporter-web-config.yaml"
+        dest: /tmp/node-exporter-web-config.yaml
+        mode: '0644'
+
+    - name: "Create web-config ConfigMap"
+      shell: |
+        /usr/local/bin/kubectl apply -f /tmp/node-exporter-web-config.yaml
+      environment:
+        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+    - name: "Deploy node-exporter"
+      shell: |
+        /usr/local/bin/helm upgrade --install node-exporter \
+          prometheus-community/prometheus-node-exporter \
+          --namespace monitoring \
+          --values /tmp/node-exporter-values.yaml \
+          --timeout 120s
+      environment:
+        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+    - name: "Copy prometheus values"
+      copy:
+        src: "{{ playbook_dir }}/../helm/values/prometheus.yaml"
+        dest: /tmp/prometheus-values.yaml
+        mode: '0644'
+
+    - name: "Deploy Prometheus"
+      shell: |
+        /usr/local/bin/helm upgrade --install prometheus \
+          prometheus-community/kube-prometheus-stack \
+          --namespace monitoring \
+          --values /tmp/prometheus-values.yaml \
+          --timeout 300s
+      environment:
+        KUBECONFIG: /etc/rancher/k3s/k3s.yaml

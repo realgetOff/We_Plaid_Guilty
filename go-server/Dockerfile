@@ -27,7 +27,7 @@ ENTRYPOINT ["./server"]
 # RUN npm install
 # COPY frontend/ .
 # RUN npm run build
-
+# 
 # FROM --platform=linux/amd64 golang:1.25-alpine AS backend-builder
 # RUN apk add --no-cache ca-certificates
 # WORKDIR /app/backend
@@ -35,7 +35,7 @@ ENTRYPOINT ["./server"]
 # RUN go mod download
 # COPY backend/ .
 # RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /app/server .
-
+# 
 # FROM --platform=linux/amd64 alpine:3.19
 # WORKDIR /app
 # COPY --from=backend-builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/

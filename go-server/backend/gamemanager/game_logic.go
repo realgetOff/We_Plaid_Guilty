@@ -76,9 +76,9 @@ func (r *Room) RunGameLoop() {
 
 		fmt.Printf("Round %d : %s starting...\n", round, r.Phase)
 		if r.Phase == string(StateDrawing) {
-			r.waitForPhase(95 * time.Second)
+			r.waitForPhase(140 * time.Second)
 		} else {
-			r.waitForPhase(50 * time.Second)
+			r.waitForPhase(100 * time.Second)
 		}
 
 	}
@@ -101,6 +101,7 @@ func (r *Room) SubmiteAction(playerID string, data map[string]interface{}, isFin
 	if !ok {
 		return fmt.Errorf("Player not found!")
 	}
+	fmt.Printf("%s valid round\n", player.Name)
 
 	var content string
 	if val, ok := data["prompt"].(string); ok {
@@ -111,7 +112,6 @@ func (r *Room) SubmiteAction(playerID string, data map[string]interface{}, isFin
 		content = val
 	}
 
-	player.LastDraft = content
 
 	if !isFinal {
 		return nil
@@ -134,7 +134,6 @@ func (r *Room) SubmiteAction(playerID string, data map[string]interface{}, isFin
 
 	ptrBook.Entries = append(ptrBook.Entries, newEntry)
 	r.Players[playerID].IsReady = true
-	r.Players[playerID].LastDraft = ""
 
 	readyCount := 0
 	for _, tmp := range r.Players {

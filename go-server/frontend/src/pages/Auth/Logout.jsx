@@ -25,6 +25,7 @@ const Logout = () =>
 			disconnect();
 
 			localStorage.removeItem("authToken");
+			localStorage.removeItem("isGuest");
 
 			setTimeout(() =>
 			{

@@ -1,13 +1,16 @@
 package main
 
 import (
-	"strings"
-	"fmt"
-	"github.com/gorilla/websocket"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"context"
-	"main.go/gamemanager"
+	"errors"
+	"fmt"
+	"strings"
 	"sync"
+
+	"github.com/gorilla/websocket"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"main.go/gamemanager"
 )
 
 // NEW STRUCT FOR CLIENT / WEBSOCKET MANAGEMENT
@@ -15,6 +18,7 @@ import (
 type Client struct {
 	CurrUsrID		*string				// UserID, to identify the
 	CurrUsrName		*string				// Ditto, for the username
+	IsGuest			bool
 	Conn			*websocket.Conn		// The actual websocket
 	Hub				*gamemanager.Hub	// Reference to the game manager
 	CurrentRoom		gamemanager.GameRoom// The current room of a GAMER
@@ -99,13 +103,49 @@ type Friend struct {
 }
 
 type FriendsListResponse struct {
-		Type string `json:"type"`
-		Friends []Friend `json:"friends,omitempty"`
-		Friend Friend `json:"friend,omitempty"`
-		Success bool `json:"success,omitempty"`
-		FriendID string `json:"friend_id,omitempty"`
+	Type         string   `json:"type"`
+	Friends      []Friend `json:"friends,omitempty"`
+	PendingIn    []Friend `json:"pending_in,omitempty"`
+	PendingOut   []Friend `json:"pending_out,omitempty"`
+	Friend       Friend   `json:"friend,omitempty"`
+	Success      bool     `json:"success,omitempty"`
+	FriendID     string   `json:"friend_id,omitempty"`
+	GuestNoFriends bool   `json:"guest_no_friends,omitempty"`
 }
 
+func scanFriendRows(ctx *WSContext, rows pgx.Rows) []Friend {
+	defer rows.Close()
+	out := make([]Friend, 0)
+	for rows.Next() {
+		var f Friend
+		if err := rows.Scan(&f.ID, &f.Username); err != nil {
+			fmt.Printf("Error scanning friends row :: %v\n", err)
+			continue
+		}
+		f.Online = ctx.chub.Clients[f.ID] != nil
+		out = append(out, f)
+	}
+	return out
+}
+
+func (d *Dispatcher) broadcastFriendAdded(ctx *WSContext, aID, aName, bID, bName string) {
+	onA := ctx.chub.Clients[aID] != nil
+	onB := ctx.chub.Clients[bID] != nil
+	if c := ctx.chub.Clients[aID]; c != nil {
+		_ = c.Conn.WriteJSON(FriendsListResponse{
+			Type:    "friend_added",
+			Success: true,
+			Friend:  Friend{ID: bID, Username: bName, Online: onB},
+		})
+	}
+	if c := ctx.chub.Clients[bID]; c != nil {
+		_ = c.Conn.WriteJSON(FriendsListResponse{
+			Type:    "friend_added",
+			Success: true,
+			Friend:  Friend{ID: aID, Username: aName, Online: onA},
+		})
+	}
+}
 
 func (d *Dispatcher) HandleGetFriend(ctx *WSContext, msg Message) {
 	fmt.Println("DEBUG: HandleGetFriend triggered!")
@@ -113,42 +153,61 @@ func (d *Dispatcher) HandleGetFriend(ctx *WSContext, msg Message) {
 		return
 	}
 
-	query := `	SELECT users.id, users.username
-				FROM users
-				JOIN friends ON (users.id = friends.requester_id OR users.id = friends.addressee_id)
-				WHERE
-				(friends.requester_id = $1 OR friends.addressee_id = $1)
-				AND users.id != $1
-			`
+	userID := msg.ID
+	if userID == "" {
+		userID = *ctx.client.CurrUsrID
+	}
 
-	rows, err := ctx.chub.Db.Query(context.Background(), query, msg.ID)
-	if err != nil {
-		fmt.Printf("Failed to open rows :: %v\n", err)
+	if ctx.client.IsGuest {
+		_ = ctx.client.Conn.WriteJSON(FriendsListResponse{
+			Type:           "friends_list",
+			Friends:        []Friend{},
+			PendingIn:      []Friend{},
+			PendingOut:     []Friend{},
+			GuestNoFriends: true,
+		})
 		return
 	}
-	defer rows.Close()
 
-	friends := make([]Friend, 0)
-	for rows.Next() {
-		var f Friend
-		if err := rows.Scan(&f.ID, &f.Username); err != nil {
-			fmt.Printf("Error scanning friends row :: %v\n", err)
-			continue 
-		}
-		if (ctx.chub.Clients[f.ID] != nil) {
-			f.Online = true
-		}
-		friends = append(friends, f)
-	}
+	qAccepted := `SELECT u.id, u.username FROM users u
+		JOIN friends f ON (u.id = f.requester_id OR u.id = f.addressee_id)
+		WHERE (f.requester_id = $1 OR f.addressee_id = $1) AND u.id != $1 AND f.status = 'accepted'`
 
-	response := FriendsListResponse {
-		Type: "friends_list",
-		Friends: friends, 
-	}
-
-	err = ctx.client.Conn.WriteJSON(response)
+	rows, err := ctx.chub.Db.Query(context.Background(), qAccepted, userID)
 	if err != nil {
-		fmt.Printf("failed to send friends list: %v", err)
+		fmt.Printf("Failed to open accepted friends :: %v\n", err)
+		return
+	}
+	friends := scanFriendRows(ctx, rows)
+
+	qIn := `SELECT u.id, u.username FROM users u
+		JOIN friends f ON u.id = f.requester_id
+		WHERE f.addressee_id = $1 AND f.status = 'pending'`
+	rowsIn, err := ctx.chub.Db.Query(context.Background(), qIn, userID)
+	if err != nil {
+		fmt.Printf("Failed pending_in :: %v\n", err)
+		return
+	}
+	pendingIn := scanFriendRows(ctx, rowsIn)
+
+	qOut := `SELECT u.id, u.username FROM users u
+		JOIN friends f ON u.id = f.addressee_id
+		WHERE f.requester_id = $1 AND f.status = 'pending'`
+	rowsOut, err := ctx.chub.Db.Query(context.Background(), qOut, userID)
+	if err != nil {
+		fmt.Printf("Failed pending_out :: %v\n", err)
+		return
+	}
+	pendingOut := scanFriendRows(ctx, rowsOut)
+
+	err = ctx.client.Conn.WriteJSON(FriendsListResponse{
+		Type:        "friends_list",
+		Friends:     friends,
+		PendingIn:   pendingIn,
+		PendingOut:  pendingOut,
+	})
+	if err != nil {
+		fmt.Printf("failed to send friends list: %v\n", err)
 	}
 }
 
@@ -187,73 +246,189 @@ func (d* Dispatcher) HandleRemoveFriend(ctx *WSContext, msg Message) {
 		FriendID: *ctx.client.CurrUsrID,
 	}
 
-	fmt.Println("TRYING TO REMOVE SENDER FROM ADDRESSEE FRIENDLIST")
-
-	err = ctx.chub.Clients[friend_id].Conn.WriteJSON(response)
-	if err != nil {
-		fmt.Printf("Failed to send friend_id to addressee on removal: %v", err)
+	if peer := ctx.chub.Clients[friend_id]; peer != nil {
+		err = peer.Conn.WriteJSON(response)
+		if err != nil {
+			fmt.Printf("Failed to send friend_id to peer on removal: %v\n", err)
+		}
 	}
 
 }
 
+func (d *Dispatcher) HandleInviteFriend(ctx *WSContext, msg Message) {
+	if !RunPipeLine(ctx, msg, d.PipeIsAuth) {
+		return
+	}
+	if ctx.client.IsGuest {
+		_ = ctx.client.Conn.WriteJSON(map[string]interface{}{
+			"type": "invite_sent", "success": false, "error": "Guests cannot send invites.",
+		})
+		return
+	}
+	to := strings.TrimSpace(msg.To)
+	code := strings.ToUpper(strings.TrimSpace(msg.Code))
+	if to == "" || code == "" {
+		_ = ctx.client.Conn.WriteJSON(map[string]interface{}{
+			"type": "invite_sent", "success": false, "error": "Missing recipient or room code.",
+		})
+		return
+	}
+	var targetID string
+	err := ctx.chub.Db.QueryRow(context.Background(),
+		`SELECT id FROM users WHERE username = $1`, to).Scan(&targetID)
+	if err != nil {
+		_ = ctx.client.Conn.WriteJSON(map[string]interface{}{
+			"type": "invite_sent", "success": false, "error": "User not found.",
+		})
+		return
+	}
+	target := ctx.chub.Clients[targetID]
+	if target == nil {
+		_ = ctx.client.Conn.WriteJSON(map[string]interface{}{
+			"type": "invite_sent", "success": false, "error": "User is offline.",
+		})
+		return
+	}
+	payload := map[string]interface{}{
+		"type": "game_invite",
+		"from": *ctx.client.CurrUsrName,
+		"code": code,
+	}
+	if msg.IsAI {
+		payload["is_ai"] = true
+	}
+	err = target.Conn.WriteJSON(payload)
+	if err != nil {
+		_ = ctx.client.Conn.WriteJSON(map[string]interface{}{
+			"type": "invite_sent", "success": false, "error": "Failed to deliver invite.",
+		})
+		return
+	}
+	_ = ctx.client.Conn.WriteJSON(map[string]interface{}{"type": "invite_sent", "success": true})
+}
+
+func (d *Dispatcher) HandleAcceptFriend(ctx *WSContext, msg Message) {
+	if !RunPipeLine(ctx, msg, d.PipeIsAuth) {
+		return
+	}
+	if ctx.client.IsGuest {
+		return
+	}
+	me := *ctx.client.CurrUsrID
+	myName := *ctx.client.CurrUsrName
+	otherUsername := strings.TrimSpace(msg.Username)
+	if otherUsername == "" {
+		return
+	}
+	var requesterID string
+	err := ctx.chub.Db.QueryRow(context.Background(),
+		`UPDATE friends SET status = 'accepted', updated_at = NOW()
+		 WHERE addressee_id = $1 AND requester_id = (SELECT id FROM users WHERE username = $2) AND status = 'pending'
+		 RETURNING requester_id`,
+		me, otherUsername).Scan(&requesterID)
+	if err != nil {
+		_ = ctx.client.Conn.WriteJSON(map[string]interface{}{
+			"type": "friend_accept_failed", "success": false, "error": "No pending request from that user.",
+		})
+		return
+	}
+	var requesterName string
+	_ = ctx.chub.Db.QueryRow(context.Background(),
+		`SELECT username FROM users WHERE id = $1`, requesterID).Scan(&requesterName)
+	d.broadcastFriendAdded(ctx, requesterID, requesterName, me, myName)
+}
+
 func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 	fmt.Println("DEBUG: HandleAddFriend triggered!")
-	if (!RunPipeLine(ctx, msg, d.PipeIsAuth)) {
+	if !RunPipeLine(ctx, msg, d.PipeIsAuth) {
 		return
 	}
-
-	query := `
-		INSERT INTO friends (requester_id, addressee_id)
-		SELECT $1, id
-		FROM users
-		WHERE username = $2
-		RETURNING addressee_id;
-	`
-
-	var addressee_id string
-
-	err := ctx.chub.Db.QueryRow(context.Background(), query, ctx.client.CurrUsrID, msg.Username).Scan(&addressee_id)
-	if (err != nil) {
-		fmt.Printf("Friend invite failed :: %v\n", err)
+	if ctx.client.IsGuest {
+		_ = ctx.client.Conn.WriteJSON(map[string]interface{}{
+			"type": "friend_add_failed", "success": false, "error": "Guests cannot add friends.",
+		})
 		return
 	}
-
-	var addressee_online bool
-	addressee_online = (ctx.chub.Clients[addressee_id] != nil)
-
-	response := FriendsListResponse {
-		Friend : Friend {
-			ID : addressee_id,
-			Username : msg.Username,
-			Online : addressee_online,
-		},
-		Type : "friend_added",
-		Success : true,
+	me := *ctx.client.CurrUsrID
+	myName := *ctx.client.CurrUsrName
+	targetName := strings.TrimSpace(msg.Username)
+	if targetName == "" || targetName == myName {
+		return
 	}
-
-	fmt.Printf("DEBUG: SENDING TYPE %v SUCCESS %v ID %v USERNAME %v ONLINE %v\n", "friend_added", true, addressee_id, msg.Username, false)
-
-	err = ctx.client.Conn.WriteJSON(response)
+	var targetID string
+	var targetIsGuest bool
+	err := ctx.chub.Db.QueryRow(context.Background(),
+		`SELECT id, COALESCE(is_guest, false) FROM users WHERE username = $1`, targetName).Scan(&targetID, &targetIsGuest)
 	if err != nil {
-		fmt.Printf("failed to send friends list: %v", err)
+		fmt.Printf("Friend add: user not found :: %v\n", err)
+		return
 	}
-
-	response = FriendsListResponse {
-		Friend : Friend {
-			ID : *ctx.client.CurrUsrID,
-			Username : *ctx.client.CurrUsrName,
-			Online : true,
-		},
-		Type : "friend_added",
-		Success : true,
+	if targetIsGuest {
+		_ = ctx.client.Conn.WriteJSON(map[string]interface{}{
+			"type": "friend_add_failed", "success": false, "error": "Cannot add guest accounts as friends.",
+		})
+		return
 	}
-
-	fmt.Printf("DEBUG: SENDING TYPE %v SUCCESS %v ID %v USERNAME %v ONLINE %v\n", "friend_added", true, addressee_id, msg.Username, false)
-
-	err = ctx.chub.Clients[addressee_id].Conn.WriteJSON(response)
+	var st string
+	var reqID string
+	err = ctx.chub.Db.QueryRow(context.Background(),
+		`SELECT f.status::text, f.requester_id::text FROM friends f WHERE
+		 (f.requester_id = $1::uuid AND f.addressee_id = $2::uuid)
+		 OR (f.requester_id = $2::uuid AND f.addressee_id = $1::uuid)`,
+		me, targetID).Scan(&st, &reqID)
+	if err == nil {
+		if st == "accepted" {
+			_ = ctx.client.Conn.WriteJSON(map[string]interface{}{
+				"type": "friend_add_failed", "success": false, "error": "Already friends.",
+			})
+			return
+		}
+		if st == "pending" {
+			if reqID == me {
+				_ = ctx.client.Conn.WriteJSON(map[string]interface{}{
+					"type": "friend_add_failed", "success": false, "error": "Friend request already sent.",
+				})
+				return
+			}
+			_, err = ctx.chub.Db.Exec(context.Background(),
+				`UPDATE friends SET status = 'accepted', updated_at = NOW()
+				 WHERE requester_id = $1::uuid AND addressee_id = $2::uuid AND status = 'pending'`,
+				targetID, me)
+			if err != nil {
+				fmt.Printf("mutual accept failed: %v\n", err)
+				return
+			}
+			var requesterName string
+			_ = ctx.chub.Db.QueryRow(context.Background(),
+				`SELECT username FROM users WHERE id = $1`, targetID).Scan(&requesterName)
+			d.broadcastFriendAdded(ctx, targetID, requesterName, me, myName)
+			return
+		}
+	} else if !errors.Is(err, pgx.ErrNoRows) {
+		fmt.Printf("Friend lookup failed :: %v\n", err)
+		return
+	}
+	_, err = ctx.chub.Db.Exec(context.Background(),
+		`INSERT INTO friends (requester_id, addressee_id, status) VALUES ($1::uuid, $2::uuid, 'pending')`,
+		me, targetID)
 	if err != nil {
-		fmt.Printf("failed to send friends list to addressee: %v", err)
+		fmt.Printf("Friend invite insert failed :: %v\n", err)
+		_ = ctx.client.Conn.WriteJSON(map[string]interface{}{
+			"type": "friend_add_failed", "success": false, "error": "Could not send friend request.",
+		})
+		return
 	}
+	addresseeOnline := ctx.chub.Clients[targetID] != nil
+	if c := ctx.chub.Clients[targetID]; c != nil {
+		_ = c.Conn.WriteJSON(map[string]interface{}{
+			"type": "friend_request",
+			"user": Friend{ID: me, Username: myName, Online: true},
+		})
+	}
+	_ = ctx.client.Conn.WriteJSON(map[string]interface{}{
+		"type": "friend_request_sent",
+		"user": Friend{ID: targetID, Username: targetName, Online: addresseeOnline},
+	})
 }
 
 type ProfileStyle struct {
@@ -265,6 +440,7 @@ type ProfileUser struct {
 	Username string `json:"username,omitempty"`
 	Email string `json:"email,omitempty"`
 	Online bool `json:"online,omitempty"`
+	IsGuest bool `json:"is_guest,omitempty"`
 	Style ProfileStyle `json:"style,omitempty"`
 }
 
@@ -284,11 +460,12 @@ func (d* Dispatcher) HandleGetProfile(ctx *WSContext, msg Message) {
 	var user ProfileUser
 	var profileID string
 
-	query := `SELECT p.id, p.display_name, p.color, p.font 
+	query := `SELECT p.id, p.display_name, p.color, p.font, COALESCE(u.is_guest, false)
 				FROM profiles p
 				INNER JOIN users u ON p.id = u.id
 				WHERE u.username = $1;`
-	err := ctx.chub.Db.QueryRow(context.Background(), query, msg.Username).Scan(&profileID, &user.Username, &user.Style.Color, &user.Style.Font)
+	err := ctx.chub.Db.QueryRow(context.Background(), query, msg.Username).Scan(
+		&profileID, &user.Username, &user.Style.Color, &user.Style.Font, &user.IsGuest)
 
 	var response ProfileResponse
 	
@@ -314,52 +491,71 @@ func (d* Dispatcher) HandleGetProfile(ctx *WSContext, msg Message) {
 }
 
 func (d* Dispatcher) HandleProfileUpdate(ctx *WSContext, msg Message) {
-	fmt.Println("DEBUG: HandleProfileUpdate triggered!")
-	if (!RunPipeLine(ctx, msg, d.PipeIsAuth)) {
-		return
-	}
+    fmt.Println("DEBUG: HandleProfileUpdate triggered!")
+    if (!RunPipeLine(ctx, msg, d.PipeIsAuth)) {
+        return
+    }
+    if ctx.client.IsGuest {
+        _ = ctx.client.Conn.WriteJSON(map[string]interface{}{
+            "type": "profile_updated", "success": false,
+            "error":  "Guest accounts cannot edit their profile.",
+        })
+        return
+    }
 
-	query := `UPDATE profiles
-				SET color = $2, font = $3, display_name = $4
-				WHERE id = $1`
-	_, err := ctx.chub.Db.Exec(context.Background(), query, ctx.client.CurrUsrID, msg.Style.Color, msg.Style.Font, msg.Username)
+    query := `UPDATE profiles
+                SET color = $2, font = $3, display_name = $4
+                WHERE id = $1`
+    _, err := ctx.chub.Db.Exec(context.Background(), query, ctx.client.CurrUsrID, msg.Style.Color, msg.Style.Font, msg.Username)
 
-	if (err != nil ) { // need to eventually use database transactions
-		fmt.Printf("FAILED TO UPDATE THE PROFILE TABLE FOR USER %v : %v\n", *ctx.client.CurrUsrName, err)
-		return
-	}
+    if (err != nil ) { 
+        fmt.Printf("FAILED TO UPDATE THE PROFILE TABLE FOR USER %v : %v\n", *ctx.client.CurrUsrName, err)
+        return
+    }
 
-	usrnmQuery := ` UPDATE users
-					SET username = $2
-					WHERE id = $1;
-	`
+    usrnmQuery := ` UPDATE users
+                    SET username = $2
+                    WHERE id = $1;
+    `
 
-	_, err = ctx.chub.Db.Exec(context.Background(), usrnmQuery, ctx.client.CurrUsrID, msg.Username)
+    _, err = ctx.chub.Db.Exec(context.Background(), usrnmQuery, ctx.client.CurrUsrID, msg.Username)
 
-	if (err != nil ) { 
-		fmt.Printf("FAILED TO UPDATE THE USERNAME FOR USER %v : %v\n", *ctx.client.CurrUsrName, err)
-		return
-	}
+    if (err != nil ) { 
+        fmt.Printf("FAILED TO UPDATE THE USERNAME FOR USER %v : %v\n", *ctx.client.CurrUsrName, err)
+        return
+    }
 
-	*ctx.client.CurrUsrName = msg.Username
+    oldUsername := *ctx.client.CurrUsrName
+    *ctx.client.CurrUsrName = msg.Username
+    
+    fmt.Printf("Session username updated from %s to %s (ID: %s)\n", oldUsername, *ctx.client.CurrUsrName, *ctx.client.CurrUsrID)
 
-	var response ProfileResponse
+    newToken, err := generateJWT(*ctx.client.CurrUsrID, *ctx.client.CurrUsrName)
+    if err != nil {
+        fmt.Printf("Failed to generate new JWT: %v\n", err)
+        return
+    }
 
-	response.Type = "profile_updated"
+    var response ProfileResponse
 
-	if (err != nil) {
-		response.Success = false
-	} else {
-		response.Success = true
-		response.User.Username = *ctx.client.CurrUsrName
-		response.User.Style.Color = msg.Style.Color
-		response.User.Style.Font = msg.Style.Font
-	}
+    response.Type = "profile_updated"
+    response.Success = true
+    response.User.Username = *ctx.client.CurrUsrName
+    response.User.Style.Color = msg.Style.Color
+    response.User.Style.Font = msg.Style.Font
 
-	err = ctx.client.Conn.WriteJSON(response)
-	if err != nil {
-		fmt.Printf("failed to send profile data: %v", err)
-	}
+    ctx.client.Conn.WriteJSON(map[string]interface{}{
+        "type": "profile_updated",
+        "success": true,
+        "user": map[string]interface{}{
+            "username": *ctx.client.CurrUsrName,
+            "style": map[string]interface{}{
+                "color": msg.Style.Color,
+                "font": msg.Style.Font,
+            },
+        },
+        "token": newToken,
+    })
 }
 
 func NewDispatcher() *Dispatcher {
@@ -371,6 +567,8 @@ func NewDispatcher() *Dispatcher {
 	d.handlers["add_friend"] = d.HandleAddFriend
 	d.handlers["get_friends"] = d.HandleGetFriend
 	d.handlers["remove_friend"] = d.HandleRemoveFriend
+	d.handlers["accept_friend"] = d.HandleAcceptFriend
+	d.handlers["invite_friend"] = d.HandleInviteFriend
 	d.handlers["authenticate"] = d.HandleAuth
 	d.handlers["create_room"] = d.HandleCreateRoom
 	d.handlers["join_room"] = d.HandleJoinRoom
@@ -562,11 +760,21 @@ func (d *Dispatcher) HandleAuth(ctx *WSContext, msg Message) {
 	ctx.client.CurrUsrName = &claims.Username
 	ctx.client.CurrUsrID = &claims.UserID
 
+	var isGuest bool
+	_ = ctx.chub.Db.QueryRow(context.Background(),
+		`SELECT COALESCE(is_guest, false) FROM users WHERE id = $1`, claims.UserID).Scan(&isGuest)
+	ctx.client.IsGuest = isGuest
+
 	ctx.chub.mu.Lock()
 	ctx.chub.Clients[claims.UserID] = ctx.client
 	ctx.chub.mu.Unlock()
 
-	fmt.Printf("WS Authenticated: %s (ID: %s)\n", *ctx.client.CurrUsrName, *ctx.client.CurrUsrID)
+	_ = ctx.client.Conn.WriteJSON(map[string]interface{}{
+		"type":     "auth_ok",
+		"is_guest": ctx.client.IsGuest,
+	})
+
+	fmt.Printf("WS Authenticated: %s (ID: %s) guest=%v\n", *ctx.client.CurrUsrName, *ctx.client.CurrUsrID, ctx.client.IsGuest)
 }
 
 func (d *Dispatcher) HandleCreateRoom(ctx *WSContext, msg Message) {

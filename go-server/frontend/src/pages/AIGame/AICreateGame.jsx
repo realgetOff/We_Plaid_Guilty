@@ -22,6 +22,7 @@ const AICreateGame = () =>
 	const roomCodeRef = useRef('');
 
 	const [status, setStatus] = useState('checking');
+	const [createErr, setCreateErr] = useState('');
 	const [roomCode, setRoomCode] = useState('');
 	const [copied, setCopied] = useState(false);
 	const [players, setPlayers] = useState([]);
@@ -50,6 +51,7 @@ const AICreateGame = () =>
 
 			if (msg.type === 'ai_room_created')
 			{
+				setCreateErr('');
 				setRoomCode(msg.code);
 				roomCodeRef.current = msg.code;
 				setStatus('ready');
@@ -97,8 +99,15 @@ const AICreateGame = () =>
 		addListener(handler);
 		send({ type: 'create_ai_room' });
 
+		const timeoutId = setTimeout(() =>
+		{
+			if (!roomCodeRef.current)
+				setCreateErr('No response from server. Check your connection and try again.');
+		}, 20000);
+
 		return () =>
 		{
+			clearTimeout(timeoutId);
 			removeListener(handler);
 			if (roomCodeRef.current)
 				send({ type: 'leave_ai_room', code: roomCodeRef.current });
@@ -153,7 +162,8 @@ const AICreateGame = () =>
 		send({ 
 			type: 'invite_friend', 
 			to: friend.username, 
-			code: roomCode 
+			code: roomCode,
+			is_ai: true,
 		});
 	};
 
@@ -163,6 +173,17 @@ const AICreateGame = () =>
 			<div className="creategame__guard">
 				<span className="creategame__guard-spinner">⧗</span>
 				Creating Neural Room...
+				{createErr && (
+					<div className="creategame__guard-card" style={{ marginTop: '1.5rem', maxWidth: '420px' }}>
+						<p className="creategame__guard-msg">⚠ {createErr}</p>
+						<button type="button" className="creategame__guard-btn" onClick={() => window.location.reload()}>
+							retry
+						</button>
+						<button type="button" className="creategame__guard-btn" onClick={() => navigate('/game')} style={{ marginLeft: '0.5rem' }}>
+							← back
+						</button>
+					</div>
+				)}
 			</div>
 		);
 	}

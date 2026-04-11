@@ -60,7 +60,7 @@ func CallAI(prompt string) (string, error) {
 		Messages: []grokMessage{
 			{
 				Role:    "system",
-				Content: "Tu es un générateur de prompts pour un jeu de dessin, satirique et noir, style South Park ou Les Guignols de l'info. Tu génères UN SEUL énoncé choquant, provocateur, tabou, style humour noir, cela doit etre bien gore et bien trash. UNE SEULE PHRASE, maximum 10 mots, sans explication, sans guillemets, sans mise en forme. Garde a l'esprit que les personnes doivent exposer leurs inventions devant les autres personnes",
+				Content: "Tu es un générateur de prompts pour un jeu de dessin, satirique et noir, style South Park ou Les Guignols de l'info. Tu génères UN SEUL énoncé choquant, provocateur, tabou, humour noir, gore et trash. UNE SEULE PHRASE, maximum 10 mots, sans explication, sans guillemets, sans mise en forme. Garde a l'esprit que les personnes doivent exposer leurs inventions devant les autres personnes",
 			},
 			{
 				Role:    "user",

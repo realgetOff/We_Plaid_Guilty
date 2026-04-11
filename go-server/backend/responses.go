@@ -51,7 +51,9 @@ type Message struct {
 	Title		string		`json:"title,omitempty"`
 	Description string		`json:"description,omitempty"`
 	Username string			`json:"username,omitempty"`
+	To		string			`json:"to,omitempty"`
 	ID string				`json:"id,omitempty"`
+	IsAI	bool			`json:"is_ai,omitempty"`
 	Style	ProfileStyle	`json:"style,omitempty"`
 }
 

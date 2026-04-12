@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"strings"
 
+	"encoding/json"
+
 	"github.com/gin-gonic/gin"
 	// "github.com/jackc/pgx/v5/pgxpool"
 	"github.com/golang-jwt/jwt/v5"
@@ -187,10 +189,96 @@ func findRoom(c *gin.Context, serverVars *serverVarsStruct){
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
-	"code":		room.GetBase().ID,
-	"status":	room.GetBase().Status,
-	"players":	len(room.GetBase().Players),
+		"code":		room.GetBase().ID,
+		"status":	room.GetBase().Status,
+		"players":	len(room.GetBase().Players),
 	})
+}
+
+func FortyTwoCallback(c *gin.Context, dbs *DBSafe){
+    code := c.Query("code")
+    
+    token, err := fortyTwoOauthConfig.Exchange(context.Background(), code)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Exchange failed"})
+        return
+    }
+
+    client := fortyTwoOauthConfig.Client(context.Background(), token)
+
+    resp, err := client.Get("https://api.intra.42.fr/v2/me")
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to reach 42 API"})
+        return
+    }
+    defer resp.Body.Close()
+
+    var userProfile struct {
+        Login string `json:"login"`
+        // Email string `json:"email"`
+        // ID    int    `json:"id"`
+        // Image struct {
+        //     Link string `json:"link"`
+        // } `json:"image"`
+    }
+
+    if err := json.NewDecoder(resp.Body).Decode(&userProfile); err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse user data"})
+        return
+    }
+
+    // 5. PRINT TO TERMINAL
+    fmt.Println("\n--- NEW LOGIN DETECTED ---")
+    fmt.Printf("Username: %s\n", userProfile.Login)
+    // fmt.Printf("Email:    %s\n", userProfile.Email)
+    // fmt.Printf("42 ID:    %d\n", userProfile.ID)
+    fmt.Println("--------------------------\n")
+
+
+	var userID string
+	db := dbs.GetPool()	
+	
+	userQuery := 	`INSERT INTO users (username, is_guest) 
+					VALUES ($1, FALSE) 
+					ON CONFLICT (username) 
+					DO UPDATE SET username = EXCLUDED.username
+					RETURNING id;`
+	err = db.QueryRow(context.Background(), userQuery, userProfile.Login).Scan(&userID);
+	if (err != nil) {
+		fmt.Printf("User creation failed %v\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Server couldn't insert a user in the database."})
+		return
+	}
+	fmt.Println("Username: " + userProfile.Login + " user ID = " + userID)
+
+	if (userID != ""){
+	profileQuery := 	`INSERT INTO profiles (id, display_name)
+						VALUES ($1, $2)
+						ON CONFLICT (id) DO NOTHING;`
+	_, err = db.Exec(context.Background(), profileQuery, userID, userProfile.Login)
+		if (err != nil) {
+		fmt.Printf("User profile creation failed %v\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Server couldn't create a user profile in the database."})
+		return
+	}
+	} // dunno if this works
+
+
+	var SignedString string
+	SignedString, err = generateJWT(userID, userProfile.Login)
+	if (err != nil) {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Couldn't sign / generate JWT for user."})
+		return 
+	}
+
+	// 5. Redirect back to the React Frontend
+	// We pass the token in the URL so the React app can grab it and save it.
+	frontendRedirectURL := fmt.Sprintf("http://localhost:8080/callback?token=%s", SignedString)
+	
+	c.Redirect(http.StatusTemporaryRedirect, frontendRedirectURL)
 }
 
 // func handleLogin(c *gin.Context) {

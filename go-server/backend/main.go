@@ -21,18 +21,16 @@ import (
 	//"math/rand/v2"
 	// "sync"
 
-	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5/pgxpool"
-<<<<<<< HEAD
-
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
-
-=======
 	// "github.com/prometheus/client_golang/prometheus"
 	// "github.com/prometheus/client_golang/prometheus/promauto"
 	// "github.com/prometheus/client_golang/prometheus/promhttp"
->>>>>>> origin/game-manager
+
+	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgxpool"
+
+
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 )
 
 type DBSafe struct {
@@ -297,39 +295,40 @@ func main() {
 
 	// -- OLD ROUTER CODE -- //
 
-	// if err := serverVars.router.Run(":" + port); err != nil {
-	// 	log.Fatalf("Failed to run server: %v", err)	
-	// }
+	if (os.Getenv("LOCAL") != "") {
+		fmt.Println("HOSTING TRANSCENDENCE LOCALLY...")
+		if err := serverVars.router.Run(":" + port); err != nil {
+			log.Fatalf("Failed to run server: %v", err)	
+		}
+	} else {
+		tlsContent := addnewlinestotls()
+		if tlsContent == nil {
+			log.Fatalf("Failed to read TLS file")
+		}
+		serverCert, err := tls.X509KeyPair(tlsContent, tlsContent)
+		if (err != nil){
+			log.Fatalf("Failed to parse key pair: %v", err)
+		}
 
-	// UNCOMMENT NET/HTTP BEFORE DEPLOYING VIA CI/CD
+		caCertPool := x509.NewCertPool()
+		caCertPool.AppendCertsFromPEM(tlsContent)
 
-	tlsContent := addnewlinestotls()
-	if tlsContent == nil {
-		log.Fatalf("Failed to read TLS file")
-	}
-	serverCert, err := tls.X509KeyPair(tlsContent, tlsContent)
-	if (err != nil){
-		log.Fatalf("Failed to parse key pair: %v", err)
-	}
+		tlsConfig := &tls.Config {
+			Certificates:	[]tls.Certificate{serverCert},
+			ClientCAs:		caCertPool,
+			ClientAuth:		tls.RequireAndVerifyClientCert,
+		}
 
-	caCertPool := x509.NewCertPool()
-	caCertPool.AppendCertsFromPEM(tlsContent)
+		server := &http.Server{
+			Addr: ":" + port,
+			Handler: serverVars.router,
+			TLSConfig: tlsConfig,
+		}
 
-	tlsConfig := &tls.Config {
-		Certificates:	[]tls.Certificate{serverCert},
-		ClientCAs:		caCertPool,
-		ClientAuth:		tls.RequireAndVerifyClientCert,
-	}
+		fmt.Println(" ~~ Attempting to boot with mTLS on port ", port, " ~~")
 
-	server := &http.Server{
-		Addr: ":" + port,
-		Handler: serverVars.router,
-		TLSConfig: tlsConfig,
-	}
-
-	fmt.Println(" ~~ Attempting to boot with mTLS on port ", port, " ~~")
-
-	if err := server.ListenAndServeTLS("", ""); err != nil && err != http.ErrServerClosed {
-		log.Fatalf("Failed to run server over mTLS: %v", err)
+		if err := server.ListenAndServeTLS("", ""); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Failed to run server over mTLS: %v", err)
+		}
 	}
 }

@@ -27,40 +27,20 @@ const Login = () =>
 
 	useEffect(() =>
 	{
-		const code = searchParams.get('code');
-		if (code)
-			handleExchangeCode(code);
-	}, [searchParams]);
+		const token = searchParams.get('token');
+		const authError = searchParams.get('error');
 
-	const handleExchangeCode = async (code) =>
-	{
-		setLoading(true);
-		try
+		if (token)
 		{
-			const res = await fetch('/api/auth/42/exchange', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ code }),
-			});
-			if (!res.ok)
-				throw new Error('Exchange failed');
-			const data = await res.json();
-			if (data.token)
-			{
-				localStorage.setItem('authToken', data.token);
-				window.dispatchEvent(new CustomEvent('userDataUpdated'));
-				navigate(redirect, { replace: true });
-			}
+			localStorage.setItem('authToken', token);
+			window.dispatchEvent(new CustomEvent('userDataUpdated'));
+			navigate(redirect, { replace: true });
 		}
-		catch (e)
+		else if (authError)
 		{
-			setError('Authentication failed. Please try again.');
+			setError('Authentication failed: ' + authError);
 		}
-		finally
-		{
-			setLoading(false);
-		}
-	};
+	}, [searchParams, navigate, redirect]);
 
 	const handleGuest = async () =>
 	{
@@ -96,7 +76,7 @@ const Login = () =>
 		}
 	};
 
-	const handleIntra = async() =>
+	const handleIntra = () =>
 	{
 		setError('');
 		if (hasToken)
@@ -105,19 +85,7 @@ const Login = () =>
 			return;
 		}
 		setLoading(true);
-		try
-		{
-			const res = await fetch('/api/auth/42/url');
-			if (!res.ok)
-				throw new Error('Server error');
-			const data = await res.json();
-			window.location.href = data.url;
-		}
-		catch (e)
-		{
-			setError('Could not connect to 42 Intra.');
-			setLoading(false);
-		}
+		window.location.href = "http://localhost:8080/login/42";
 	};
 
 	const handleSignOut = () =>

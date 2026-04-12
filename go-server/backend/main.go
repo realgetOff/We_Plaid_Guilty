@@ -26,7 +26,6 @@ import (
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
-
 )
 
 type DBSafe struct {
@@ -273,9 +272,16 @@ func main() {
 		c.Redirect(http.StatusTemporaryRedirect, url)
 	})
 
-	serverVars.router.GET("/login/42", func (c *gin.Context){
+	// NEW LOGIN CODE
+	serverVars.router.GET("/api/auth/42/url", func (c *gin.Context){
+		fmt.Println("ATTEMPTING TO GET LOGIN/42/URL FROM ROUTER")
 		url := fortyTwoOauthConfig.AuthCodeURL(oauthStateString)
-		c.Redirect(http.StatusTemporaryRedirect, url)
+		c.JSON(http.StatusOK, gin.H{"url": url})
+	})
+
+	serverVars.router.GET("/api/auth/42/callback", func(c *gin.Context){
+		fmt.Println("42 CALLBACK URL")
+		FortyTwoCallback(c, &serverVars.db)
 	})
 
 	

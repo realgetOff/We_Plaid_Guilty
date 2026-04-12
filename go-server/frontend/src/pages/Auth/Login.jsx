@@ -10,7 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import './Auth.css';
 
@@ -22,14 +22,49 @@ const Login = () =>
 
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState('');
-	const [oauthHint, setOauthHint] = useState('');
 
 	const hasToken = !!localStorage.getItem('authToken');
+
+	useEffect(() =>
+	{
+		const code = searchParams.get('code');
+		if (code)
+			handleExchangeCode(code);
+	}, [searchParams]);
+
+	const handleExchangeCode = async (code) =>
+	{
+		setLoading(true);
+		try
+		{
+			const res = await fetch('/api/auth/42/exchange', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ code }),
+			});
+			if (!res.ok)
+				throw new Error('Exchange failed');
+			const data = await res.json();
+			if (data.token)
+			{
+				localStorage.setItem('authToken', data.token);
+				window.dispatchEvent(new CustomEvent('userDataUpdated'));
+				navigate(redirect, { replace: true });
+			}
+		}
+		catch (e)
+		{
+			setError('Authentication failed. Please try again.');
+		}
+		finally
+		{
+			setLoading(false);
+		}
+	};
 
 	const handleGuest = async () =>
 	{
 		setError('');
-		setOauthHint('');
 		if (hasToken)
 		{
 			navigate(redirect, { replace: true });
@@ -53,7 +88,7 @@ const Login = () =>
 		}
 		catch (e)
 		{
-			setError('Could not start a guest session. Try again later.');
+			setError('Could not start a guest session.');
 		}
 		finally
 		{
@@ -64,7 +99,6 @@ const Login = () =>
 	const handleIntra = async() =>
 	{
 		setError('');
-		setOauthHint('to do');
 		if (hasToken)
 		{
 			navigate(redirect, { replace: true });
@@ -73,62 +107,15 @@ const Login = () =>
 		setLoading(true);
 		try
 		{
-			const res = await fetch('/login/42', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-			});
+			const res = await fetch('/api/auth/42/url');
 			if (!res.ok)
 				throw new Error('Server error');
 			const data = await res.json();
 			window.location.href = data.url;
-			// if (!data.token)
-				// throw new Error('No token');
-			// localStorage.setItem('authToken', data.token);
-			window.dispatchEvent(new CustomEvent('userDataUpdated'));
-			navigate(redirect, { replace: true });
 		}
 		catch (e)
 		{
-			setError('Could not start a 42 session. Try again later.');
-		}
-		finally
-		{
-			setLoading(false);
-		}
-	};
-
-	const handleGoogle = async() =>
-	{
-		setError('');
-		setOauthHint('to do');
-		if (hasToken)
-		{
-			navigate(redirect, { replace: true });
-			return;
-		}
-		setLoading(true);
-		try
-		{
-			const res = await fetch('/login/google', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-			});
-			if (!res.ok)
-				throw new Error('Server error');
-			const data = await res.json();
-			window.location.href = data.authUrl;
-			if (!data.token)
-				throw new Error('No token');
-			localStorage.setItem('authToken', data.token);
-			window.dispatchEvent(new CustomEvent('userDataUpdated'));
-			navigate(redirect, { replace: true });
-		}
-		catch (e)
-		{
-			setError('Could not start a google session. Try again later.');
-		}
-		finally
-		{
+			setError('Could not connect to 42 Intra.');
 			setLoading(false);
 		}
 	};
@@ -153,12 +140,9 @@ const Login = () =>
 					<span className="login-page__title">ft_transcendence — sign in</span>
 				</div>
 				<div className="login-page__body">
-					<p className="login-page__lead">
-						Choose how you want to play.
-					</p>
+					<p className="login-page__lead">Choose how you want to play.</p>
 
 					{error && <p className="login-page__error" role="alert">{error}</p>}
-					{oauthHint && <p className="login-page__oauth-hint" role="status">{oauthHint}</p>}
 
 					<div className="login-page__actions">
 						<button
@@ -178,16 +162,6 @@ const Login = () =>
 						>
 							<span className="login-page__btn-label">sign in with</span>
 							<span className="login-page__btn-intra-mark">42</span>
-						</button>
-
-						<button
-							type="button"
-							className="login-page__btn login-page__btn--google"
-							onClick={handleGoogle}
-							disabled={loading}
-						>
-							<span>sign in with Google</span>
-							<span className="login-page__google-icon" aria-hidden>G</span>
 						</button>
 					</div>
 

@@ -103,7 +103,7 @@ func (r *Room) SubmiteAction(playerID string, data map[string]interface{}, isFin
 	}
 	fmt.Printf("action_submited for player = %s\n", player.Name)
 
-	var content string
+	content := ""
 	if val, ok := data["prompt"].(string); ok {
 		content = val
 	} else if val, ok := data["drawing"].(string); ok {

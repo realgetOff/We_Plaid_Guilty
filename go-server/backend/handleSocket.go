@@ -66,7 +66,8 @@ func (d *Dispatcher) PipeIsAuth(ctx *WSContext, msg Message) bool {
 	if ctx.client.CurrUsrName == nil || *ctx.client.CurrUsrName == "" {
 		return false
 	}
-	
+
+	fmt.Printf("DEBUG: %s is Auth\n", *ctx.client.CurrUsrName)
 	return true
 }
 
@@ -83,6 +84,7 @@ func (d *Dispatcher) PipeRoomExist(ctx *WSContext, msg Message) bool {
 		return false
 	}
 	ctx.client.CurrentRoom = tmpRoom
+	fmt.Printf("DEBUG: Room Exist\n")
 	return true
 }
 

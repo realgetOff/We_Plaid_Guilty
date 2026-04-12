@@ -18,6 +18,9 @@ controller:
       kill -HUP $(pgrep -x nginx | head -1)
 
   config:
+    proxy-read-timeout: "3600"
+    proxy-send-timeout: "3600"
+    proxy-connect-timeout: "60"
     enable-modsecurity: "true"
     enable-owasp-modsecurity-crs: "true"
     ssl-protocols: "TLSv1.2 TLSv1.3"

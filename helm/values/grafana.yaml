@@ -49,9 +49,10 @@ envFromFile: /vault/secrets/config
 
 grafana.ini:
   server:
-    protocol: https
-    cert_file: /vault/secrets/tls
-    cert_key: /vault/secrets/tls
+    protocol: http
+    # protocol: https
+    # cert_file: /vault/secrets/tls
+    # cert_key: /vault/secrets/tls
 
 datasources:
   datasources.yaml:

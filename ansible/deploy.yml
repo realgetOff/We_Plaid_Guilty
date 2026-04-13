@@ -249,3 +249,90 @@
           --timeout 300s
       environment:
         KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+
+
+- name: "Logging"
+  hosts: MASTER
+  become: true
+  tasks:
+    - name: "Load Vault secrets"
+      include_vars:
+        file: "{{ playbook_dir }}/secrets.yml"
+      when: lookup('fileglob', playbook_dir + '/secrets.yml') != []
+
+    - name: "Create namespace logging"
+      shell: |
+        /usr/local/bin/kubectl create namespace logging \
+          --dry-run=client -o yaml | \
+        /usr/local/bin/kubectl apply -f -
+      environment:
+        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+    - name: "Label namespace logging for Vault injection"
+      shell: |
+        /usr/local/bin/kubectl label namespace logging \
+          vault-injection=enabled --overwrite
+      environment:
+        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+    - name: "Create Elasticsearch credentials secret"
+      shell: |
+        /usr/local/bin/kubectl create secret generic elasticsearch-credentials \
+          --from-literal=username=elastic \
+          --from-literal=password="{{ elastic_pass }}" \
+          --namespace logging \
+          --dry-run=client -o yaml | \
+        /usr/local/bin/kubectl apply -f -
+      environment:
+        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+      no_log: true
+
+    - name: "Copy elasticsearch values"
+      copy:
+        src: "{{ playbook_dir }}/../helm/values/elasticsearch.yaml"
+        dest: /tmp/elasticsearch-values.yaml
+        mode: '0644'
+
+    - name: "Copy kibana values"
+      template:
+        src: "{{ playbook_dir }}/../helm/values/kibana.yaml"
+        dest: /tmp/kibana-values.yaml
+        mode: '0644'
+          #TODO: template -> copy
+
+    - name: "Copy filebeat values"
+      copy:
+        src: "{{ playbook_dir }}/../helm/values/filebeat.yaml"
+        dest: /tmp/filebeat-values.yaml
+        mode: '0644'
+
+    - name: "Deploy Elasticsearch"
+      shell: |
+        /usr/local/bin/helm upgrade --install elasticsearch \
+          elastic/elasticsearch \
+          --namespace logging \
+          --values /tmp/elasticsearch-values.yaml \
+          --timeout 300s
+      environment:
+        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+    - name: "Deploy Kibana"
+      shell: |
+        /usr/local/bin/helm upgrade --install kibana \
+          elastic/kibana \
+          --namespace logging \
+          --values /tmp/kibana-values.yaml \
+          --timeout 300s
+      environment:
+        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+    - name: "Deploy Filebeat"
+      shell: |
+        /usr/local/bin/helm upgrade --install filebeat \
+          elastic/filebeat \
+          --namespace logging \
+          --values /tmp/filebeat-values.yaml \
+          --timeout 120s
+      environment:
+        KUBECONFIG: /etc/rancher/k3s/k3s.yaml

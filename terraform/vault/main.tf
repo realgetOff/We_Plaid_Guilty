@@ -117,16 +117,44 @@ module "vault_grafana" {
   allowed_domains     = ["transcendance.local", "monitoring.svc.cluster.local"]
 }
 
-module "vault_elk" {
-  source              = "../modules/vault-config"
-  service_name        = "elk"
-  auth_type           = "kubernetes"
-  auth_backend_path   = vault_auth_backend.kubernetes.path
-  k8s_service_account = "elk"
-  k8s_namespace       = "logging"
-  token_ttl           = 40000
-  token_max_ttl       = 86400
-  enable_pki          = true
-  pki_backend         = vault_mount.pki.path
-  allowed_domains     = ["transcendance.local", "elk.svc.cluster.local"]
-}
+# module "vault_elastic" {
+  # source              = "../modules/vault-config"
+  # service_name        = "elk"
+  # auth_type           = "kubernetes"
+  # auth_backend_path   = vault_auth_backend.kubernetes.path
+  # k8s_service_account = "elasticsearch-master"
+  # k8s_namespace       = "logging"
+  # token_ttl           = 40000
+  # token_max_ttl       = 86400
+  # enable_pki          = true
+  # pki_backend         = vault_mount.pki.path
+  # allowed_domains     = ["transcendance.local", "logging.svc.cluster.local"]
+# }
+# 
+# module "vault_filebeat" {
+  # source              = "../modules/vault-config"
+  # service_name        = "filebeat"
+  # auth_type           = "kubernetes"
+  # auth_backend_path   = vault_auth_backend.kubernetes.path
+  # k8s_service_account = "filebeat-filebeat"
+  # k8s_namespace       = "logging"
+  # token_ttl           = 40000
+  # token_max_ttl       = 86400
+  # enable_pki          = true
+  # pki_backend         = vault_mount.pki.path
+  # allowed_domains     = ["transcendance.local", "logging.svc.cluster.local"]
+# }
+# 
+# module "vault_kibana" {
+  # source              = "../modules/vault-config"
+  # service_name        = "kibana"
+  # auth_type           = "kubernetes"
+  # auth_backend_path   = vault_auth_backend.kubernetes.path
+  # k8s_service_account = "kibana-kibana"
+  # k8s_namespace       = "logging"
+  # token_ttl           = 40000
+  # token_max_ttl       = 86400
+  # enable_pki          = true
+  # pki_backend         = vault_mount.pki.path
+  # allowed_domains     = ["transcendance.local", "logging.svc.cluster.local"]
+# }

@@ -54,23 +54,36 @@ grafana.ini:
     # cert_file: /vault/secrets/tls
     # cert_key: /vault/secrets/tls
 
+
 datasources:
   datasources.yaml:
     apiVersion: 1
     datasources:
       - name: Prometheus
         type: prometheus
-        url: https://prometheus-operated.monitoring.svc.cluster.local:9090
+        url: http://prometheus-operated.monitoring.svc.cluster.local:9090
         access: proxy
         isDefault: true
-        jsonData:
-          tlsAuth: true
-          tlsAuthWithCACert: true
-          tlsSkipVerify: false
-        secureJsonData:
-          tlsCACert: $__file{/vault/secrets/tls}
-          tlsClientCert: $__file{/vault/secrets/tls}
-          tlsClientKey: $__file{/vault/secrets/tls}
+        jsonData: {}
+
+
+# datasources:
+  # datasources.yaml:
+    # apiVersion: 1
+    # datasources:
+      # - name: Prometheus
+        # type: prometheus
+        # url: https://prometheus-operated.monitoring.svc.cluster.local:9090
+        # access: proxy
+        # isDefault: true
+        # jsonData:
+          # tlsAuth: true
+          # tlsAuthWithCACert: true
+          # tlsSkipVerify: false
+        # secureJsonData:
+          # tlsCACert: $__file{/vault/secrets/tls}
+          # tlsClientCert: $__file{/vault/secrets/tls}
+          # tlsClientKey: $__file{/vault/secrets/tls}
 
 dashboardProviders:
   dashboardproviders.yaml:

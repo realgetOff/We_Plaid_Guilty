@@ -230,6 +230,21 @@
         dest: /tmp/grafana-values.yaml
         mode: '0644'
 
+    - name: "Copy Grafana dashboard JSON"
+      copy:
+        src: "{{ playbook_dir }}/../helm/values/dashboard/DASHBOARD_GRAFANA.json"
+        dest: /tmp/DASHBOARD_GRAFANA.json
+        mode: '0644'
+
+    - name: "Create Grafana dashboard ConfigMap"
+      shell: |
+        /usr/local/bin/kubectl create configmap grafana-custom-dashboard \
+          --from-file=DASHBOARD_GRAFANA.json=/tmp/DASHBOARD_GRAFANA.json \
+          -n monitoring --dry-run=client -o yaml | \
+        /usr/local/bin/kubectl apply -f -
+      environment:
+        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
     - name: "Deploy Prometheus"
       shell: |
         /usr/local/bin/helm upgrade --install prometheus \

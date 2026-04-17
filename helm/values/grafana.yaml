@@ -41,9 +41,7 @@ env:
 
 grafana.ini:
   server:
-    protocol: https
-    cert_file: /vault/secrets/tls
-    cert_key: /vault/secrets/tls
+    protocol: http
 
 
 datasources:
@@ -52,11 +50,10 @@ datasources:
     datasources:
       - name: Prometheus
         type: prometheus
-        url: https://prometheus-operated.monitoring.svc.cluster.local:9090
+        url: http://prometheus-operated.monitoring.svc.cluster.local:9090
         access: proxy
         isDefault: true
-        jsonData:
-          tlsSkipVerify: true
+        jsonData: {}
 
 
 # datasources:
@@ -104,15 +101,3 @@ persistence:
   enabled: false
 
 dnsPolicy: ClusterFirstWithHostNet
-
-readinessProbe:
-  httpGet:
-    path: /api/health
-    port: 3000
-    scheme: HTTPS
-
-livenessProbe:
-  httpGet:
-    path: /api/health
-    port: 3000
-    scheme: HTTPS

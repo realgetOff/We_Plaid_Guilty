@@ -2,6 +2,8 @@ controller:
   serviceAccount:
     name: nginx-pki
     create: true
+  admissionWebhooks:
+    enabled: false
 
   shareProcessNamespace: true
 

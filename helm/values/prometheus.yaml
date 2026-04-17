@@ -34,6 +34,13 @@ prometheus:
 
     dnsPolicy: ClusterFirstWithHostNet
 
+    web:
+      httpConfig:
+        http2: false
+      tlsConfig:
+        certFile: /vault/secrets/tls
+        keyFile: /vault/secrets/tls
+
     podMetadata:
       annotations:
         vault.hashicorp.com/agent-inject: "true"

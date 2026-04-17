@@ -167,6 +167,11 @@
   hosts: MASTER
   become: true
   tasks:
+    - name: "Load Vault secrets"
+      include_vars:
+        file: "{{ playbook_dir }}/secrets.yml"
+      when: lookup('fileglob', playbook_dir + '/secrets.yml') != []
+
     - name: "Wait for workers to join"
       shell: |
         /usr/local/bin/kubectl wait node \
@@ -175,6 +180,7 @@
           --timeout=120s
       environment:
         KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
     - name: "Create namespace monitoring"
       shell: |
         /usr/local/bin/kubectl create namespace monitoring \
@@ -224,6 +230,18 @@
         dest: /tmp/prometheus-values.yaml
         mode: '0644'
 
+    - name: "Copy prometheus web-config"
+      copy:
+        src: "{{ playbook_dir }}/../helm/values/prometheus-web-config.yaml"
+        dest: /tmp/prometheus-web-config.yaml
+        mode: '0644'
+
+    - name: "Create prometheus web-config ConfigMap"
+      shell: |
+        /usr/local/bin/kubectl apply -f /tmp/prometheus-web-config.yaml
+      environment:
+        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
     - name: "Copy grafana values"
       copy:
         src: "{{ playbook_dir }}/../helm/values/grafana.yaml"
@@ -244,6 +262,17 @@
         /usr/local/bin/kubectl apply -f -
       environment:
         KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+    - name: "Create Grafana admin secret"
+      shell: |
+        /usr/local/bin/kubectl create secret generic grafana-admin-secret \
+          --from-literal=admin-user=admin \
+          --from-literal=admin-password="{{ grafana_pass }}" \
+          -n monitoring --dry-run=client -o yaml | \
+        /usr/local/bin/kubectl apply -f -
+      environment:
+        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+      no_log: true
 
     - name: "Deploy Prometheus"
       shell: |

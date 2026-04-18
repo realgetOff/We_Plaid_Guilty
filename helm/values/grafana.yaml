@@ -43,6 +43,11 @@ grafana.ini:
   server:
     protocol: http
 
+service:
+  type: NodePort
+  nodePort: 30300
+  port: 80
+  targetPort: 3000
 
 datasources:
   datasources.yaml:

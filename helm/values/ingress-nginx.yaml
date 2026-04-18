@@ -36,6 +36,8 @@ controller:
       proxy_ssl_verify on;
       proxy_ssl_verify_depth 3;
       proxy_ssl_name gartic-app.app.svc.cluster.local;
+    allow-snippet-annotations: "true"
+    annotations-risk-level: "Critical"
 
   allowSnippetAnnotations: true
 

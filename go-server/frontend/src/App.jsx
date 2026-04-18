@@ -50,6 +50,7 @@ import AICreateGame from './pages/AIGame/AICreateGame';
 import AIJoinGame from './pages/AIGame/AIJoinGame';
 import AILobby from './pages/AIGame/AILobby';
 import AIGame from './pages/AIGame/AIGame';
+import AuthCallback from './pages/Auth/Callback';
 import './styles/global.css';
 import './styles/hypercard.css';
 
@@ -110,6 +111,7 @@ const App = () =>
 							<Route path="/aigame/play/:code" element={<AIGame />} />
 							<Route path="/profile/:username" element={<Profile />} />
 							<Route path="/friends" element={<Friends />} />
+							<Route path="/callback" element={<AuthCallback />} />
 							<Route path="*" element={<NotFound />} />
 						</Routes>
 					</MacWindow>

@@ -224,12 +224,28 @@
         dest: /tmp/prometheus-values.yaml
         mode: '0644'
 
+    - name: "Copy grafana values"
+      copy:
+        src: "{{ playbook_dir }}/../helm/values/grafana.yaml"
+        dest: /tmp/grafana-values.yaml
+        mode: '0644'
+
     - name: "Deploy Prometheus"
       shell: |
         /usr/local/bin/helm upgrade --install prometheus \
           prometheus-community/kube-prometheus-stack \
           --namespace monitoring \
           --values /tmp/prometheus-values.yaml \
+          --timeout 300s
+      environment:
+        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+    - name: "Deploy Grafana"
+      shell: |
+        /usr/local/bin/helm upgrade --install grafana \
+          grafana/grafana \
+          --namespace monitoring \
+          --values /tmp/grafana-values.yaml \
           --timeout 300s
       environment:
         KUBECONFIG: /etc/rancher/k3s/k3s.yaml

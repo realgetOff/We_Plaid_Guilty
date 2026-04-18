@@ -338,7 +338,7 @@ const AIDrawBoard = ({ prompt, onDone }) =>
 				✏ Draw : <strong>{prompt || '…'}</strong>
 			</div>
 
-			{/* titre et description */}
+			{/* title and description */}
 			<div className="drawboard__meta-section">
 				<input
 					type="text"

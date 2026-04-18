@@ -139,7 +139,6 @@ const AICreateGame = () =>
 
 	const handleCopy = () =>
 	{
-		console.warn("DEBUG handleCopy called");
 		navigator.clipboard.writeText(roomCode);
 		setCopied(true);
 		setTimeout(() => setCopied(false), 2000);

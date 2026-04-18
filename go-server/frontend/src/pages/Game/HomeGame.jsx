@@ -21,12 +21,12 @@ const HomeGame = () =>
 {
 	const navigate = useNavigate();
 
-	const [joinCode,      setJoinCode]      = useState('');
-	const [joinError,     setJoinError]     = useState('');
-	const [isChecking,    setIsChecking]    = useState(false);
-	const [aiJoinCode,    setAiJoinCode]    = useState('');
-	const [aiJoinError,   setAiJoinError]   = useState('');
-	const [aiIsChecking,  setAiIsChecking]  = useState(false);
+	const [joinCode,     setJoinCode]     = useState('');
+	const [joinError,    setJoinError]    = useState('');
+	const [isChecking,   setIsChecking]   = useState(false);
+	const [aiJoinCode,   setAiJoinCode]   = useState('');
+	const [aiJoinError,  setAiJoinError]  = useState('');
+	const [aiIsChecking, setAiIsChecking] = useState(false);
 
 	const handleJoin = async () =>
 	{

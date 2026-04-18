@@ -213,14 +213,16 @@
   transform: translate(1px,1px);
 }
 
-.drawboard__submit-form {
+.drawboard__submit-form
+{
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: 400px;
 }
 
-.drawboard__form-card {
+.drawboard__form-card
+{
   width: 100%;
   max-width: 480px;
   border: 1px solid #000000;
@@ -228,7 +230,8 @@
   box-shadow: 2px 2px 0 #000000;
 }
 
-.drawboard__form-header {
+.drawboard__form-header
+{
   background: #000000;
   color: #ffffff;
   padding: 8px 16px;
@@ -236,7 +239,8 @@
   font-weight: bold;
 }
 
-.drawboard__form-body {
+.drawboard__form-body
+{
   padding: 20px;
   display: flex;
   flex-direction: column;
@@ -244,7 +248,8 @@
 }
 
 .drawboard__form-input,
-.drawboard__form-textarea {
+.drawboard__form-textarea
+{
   width: 100%;
   border: 1px solid #000000;
   padding: 8px 12px;
@@ -256,17 +261,20 @@
 }
 
 .drawboard__form-input:focus,
-.drawboard__form-textarea:focus {
+.drawboard__form-textarea:focus
+{
   box-shadow: inset 1px 1px 0 #000000;
 }
 
-.drawboard__form-actions {
+.drawboard__form-actions
+{
   display: flex;
   gap: 12px;
   justify-content: space-between;
 }
 
-.drawboard__form-btn {
+.drawboard__form-btn
+{
   border: 1px solid #000000;
   font-family: 'Courier New', Courier, monospace;
   font-size: 12px;
@@ -276,16 +284,19 @@
   box-shadow: 1px 1px 0 #000000;
 }
 
-.drawboard__form-btn--back {
+.drawboard__form-btn--back
+{
   background: #ffffff;
   color: #000000;
 }
 
-.drawboard__form-btn--back:hover {
+.drawboard__form-btn--back:hover
+{
   background: #dddddd;
 }
 
-.drawboard__form-btn--submit {
+.drawboard__form-btn--submit
+{
   background: #000000;
   color: #ffffff;
   flex: 1;
@@ -293,23 +304,27 @@
   outline-offset: 2px;
 }
 
-.drawboard__form-btn--submit:hover {
+.drawboard__form-btn--submit:hover
+{
   background: #333333;
 }
 
-.drawboard__form-btn:active {
+.drawboard__form-btn:active
+{
   box-shadow: none;
   transform: translate(1px, 1px);
 }
 
-.drawboard__meta-section {
+.drawboard__meta-section
+{
   display: flex;
   gap: 8px;
   margin-bottom: 8px;
 }
 
 .drawboard__meta-input,
-.drawboard__meta-textarea {
+.drawboard__meta-textarea
+{
   flex: 1;
   border: 1px solid #000000;
   padding: 6px 8px;
@@ -322,11 +337,13 @@
 }
 
 .drawboard__meta-input:focus,
-.drawboard__meta-textarea:focus {
+.drawboard__meta-textarea:focus
+{
   box-shadow: inset 1px 1px 0 #000000;
 }
 
 .drawboard__meta-input::placeholder,
-.drawboard__meta-textarea::placeholder {
+.drawboard__meta-textarea::placeholder
+{
   color: #bbbbbb;
 }

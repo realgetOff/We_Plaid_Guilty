@@ -16,7 +16,8 @@ import { connect, send, addListener, removeListener, getIDFromToken } from '../.
 import { roomsApi } from '../../api/rooms';
 import '../Game/CreateGame.css';
 
-const DENY_REASONS = {
+const DENY_REASONS =
+{
 	invalid:   'invalid room code format.',
 	not_found: 'room not found.',
 	started:   'this game has already started.',

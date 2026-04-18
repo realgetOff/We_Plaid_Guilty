@@ -1,7 +1,7 @@
 name: Deploy
 on:
   push:
-    branches: [main, feature/infra, dev]
+    branches: [main, feature/infra]
   workflow_dispatch:
     inputs:
       action:

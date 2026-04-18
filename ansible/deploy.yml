@@ -110,7 +110,11 @@
       environment:
         KUBECONFIG: /etc/rancher/k3s/k3s.yaml
 
-
+    - name: "Delete ingress-nginx admission webhook"
+      shell: |
+        /usr/local/bin/kubectl delete validatingwebhookconfiguration ingress-nginx-admission --ignore-not-found
+      environment:
+        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
 
 - name: "Worker nodes"
   hosts: WORKERS
@@ -302,17 +306,6 @@
       # environment:
         # KUBECONFIG: /etc/rancher/k3s/k3s.yaml
 
-    - name: "Copy grafana ingress"
-      copy:
-        src: "{{ playbook_dir }}/../helm/values/grafana-ingress.yaml"
-        dest: /tmp/grafana-ingress.yaml
-        mode: '0644'
-
-    - name: "Apply grafana ingress"
-      shell: |
-        /usr/local/bin/kubectl apply -f /tmp/grafana-ingress.yaml --validate=false
-      environment:
-        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
 
 - name: "Logging"
   hosts: MASTER

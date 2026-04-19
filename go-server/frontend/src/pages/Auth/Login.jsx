@@ -12,6 +12,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { authApi } from '../../api/auth';
 import './Auth.css';
 
 const Login = () =>
@@ -76,7 +77,7 @@ const Login = () =>
 		}
 	};
 
-	const handleIntra = () =>
+	const handleIntra = async () =>
 	{
 		setError('');
 		if (hasToken)
@@ -85,8 +86,17 @@ const Login = () =>
 			return;
 		}
 		setLoading(true);
-		window.location.href = "http://localhost:8080/login/42";
-	};
+		try
+		{
+			const url = await authApi.oauth42Url();
+			window.location.href = url;
+		}
+		catch
+		{
+			setError('Could not reach the auth server.');
+			setLoading(false);
+		}
+	};	
 
 	const handleSignOut = () =>
 	{

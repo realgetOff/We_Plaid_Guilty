@@ -23,14 +23,14 @@ const Privacy = () => {
             <section className="legal__section">
                 <h3>1. Data Collection</h3>
                 <p>
-                    To provide you with the best experience, we collect essential information such as your email and password during registration. We also store your profile information, which may include an uploaded avatar and display name.
+                    To provide you with the best experience, we collect essential information such as your username.
                 </p>
             </section>
 
             <section className="legal__section">
                 <h3>2. Data Usage</h3>
                 <p>
-                    Your data is used strictly to manage your account, track your game statistics, and enable social features like friend lists and real-time chat. Your security is a priority, and all passwords are properly hashed and secured.
+                    Your data is used strictly to manage your account, track your game statistics, and enable social features like friend lists and real-time chat. Your security is a priority, and all tokens are properly hashed and secured.
                 </p>
             </section>
 

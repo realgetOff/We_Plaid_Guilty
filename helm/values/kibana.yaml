@@ -38,8 +38,13 @@ protocol: http
 serverHost: "0.0.0.0"
 httpPort: 5601
 
+# service:
+  # type: ClusterIP
+  # port: 5601
+
 service:
-  type: ClusterIP
+  type: NodePort
+  nodePort: 30601
   port: 5601
 
 ingress:

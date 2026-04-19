@@ -38,10 +38,16 @@ admin:
 env:
   GF_SECURITY_ADMIN_USER: admin
 
-
 grafana.ini:
   server:
     protocol: http
+  feature_toggles:
+    enable: ""
+  analytics:
+    check_for_updates: false
+  plugin_admin:
+    enabled: false
+
 
 service:
   type: NodePort

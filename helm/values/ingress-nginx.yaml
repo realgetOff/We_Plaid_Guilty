@@ -2,6 +2,8 @@ controller:
   serviceAccount:
     name: nginx-pki
     create: true
+  admissionWebhooks:
+    enabled: false
 
   shareProcessNamespace: true
 
@@ -18,6 +20,9 @@ controller:
       kill -HUP $(pgrep -x nginx | head -1)
 
   config:
+    proxy-read-timeout: "3600"
+    proxy-send-timeout: "3600"
+    proxy-connect-timeout: "60"
     enable-modsecurity: "true"
     enable-owasp-modsecurity-crs: "true"
     ssl-protocols: "TLSv1.2 TLSv1.3"
@@ -31,6 +36,8 @@ controller:
       proxy_ssl_verify on;
       proxy_ssl_verify_depth 3;
       proxy_ssl_name gartic-app.app.svc.cluster.local;
+    allow-snippet-annotations: "true"
+    annotations-risk-level: "Critical"
 
   allowSnippetAnnotations: true
 

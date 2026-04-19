@@ -12,15 +12,8 @@ podAnnotations:
   vault.hashicorp.com/agent-inject-secret-tls: "pki/issue/grafana-pki"
   vault.hashicorp.com/agent-inject-template-tls: |
     {{ with pkiCert "pki/issue/grafana-pki" "common_name=grafana.monitoring.svc.cluster.local" "ttl=24h" }}
-    {{ .Cert }}
-    {{ .CA }}
-    {{ .Key }}
+    {{ .Cert }}{{ .CA }}{{ .Key }}
     {{ end }}
-  vault.hashicorp.com/agent-inject-secret-config: "secret/data/grafana/config"
-  vault.hashicorp.com/agent-inject-template-config: |
-    {{`{{ with secret "secret/data/grafana/config" }}`}}
-    GF_SECURITY_ADMIN_PASSWORD={{`{{ .Data.data.grafana_password }}`}}
-    {{`{{ end }}`}}
 
 nodeSelector:
   kubernetes.io/hostname: gartic-grafana
@@ -38,20 +31,34 @@ ingress:
   # tls: []
 
 admin:
-  existingSecret: ""
+  existingSecret: "grafana-admin-secret"
   userKey: admin-user
   passwordKey: admin-password
 
 env:
   GF_SECURITY_ADMIN_USER: admin
 
-envFromFile: /vault/secrets/config
-
 grafana.ini:
   server:
-    protocol: https
-    cert_file: /vault/secrets/tls
-    cert_key: /vault/secrets/tls
+    protocol: http
+  feature_toggles:
+    enable: ""
+  analytics:
+    check_for_updates: false
+  plugin_admin:
+    enabled: false
+
+service:
+  type: NodePort
+  nodePort: 30300
+  port: 80
+  targetPort: 3000
+
+service:
+  type: NodePort
+  nodePort: 30300
+  port: 80
+  targetPort: 3000
 
 datasources:
   datasources.yaml:
@@ -59,17 +66,29 @@ datasources:
     datasources:
       - name: Prometheus
         type: prometheus
-        url: https://prometheus-operated.monitoring.svc.cluster.local:9090
+        url: http://prometheus-operated.monitoring.svc.cluster.local:9090
         access: proxy
         isDefault: true
-        jsonData:
-          tlsAuth: true
-          tlsAuthWithCACert: true
-          tlsSkipVerify: false
-        secureJsonData:
-          tlsCACert: $__file{/vault/secrets/tls}
-          tlsClientCert: $__file{/vault/secrets/tls}
-          tlsClientKey: $__file{/vault/secrets/tls}
+        jsonData: {}
+
+
+# datasources:
+  # datasources.yaml:
+    # apiVersion: 1
+    # datasources:
+      # - name: Prometheus
+        # type: prometheus
+        # url: https://prometheus-operated.monitoring.svc.cluster.local:9090
+        # access: proxy
+        # isDefault: true
+        # jsonData:
+          # tlsAuth: true
+          # tlsAuthWithCACert: true
+          # tlsSkipVerify: false
+        # secureJsonData:
+          # tlsCACert: $__file{/vault/secrets/tls}
+          # tlsClientCert: $__file{/vault/secrets/tls}
+          # tlsClientKey: $__file{/vault/secrets/tls}
 
 dashboardProviders:
   dashboardproviders.yaml:
@@ -84,12 +103,15 @@ dashboardProviders:
         options:
           path: /var/lib/grafana/dashboards/default
 
-dashboards:
-  default:
-    kubernetes-cluster:
-      gnetId: 15520
-      revision: 1
-      datasource: Prometheus
+dashboardsConfigMaps:
+  default: "grafana-custom-dashboard"
+
+# dashboards: {}
+  # default:
+    # kubernetes-cluster:
+      # gnetId: 15520
+      # revision: 10
+      # datasource: Prometheus
 
 persistence:
   enabled: false

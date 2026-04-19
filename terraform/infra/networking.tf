@@ -93,6 +93,13 @@ resource "aws_security_group" "master_sg" {
     to_port     = 5432
   }
   ingress {
+    description = "Node grafana"
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port   = 30300
+    protocol    = "tcp"
+    to_port     = 30300
+  } //DELETE -> NGINX
+  ingress {
     description = "Node exporter"
     cidr_blocks = ["172.31.0.0/16"]
     from_port   = 9100
@@ -117,6 +124,13 @@ resource "aws_security_group" "worker_sg" {
     protocol    = "tcp"
     to_port     = 22
   }
+  ingress {
+    description = "Node grafana"
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port   = 30300
+    protocol    = "tcp"
+    to_port     = 30300
+  } //DELETE -> NGINX
   ingress {
     description = "Kubelet"
     cidr_blocks = ["172.31.0.0/16"]

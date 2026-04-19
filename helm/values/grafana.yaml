@@ -48,6 +48,11 @@ grafana.ini:
   plugin_admin:
     enabled: false
 
+service:
+  type: NodePort
+  nodePort: 30300
+  port: 80
+  targetPort: 3000
 
 service:
   type: NodePort

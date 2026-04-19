@@ -66,7 +66,8 @@ func (d *Dispatcher) PipeIsAuth(ctx *WSContext, msg Message) bool {
 	if ctx.client.CurrUsrName == nil || *ctx.client.CurrUsrName == "" {
 		return false
 	}
-	
+
+	fmt.Printf("DEBUG: %s is Auth\n", *ctx.client.CurrUsrName)
 	return true
 }
 
@@ -83,6 +84,7 @@ func (d *Dispatcher) PipeRoomExist(ctx *WSContext, msg Message) bool {
 		return false
 	}
 	ctx.client.CurrentRoom = tmpRoom
+	fmt.Printf("DEBUG: Room Exist\n")
 	return true
 }
 
@@ -906,7 +908,6 @@ func (d *Dispatcher) HandlePrompt(ctx *WSContext, msg Message) {
 }
 
 func (d *Dispatcher) HandleDraw(ctx *WSContext, msg Message) {
-	fmt.Printf("DEBUG: draw_submitted code = %s\n", msg.Code)
 	if (!RunPipeLine(ctx, msg, d.PipeIsAuth, d.PipeRoomExist)) { return }
 
 	data := map[string]interface{}{
@@ -915,6 +916,7 @@ func (d *Dispatcher) HandleDraw(ctx *WSContext, msg Message) {
 	}
 	fmt.Printf("DEGUB: %s\n", msg.Type)
 	if classicRoom, ok := ctx.client.CurrentRoom.(*gamemanager.Room); ok {
+		fmt.Printf("DEBUG: draw_submitted code = %s\n", msg.Code)
 		err := classicRoom.SubmiteAction(*ctx.client.CurrUsrID, data, true);
 		if (err != nil) {
 			fmt.Printf("Error: Submited draw: %v\n", err);

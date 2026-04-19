@@ -16,13 +16,20 @@ import (
 	"syscall"
 	"github.com/joho/godotenv"
 	"main.go/gamemanager"
+	"runtime"
 
 	// following two are for lobby generation
 	//"math/rand/v2"
 	// "sync"
 
+	// "github.com/prometheus/client_golang/prometheus"
+	// "github.com/prometheus/client_golang/prometheus/promauto"
+	// "github.com/prometheus/client_golang/prometheus/promhttp"
+
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/zsais/go-gin-prometheus"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -147,8 +154,7 @@ func connectToDatabase () (*pgxpool.Pool, error) {
 func NewServerStructure () *serverVarsStruct {
 	
 	// Try to connect to the database, fatally exit if we can't reach it
-	
-	
+
 	var dbs DBSafe
 
 	db, err := connectToDatabase()
@@ -174,6 +180,9 @@ func NewServerStructure () *serverVarsStruct {
 		Rooms: make(map[string]gamemanager.GameRoom),
 	}
 	r := gin.Default();
+
+	gin_prom := ginprometheus.NewPrometheus("app")
+	gin_prom.Use(r)
 
 	chub := &ClientHub{
 		Clients:	make(map[string]*Client),
@@ -231,6 +240,8 @@ func main() {
 	fmt.Println("~o~ This project was brought to you with hate by pmilner- mforest- namichel & lviravon! ~o~")
 	fmt.Println(" ~~ Starting transcendence backend... ~~")
 
+	runtime.NumGoroutine()
+
 	serverVars := NewServerStructure()
 
 	defer serverVars.db.GetPool().Close()
@@ -284,8 +295,6 @@ func main() {
 		FortyTwoCallback(c, &serverVars.db)
 	})
 
-	
-
 	// need callback functions but im lost at the moment
 	// serverVars.router.GET("/auth/42/callback", ...)
 	// serverVars.router.GET("/auth/google/callback", ...) 
@@ -303,6 +312,7 @@ func main() {
 			log.Fatalf("Failed to run server: %v", err)	
 		}
 	} else {
+
 		tlsContent := addnewlinestotls()
 		if tlsContent == nil {
 			log.Fatalf("Failed to read TLS file")

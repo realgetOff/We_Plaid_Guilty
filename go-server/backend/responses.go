@@ -196,43 +196,43 @@ func findRoom(c *gin.Context, serverVars *serverVarsStruct){
 }
 
 func FortyTwoCallback(c *gin.Context, dbs *DBSafe){
-    code := c.Query("code")
-    
-    token, err := fortyTwoOauthConfig.Exchange(context.Background(), code)
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Exchange failed"})
-        return
-    }
+	code := c.Query("code")
 
-    client := fortyTwoOauthConfig.Client(context.Background(), token)
+	token, err := fortyTwoOauthConfig.Exchange(context.Background(), code)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Exchange failed"})
+		return
+	}
 
-    resp, err := client.Get("https://api.intra.42.fr/v2/me")
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to reach 42 API"})
-        return
-    }
-    defer resp.Body.Close()
+	client := fortyTwoOauthConfig.Client(context.Background(), token)
 
-    var userProfile struct {
-        Login string `json:"login"`
-        // Email string `json:"email"`
-        // ID    int    `json:"id"`
-        // Image struct {
-        //     Link string `json:"link"`
-        // } `json:"image"`
-    }
+	resp, err := client.Get("https://api.intra.42.fr/v2/me")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to reach 42 API"})
+		return
+	}
+	defer resp.Body.Close()
 
-    if err := json.NewDecoder(resp.Body).Decode(&userProfile); err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse user data"})
-        return
-    }
+	var userProfile struct {
+		Login string `json:"login"`
+		// Email string `json:"email"`
+		// ID    int    `json:"id"`
+		// Image struct {
+		//     Link string `json:"link"`
+		// } `json:"image"`
+	}
 
-    // 5. PRINT TO TERMINAL
-    fmt.Println("\n--- NEW LOGIN DETECTED ---")
-    fmt.Printf("Username: %s\n", userProfile.Login)
-    // fmt.Printf("Email:    %s\n", userProfile.Email)
-    // fmt.Printf("42 ID:    %d\n", userProfile.ID)
-    fmt.Println("--------------------------\n")
+	if err := json.NewDecoder(resp.Body).Decode(&userProfile); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse user data"})
+		return
+	}
+
+
+	fmt.Println("\n--- NEW LOGIN DETECTED ---")
+	fmt.Printf("Username: %s\n", userProfile.Login)
+	// fmt.Printf("Email:    %s\n", userProfile.Email)
+	// fmt.Printf("42 ID:    %d\n", userProfile.ID)
+	fmt.Println("--------------------------\n")
 
 
 	var userID string
@@ -274,10 +274,7 @@ func FortyTwoCallback(c *gin.Context, dbs *DBSafe){
 		return 
 	}
 
-	// 5. Redirect back to the React Frontend
-	// We pass the token in the URL so the React app can grab it and save it.
-	frontendRedirectURL := fmt.Sprintf("http://localhost:8080/callback?token=%s", SignedString)
-	
+	frontendRedirectURL := fmt.Sprintf("http://localhost:8080/callback?token=%s", SignedString)	
 	c.Redirect(http.StatusTemporaryRedirect, frontendRedirectURL)
 }
 

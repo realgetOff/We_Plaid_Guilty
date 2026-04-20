@@ -30,6 +30,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/zsais/go-gin-prometheus"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -48,7 +49,10 @@ type serverVarsStruct struct { // the name is temporary
 	//db *pgxpool.Pool
 }
 
-func (d *DBSafe) GetPool() (pool *pgxpool.Pool){
+// this does nothing? whats the point?
+// it doesnt ensure thread safety or anything, it just slows down getting the pgxpool slightly
+
+func (d *DBSafe) GetPool() (pool *pgxpool.Pool){ 
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 	return d.Pool
@@ -181,8 +185,13 @@ func NewServerStructure () *serverVarsStruct {
 	}
 	r := gin.Default();
 
+	// PROMETHEUS START
+	prometheus.MustRegister(activeWebsockets)
+	
 	gin_prom := ginprometheus.NewPrometheus("app")
 	gin_prom.Use(r)
+
+	// PROMETHEUS END
 
 	chub := &ClientHub{
 		Clients:	make(map[string]*Client),
@@ -234,6 +243,13 @@ var (
 	}
 	// this should be turned into a randomly generated string
 	oauthStateString = "pseudo-random-state"
+)
+
+var ( // PROMETHEUS METRICS	
+	activeWebsockets = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: "active_websockets",
+		Help: "The current number of open / active websocket connections.",
+	})
 )
 
 func main() {

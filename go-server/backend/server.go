@@ -81,5 +81,9 @@ func handleWebsocket(c *gin.Context, serverVars *serverVarsStruct) {
 	
 	defer conn.Close()
 
+	// increase / decrease the activeWebsockets gauge for metrics
+	activeWebsockets.Inc()
+	defer activeWebsockets.Dec()
+
 	socketLogic(client, serverVars)
 }

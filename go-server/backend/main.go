@@ -187,6 +187,8 @@ func NewServerStructure () *serverVarsStruct {
 
 	// PROMETHEUS START
 	prometheus.MustRegister(activeWebsockets)
+	prometheus.MustRegister(dbRequests)
+	prometheus.MustRegister(dbRequestsSucessful)
 	
 	gin_prom := ginprometheus.NewPrometheus("app")
 	gin_prom.Use(r)
@@ -249,6 +251,14 @@ var ( // PROMETHEUS METRICS
 	activeWebsockets = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name: "active_websockets",
 		Help: "The current number of open / active websocket connections.",
+	})
+	dbRequests = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "db_requests",
+		Help: "Number of SQL requests made to the postgresql database.",
+	})
+	dbRequestsSucessful = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "db_requests_successful",
+		Help: "Number of successful SQL requests made to the postgresql database.",
 	})
 )
 

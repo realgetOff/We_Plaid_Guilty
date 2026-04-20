@@ -171,6 +171,9 @@ func (d *Dispatcher) HandleGetFriend(ctx *WSContext, msg Message) {
 		return
 	}
 
+	// PROMETHEUS
+	dbRequests.Inc()
+
 	qAccepted := `SELECT u.id, u.username FROM users u
 		JOIN friends f ON (u.id = f.requester_id OR u.id = f.addressee_id)
 		WHERE (f.requester_id = $1 OR f.addressee_id = $1) AND u.id != $1 AND f.status = 'accepted'`
@@ -180,7 +183,14 @@ func (d *Dispatcher) HandleGetFriend(ctx *WSContext, msg Message) {
 		fmt.Printf("Failed to open accepted friends :: %v\n", err)
 		return
 	}
+
+	// PROMETHEUS
+	dbRequestsSucessful.Inc()
+
 	friends := scanFriendRows(ctx, rows)
+
+	// PROMETHEUS
+	dbRequests.Inc()
 
 	qIn := `SELECT u.id, u.username FROM users u
 		JOIN friends f ON u.id = f.requester_id
@@ -190,7 +200,14 @@ func (d *Dispatcher) HandleGetFriend(ctx *WSContext, msg Message) {
 		fmt.Printf("Failed pending_in :: %v\n", err)
 		return
 	}
+
+	// PROMETHEUS
+	dbRequestsSucessful.Inc()
+
 	pendingIn := scanFriendRows(ctx, rowsIn)
+
+	// PROMETHEUS
+	dbRequests.Inc()
 
 	qOut := `SELECT u.id, u.username FROM users u
 		JOIN friends f ON u.id = f.addressee_id
@@ -200,6 +217,10 @@ func (d *Dispatcher) HandleGetFriend(ctx *WSContext, msg Message) {
 		fmt.Printf("Failed pending_out :: %v\n", err)
 		return
 	}
+
+	// PROMETHEUS
+	dbRequestsSucessful.Inc()
+
 	pendingOut := scanFriendRows(ctx, rowsOut)
 
 	err = ctx.client.Conn.WriteJSON(FriendsListResponse{
@@ -219,6 +240,9 @@ func (d* Dispatcher) HandleRemoveFriend(ctx *WSContext, msg Message) {
 		return
 	}
 
+	// PROMETHEUS
+	dbRequests.Inc()
+
 	query := `
 	DELETE FROM friends 
 	WHERE (requester_id = $1 AND addressee_id = (SELECT id FROM users WHERE username = $2))
@@ -232,6 +256,9 @@ func (d* Dispatcher) HandleRemoveFriend(ctx *WSContext, msg Message) {
 		fmt.Printf("Friend remove failed :: %v\n", err)
 		return
 	}
+
+	// PROMETHEUS
+	dbRequestsSucessful.Inc()
 
 	response := FriendsListResponse {
 		Type: "friend_removed",
@@ -276,6 +303,10 @@ func (d *Dispatcher) HandleInviteFriend(ctx *WSContext, msg Message) {
 		return
 	}
 	var targetID string
+
+	// PROMETHEUS
+	dbRequests.Inc()
+
 	err := ctx.chub.Db.QueryRow(context.Background(),
 		`SELECT id FROM users WHERE username = $1`, to).Scan(&targetID)
 	if err != nil {
@@ -284,6 +315,10 @@ func (d *Dispatcher) HandleInviteFriend(ctx *WSContext, msg Message) {
 		})
 		return
 	}
+
+	// PROMETHEUS
+	dbRequestsSucessful.Inc()
+
 	target := ctx.chub.Clients[targetID]
 	if target == nil {
 		_ = ctx.client.Conn.WriteJSON(map[string]interface{}{
@@ -323,6 +358,10 @@ func (d *Dispatcher) HandleAcceptFriend(ctx *WSContext, msg Message) {
 		return
 	}
 	var requesterID string
+	
+	// PROMETHEUS
+	dbRequests.Inc()
+	
 	err := ctx.chub.Db.QueryRow(context.Background(),
 		`UPDATE friends SET status = 'accepted', updated_at = NOW()
 		 WHERE addressee_id = $1 AND requester_id = (SELECT id FROM users WHERE username = $2) AND status = 'pending'
@@ -334,9 +373,19 @@ func (d *Dispatcher) HandleAcceptFriend(ctx *WSContext, msg Message) {
 		})
 		return
 	}
+
+	// PROMETHEUS
+	dbRequestsSucessful.Inc()
+
+	dbRequests.Inc()
+
 	var requesterName string
 	_ = ctx.chub.Db.QueryRow(context.Background(),
 		`SELECT username FROM users WHERE id = $1`, requesterID).Scan(&requesterName)
+
+	// PROMETHEUS
+	dbRequestsSucessful.Inc()
+	
 	d.broadcastFriendAdded(ctx, requesterID, requesterName, me, myName)
 }
 
@@ -359,12 +408,20 @@ func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 	}
 	var targetID string
 	var targetIsGuest bool
+
+	// PROMETHEUS
+	dbRequests.Inc()
+
 	err := ctx.chub.Db.QueryRow(context.Background(),
 		`SELECT id, COALESCE(is_guest, false) FROM users WHERE username = $1`, targetName).Scan(&targetID, &targetIsGuest)
 	if err != nil {
 		fmt.Printf("Friend add: user not found :: %v\n", err)
 		return
 	}
+
+	// PROMETHEUS
+	dbRequestsSucessful.Inc()
+
 	if targetIsGuest {
 		_ = ctx.client.Conn.WriteJSON(map[string]interface{}{
 			"type": "friend_add_failed", "success": false, "error": "Cannot add guest accounts as friends.",
@@ -373,6 +430,10 @@ func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 	}
 	var st string
 	var reqID string
+
+	// PROMETHEUS
+	dbRequests.Inc()
+
 	err = ctx.chub.Db.QueryRow(context.Background(),
 		`SELECT f.status::text, f.requester_id::text FROM friends f WHERE
 		 (f.requester_id = $1::uuid AND f.addressee_id = $2::uuid)
@@ -392,6 +453,10 @@ func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 				})
 				return
 			}
+
+			// PROMETHEUS
+			dbRequests.Inc()
+
 			_, err = ctx.chub.Db.Exec(context.Background(),
 				`UPDATE friends SET status = 'accepted', updated_at = NOW()
 				 WHERE requester_id = $1::uuid AND addressee_id = $2::uuid AND status = 'pending'`,
@@ -400,9 +465,19 @@ func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 				fmt.Printf("mutual accept failed: %v\n", err)
 				return
 			}
+
+			// PROMETHEUS
+			dbRequestsSucessful.Inc()
+
+			dbRequests.Inc()
+
 			var requesterName string
 			_ = ctx.chub.Db.QueryRow(context.Background(),
 				`SELECT username FROM users WHERE id = $1`, targetID).Scan(&requesterName)
+
+			// PROMETHEUS
+			dbRequestsSucessful.Inc()
+			
 			d.broadcastFriendAdded(ctx, targetID, requesterName, me, myName)
 			return
 		}
@@ -410,6 +485,11 @@ func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 		fmt.Printf("Friend lookup failed :: %v\n", err)
 		return
 	}
+	// PROMETHEUS
+	dbRequestsSucessful.Inc()
+
+	dbRequests.Inc()
+
 	_, err = ctx.chub.Db.Exec(context.Background(),
 		`INSERT INTO friends (requester_id, addressee_id, status) VALUES ($1::uuid, $2::uuid, 'pending')`,
 		me, targetID)
@@ -420,6 +500,10 @@ func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 		})
 		return
 	}
+
+	// PROMETHEUS
+	dbRequestsSucessful.Inc()
+
 	addresseeOnline := ctx.chub.Clients[targetID] != nil
 	if c := ctx.chub.Clients[targetID]; c != nil {
 		_ = c.Conn.WriteJSON(map[string]interface{}{
@@ -462,6 +546,9 @@ func (d* Dispatcher) HandleGetProfile(ctx *WSContext, msg Message) {
 	var user ProfileUser
 	var profileID string
 
+	// PROMETHEUS
+	dbRequests.Inc()
+
 	query := `SELECT p.id, p.display_name, p.color, p.font, COALESCE(u.is_guest, false)
 				FROM profiles p
 				INNER JOIN users u ON p.id = u.id
@@ -478,6 +565,8 @@ func (d* Dispatcher) HandleGetProfile(ctx *WSContext, msg Message) {
 	if (err != nil) {
 		response.Success = false
 	} else {
+		// PROMETHEUS
+		dbRequestsSucessful.Inc()
 		response.Success = true
 		response.User = user
 		response.IsCaller = (profileID == *ctx.client.CurrUsrID)
@@ -505,6 +594,9 @@ func (d* Dispatcher) HandleProfileUpdate(ctx *WSContext, msg Message) {
         return
     }
 
+	// PROMETHEUS
+	dbRequests.Inc()
+
     query := `UPDATE profiles
                 SET color = $2, font = $3, display_name = $4
                 WHERE id = $1`
@@ -514,6 +606,11 @@ func (d* Dispatcher) HandleProfileUpdate(ctx *WSContext, msg Message) {
         fmt.Printf("FAILED TO UPDATE THE PROFILE TABLE FOR USER %v : %v\n", *ctx.client.CurrUsrName, err)
         return
     }
+
+	// PROMETHEUS
+	dbRequestsSucessful.Inc()
+
+	dbRequests.Inc()
 
     usrnmQuery := ` UPDATE users
                     SET username = $2
@@ -526,6 +623,9 @@ func (d* Dispatcher) HandleProfileUpdate(ctx *WSContext, msg Message) {
         fmt.Printf("FAILED TO UPDATE THE USERNAME FOR USER %v : %v\n", *ctx.client.CurrUsrName, err)
         return
     }
+
+	// PROMETHEUS
+	dbRequestsSucessful.Inc()
 
     oldUsername := *ctx.client.CurrUsrName
     *ctx.client.CurrUsrName = msg.Username
@@ -763,8 +863,17 @@ func (d *Dispatcher) HandleAuth(ctx *WSContext, msg Message) {
 	ctx.client.CurrUsrID = &claims.UserID
 
 	var isGuest bool
+
+	// PROMETHEUS
+	dbRequests.Inc()
+
 	_ = ctx.chub.Db.QueryRow(context.Background(),
 		`SELECT COALESCE(is_guest, false) FROM users WHERE id = $1`, claims.UserID).Scan(&isGuest)
+	
+	
+	// PROMETHEUS
+	dbRequestsSucessful.Inc()
+	
 	ctx.client.IsGuest = isGuest
 
 	ctx.chub.mu.Lock()

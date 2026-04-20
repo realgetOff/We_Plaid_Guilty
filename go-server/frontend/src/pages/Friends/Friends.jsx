@@ -10,14 +10,14 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-import React, { useState, useEffect }          from 'react';
-import { useNavigate, Link }                   from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { connect, send, addListener, removeListener, getIDFromToken } from '../../api/socket';
 import './Friends.css';
 
 const Friends = () =>
 {
-  const navigate            = useNavigate();
+  const navigate = useNavigate();
 
   const [friends,     setFriends]     = useState([]);
   const [pendingIn,   setPendingIn]   = useState([]);

@@ -353,7 +353,7 @@ const DrawBoard = ({ prompt, onDone }) =>
 
 				<div className="drawboard__toolbar-sep" />
 
-				{/* formes */}
+				{/* shapes */}
 				<div className="drawboard__section">
 					<span className="drawboard__section-label">Shapes</span>
 					<div className="drawboard__toolbar-group">

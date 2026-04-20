@@ -139,7 +139,6 @@ const AICreateGame = () =>
 
 	const handleCopy = () =>
 	{
-		console.warn("DEBUG handleCopy called");
 		navigator.clipboard.writeText(roomCode);
 		setCopied(true);
 		setTimeout(() => setCopied(false), 2000);
@@ -226,7 +225,16 @@ const AICreateGame = () =>
 								{players.map((p) => (
 									<div key={p.id} className="creategame__player-row">
 										<span className="creategame__player-dot" />
-										<span className="creategame__player-name">{p.name}</span>
+									<span
+										className="creategame__player-name"
+										style={{
+											color:      p.color || '#000000',
+											fontWeight: p.font === 'bold'   ? 'bold'   : 'normal',
+											fontStyle:  p.font === 'italic' ? 'italic' : 'normal',
+										}}
+									>
+										{p.name}
+									</span>
 										{p.host && <span className="creategame__badge">HOST</span>}
 									</div>
 								))}

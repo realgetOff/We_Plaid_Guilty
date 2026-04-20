@@ -1,24 +1,36 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Callback.jsx                                       :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mforest- <marvin@d42.fr>                   +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/04/18 14:15:53 by mforest-          #+#    #+#             */
+/*   Updated: 2026/04/18 14:15:53 by mforest-         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-const AuthCallback = () => {
+const AuthCallback = () =>
+{
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const redirect = '/'; // Or wherever your default landing is
+    const redirect = '/';
 
-    useEffect(() => {
+    useEffect(() =>
+	{
         const token = searchParams.get('token');
         
-        if (token) {
-            // 1. Persist the session
+        if (token)
+		{
             localStorage.setItem('authToken', token);
-            
-            // 2. Notify other components (like Navbars) to re-fetch user data
             window.dispatchEvent(new CustomEvent('userDataUpdated'));
-            
-            // 3. Clean redirect
             navigate(redirect, { replace: true });
-        } else {
+        }
+		else
+		{
             const errorReason = searchParams.get('error') || 'auth_failed';
             navigate(`/login?error=${errorReason}`);
         }

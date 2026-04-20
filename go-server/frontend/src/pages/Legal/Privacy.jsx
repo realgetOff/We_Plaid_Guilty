@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Privacy.jsx                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pmilner- <pmilner-@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mforest- <marvin@d42.fr>                   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/03/04 02:59:53 by mforest-          #+#    #+#             */
-/*   Updated: 2026/03/04 22:12:15 by pmilner-         ###   ########.fr       */
+/*   Created: 2026/04/18 14:28:53 by mforest-          #+#    #+#             */
+/*   Updated: 2026/04/18 14:28:53 by mforest-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,43 +14,36 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import './Legal.css';
 
-const Navbar = () =>
-{
-	return (
-		<div className="legal">
-			<h2 className="legal__title">Privacy? What Privacy?</h2>
-			<p className="legal__date">Last updated: The moment you clicked</p>
+const Privacy = () => {
+    return (
+        <div className="legal">
+            <h2 className="legal__title">Privacy Policy</h2>
+            <p className="legal__date">Last updated: April 18, 2026</p>
 
-			<section className="legal__section">
-				<h3>1. Data Harvesting</h3>
-				<p>
-					We reserve the right to monitor your keystrokes, your
-					unfiltered thoughts, and the exact brand of snacks you
-					consume while coding. If you blink, we log it.
-				</p>
-			</section>
+            <section className="legal__section">
+                <h3>1. Data Collection</h3>
+                <p>
+                    To provide you with the best experience, we collect essential information such as your username.
+                </p>
+            </section>
 
-			<section className="legal__section">
-				<h3>2. Deep Dark Web Sharing</h3>
-				<p>
-					Your personal data, including your most embarrassing
-					git commit messages, will be sold to the highest bidder,
-					or simply traded for a lukewarm cup of cluster coffee.
-				</p>
-			</section>
+            <section className="legal__section">
+                <h3>2. Data Usage</h3>
+                <p>
+                    Your data is used strictly to manage your account, track your game statistics, and enable social features like friend lists and real-time chat. Your security is a priority, and all tokens are properly hashed and secured.
+                </p>
+            </section>
 
-			<section className="legal__section">
-				<h3>3. Biometric Surrender</h3>
-				<p>
-					By staying on this page for more than five seconds, you
-					legally grant us ownership of your digital soul and
-					your first-born's future GitHub username.
-				</p>
-			</section>
+            <section className="legal__section">
+                <h3>3. User Rights</h3>
+                <p>
+                    You have the right to access, update, or request the deletion of your personal data at any time. Please note that this platform is built as an educational project for the 42 curriculum.
+                </p>
+            </section>
 
-			<Link to="/" className="legal__back">← Escape while you can</Link>
-		</div>
-	);
+            <Link to="/" className="legal__back">← Back to Home</Link>
+        </div>
+    );
 };
 
-export default Navbar;
+export default Privacy;

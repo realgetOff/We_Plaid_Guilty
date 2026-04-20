@@ -75,7 +75,8 @@ const floodFill = (ctx, startX, startY, fillColor, canvas) =>
 			continue;
 		visited[pos] = 1;
 		const idx = pos * 4;
-		if (!colorMatch(data, idx, targetR, targetG, targetB, targetA)) continue;
+		if (!colorMatch(data, idx, targetR, targetG, targetB, targetA))
+			continue;
 		data[idx]     = fillR;
 		data[idx + 1] = fillG;
 		data[idx + 2] = fillB;
@@ -352,7 +353,7 @@ const DrawBoard = ({ prompt, onDone }) =>
 
 				<div className="drawboard__toolbar-sep" />
 
-				{/* formes */}
+				{/* shapes */}
 				<div className="drawboard__section">
 					<span className="drawboard__section-label">Shapes</span>
 					<div className="drawboard__toolbar-group">

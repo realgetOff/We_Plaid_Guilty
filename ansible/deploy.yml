@@ -110,7 +110,11 @@
       environment:
         KUBECONFIG: /etc/rancher/k3s/k3s.yaml
 
-
+    - name: "Delete ingress-nginx admission webhook"
+      shell: |
+        /usr/local/bin/kubectl delete validatingwebhookconfiguration ingress-nginx-admission --ignore-not-found
+      environment:
+        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
 
 - name: "Worker nodes"
   hosts: WORKERS
@@ -167,6 +171,11 @@
   hosts: MASTER
   become: true
   tasks:
+    - name: "Load Vault secrets"
+      include_vars:
+        file: "{{ playbook_dir }}/secrets.yml"
+      when: lookup('fileglob', playbook_dir + '/secrets.yml') != []
+
     - name: "Wait for workers to join"
       shell: |
         /usr/local/bin/kubectl wait node \
@@ -175,6 +184,7 @@
           --timeout=120s
       environment:
         KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
     - name: "Create namespace monitoring"
       shell: |
         /usr/local/bin/kubectl create namespace monitoring \
@@ -224,6 +234,50 @@
         dest: /tmp/prometheus-values.yaml
         mode: '0644'
 
+    # - name: "Copy prometheus web-config"
+      # copy:
+        # src: "{{ playbook_dir }}/../helm/values/prometheus-web-config.yaml"
+        # dest: /tmp/prometheus-web-config.yaml
+        # mode: '0644'
+# 
+    # - name: "Create prometheus web-config ConfigMap"
+      # shell: |
+        # /usr/local/bin/kubectl apply -f /tmp/prometheus-web-config.yaml
+      # environment:
+        # KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+    - name: "Copy grafana values"
+      copy:
+        src: "{{ playbook_dir }}/../helm/values/grafana.yaml"
+        dest: /tmp/grafana-values.yaml
+        mode: '0644'
+
+    - name: "Copy Grafana dashboard JSON"
+      copy:
+        src: "{{ playbook_dir }}/../helm/values/dashboard/DASHBOARD_GRAFANA.json"
+        dest: /tmp/DASHBOARD_GRAFANA.json
+        mode: '0644'
+
+    - name: "Create Grafana dashboard ConfigMap"
+      shell: |
+        /usr/local/bin/kubectl create configmap grafana-custom-dashboard \
+          --from-file=DASHBOARD_GRAFANA.json=/tmp/DASHBOARD_GRAFANA.json \
+          -n monitoring --dry-run=client -o yaml | \
+        /usr/local/bin/kubectl apply -f -
+      environment:
+        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+    - name: "Create Grafana admin secret"
+      shell: |
+        /usr/local/bin/kubectl create secret generic grafana-admin-secret \
+          --from-literal=admin-user=admin \
+          --from-literal=admin-password="{{ grafana_pass }}" \
+          -n monitoring --dry-run=client -o yaml | \
+        /usr/local/bin/kubectl apply -f -
+      environment:
+        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+      no_log: true
+
     - name: "Deploy Prometheus"
       shell: |
         /usr/local/bin/helm upgrade --install prometheus \
@@ -231,5 +285,109 @@
           --namespace monitoring \
           --values /tmp/prometheus-values.yaml \
           --timeout 300s
+      environment:
+        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+    - name: "Deploy Grafana"
+      shell: |
+        /usr/local/bin/helm upgrade --install grafana \
+          grafana/grafana \
+          --namespace monitoring \
+          --values /tmp/grafana-values.yaml \
+          --timeout 300s
+      environment:
+        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+    # - name: "Wait for ingress-nginx"
+      # shell: |
+        # /usr/local/bin/kubectl wait --for=condition=ready pod \
+          # -l app.kubernetes.io/name=ingress-nginx \
+          # -n ingress-nginx --timeout=120s
+      # environment:
+        # KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+
+- name: "Logging"
+  hosts: MASTER
+  become: true
+  tasks:
+    - name: "Load Vault secrets"
+      include_vars:
+        file: "{{ playbook_dir }}/secrets.yml"
+      when: lookup('fileglob', playbook_dir + '/secrets.yml') != []
+
+    - name: "Create namespace logging"
+      shell: |
+        /usr/local/bin/kubectl create namespace logging \
+          --dry-run=client -o yaml | \
+        /usr/local/bin/kubectl apply -f -
+      environment:
+        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+    - name: "Label namespace logging for Vault injection"
+      shell: |
+        /usr/local/bin/kubectl label namespace logging \
+          vault-injection=enabled --overwrite
+      environment:
+        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+    - name: "Create Elasticsearch credentials secret"
+      shell: |
+        /usr/local/bin/kubectl create secret generic elasticsearch-credentials \
+          --from-literal=username=elastic \
+          --from-literal=password="{{ elastic_pass }}" \
+          --namespace logging \
+          --dry-run=client -o yaml | \
+        /usr/local/bin/kubectl apply -f -
+      environment:
+        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+      no_log: true
+
+    - name: "Copy elasticsearch values"
+      copy:
+        src: "{{ playbook_dir }}/../helm/values/elasticsearch.yaml"
+        dest: /tmp/elasticsearch-values.yaml
+        mode: '0644'
+
+    - name: "Copy kibana values"
+      template:
+        src: "{{ playbook_dir }}/../helm/values/kibana.yaml"
+        dest: /tmp/kibana-values.yaml
+        mode: '0644'
+          #TODO: template -> copy
+
+    - name: "Copy filebeat values"
+      copy:
+        src: "{{ playbook_dir }}/../helm/values/filebeat.yaml"
+        dest: /tmp/filebeat-values.yaml
+        mode: '0644'
+
+    - name: "Deploy Elasticsearch"
+      shell: |
+        /usr/local/bin/helm upgrade --install elasticsearch \
+          elastic/elasticsearch \
+          --namespace logging \
+          --values /tmp/elasticsearch-values.yaml \
+          --timeout 300s
+      environment:
+        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+    - name: "Deploy Kibana"
+      shell: |
+        /usr/local/bin/helm upgrade --install kibana \
+          elastic/kibana \
+          --namespace logging \
+          --values /tmp/kibana-values.yaml \
+          --timeout 300s
+      environment:
+        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+    - name: "Deploy Filebeat"
+      shell: |
+        /usr/local/bin/helm upgrade --install filebeat \
+          elastic/filebeat \
+          --namespace logging \
+          --values /tmp/filebeat-values.yaml \
+          --timeout 120s
       environment:
         KUBECONFIG: /etc/rancher/k3s/k3s.yaml

@@ -10,7 +10,8 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-.aigame {
+.aigame
+{
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -19,7 +20,8 @@
 	font-family: 'Inter', sans-serif;
 }
 
-.aigame__header {
+.aigame__header
+{
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
@@ -33,20 +35,23 @@
 	box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
-.aigame__phase-label {
+.aigame__phase-label
+{
 	font-size: 1.1rem;
 	font-weight: 700;
 	text-transform: uppercase;
 	letter-spacing: 1px;
 }
 
-.aigame__room-code {
+.aigame__room-code
+{
 	font-size: .9rem;
 	opacity: .7;
 	font-family: monospace;
 }
 
-.aigame__prompt-banner {
+.aigame__prompt-banner
+{
 	background: #1a1a2e;
 	color: #fff;
 	border-left: 5px solid #4488ff;
@@ -59,7 +64,8 @@
 	line-height: 1.4;
 }
 
-.aigame__waiting {
+.aigame__waiting
+{
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -68,12 +74,14 @@
 	color: #888;
 }
 
-.aigame__spinner {
+.aigame__spinner
+{
 	font-size: 3rem;
 	animation: ai-spin 1.5s linear infinite;
 }
 
-@keyframes ai-spin {
+@keyframes ai-spin
+{
 	from { transform: rotate(0deg); }
 	to { transform: rotate(360deg); }
 }

@@ -1,3 +1,4 @@
 extra_ports:
   - "9100/tcp"
   - "10250/tcp"
+  - "30300/tcp"

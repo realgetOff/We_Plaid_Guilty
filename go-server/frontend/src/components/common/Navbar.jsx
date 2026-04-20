@@ -96,7 +96,7 @@ const Navbar = () =>
 				<div
 					className="hc-menubar__item_useful"
 					role="menuitem"
-					onClick={() => navigate('/logout')}
+					onClick={() => navigate('/login')}
 				>
 					Logout
 				</div>

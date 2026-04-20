@@ -141,9 +141,6 @@
     dest: /tmp/ingress-nginx-values.yaml
     mode: '0644'
 
-
-
-
 - name: "Copy app chart to master"
   copy:
     src: "{{ playbook_dir }}/../helm/app/"

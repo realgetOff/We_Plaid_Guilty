@@ -10,8 +10,9 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { authApi } from '../../api/auth';
 import './Auth.css';
 
 const Login = () =>
@@ -22,14 +23,29 @@ const Login = () =>
 
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState('');
-	const [oauthHint, setOauthHint] = useState('');
 
 	const hasToken = !!localStorage.getItem('authToken');
+
+	useEffect(() =>
+	{
+		const token = searchParams.get('token');
+		const authError = searchParams.get('error');
+
+		if (token)
+		{
+			localStorage.setItem('authToken', token);
+			window.dispatchEvent(new CustomEvent('userDataUpdated'));
+			navigate(redirect, { replace: true });
+		}
+		else if (authError)
+		{
+			setError('Authentication failed: ' + authError);
+		}
+	}, [searchParams, navigate, redirect]);
 
 	const handleGuest = async () =>
 	{
 		setError('');
-		setOauthHint('');
 		if (hasToken)
 		{
 			navigate(redirect, { replace: true });
@@ -53,7 +69,7 @@ const Login = () =>
 		}
 		catch (e)
 		{
-			setError('Could not start a guest session. Try again later.');
+			setError('Could not start a guest session.');
 		}
 		finally
 		{
@@ -61,17 +77,26 @@ const Login = () =>
 		}
 	};
 
-	const handleIntra = () =>
+	const handleIntra = async () =>
 	{
 		setError('');
-		setOauthHint('to do');
-	};
-
-	const handleGoogle = () =>
-	{
-		setError('');
-		setOauthHint('to do');
-	};
+		if (hasToken)
+		{
+			navigate(redirect, { replace: true });
+			return;
+		}
+		setLoading(true);
+		try
+		{
+			const url = await authApi.oauth42Url();
+			window.location.href = url;
+		}
+		catch
+		{
+			setError('Could not reach the auth server.');
+			setLoading(false);
+		}
+	};	
 
 	const handleSignOut = () =>
 	{
@@ -93,12 +118,9 @@ const Login = () =>
 					<span className="login-page__title">ft_transcendence — sign in</span>
 				</div>
 				<div className="login-page__body">
-					<p className="login-page__lead">
-						Choose how you want to play.
-					</p>
+					<p className="login-page__lead">Choose how you want to play.</p>
 
 					{error && <p className="login-page__error" role="alert">{error}</p>}
-					{oauthHint && <p className="login-page__oauth-hint" role="status">{oauthHint}</p>}
 
 					<div className="login-page__actions">
 						<button
@@ -118,16 +140,6 @@ const Login = () =>
 						>
 							<span className="login-page__btn-label">sign in with</span>
 							<span className="login-page__btn-intra-mark">42</span>
-						</button>
-
-						<button
-							type="button"
-							className="login-page__btn login-page__btn--google"
-							onClick={handleGoogle}
-							disabled={loading}
-						>
-							<span>sign in with Google</span>
-							<span className="login-page__google-icon" aria-hidden>G</span>
 						</button>
 					</div>
 

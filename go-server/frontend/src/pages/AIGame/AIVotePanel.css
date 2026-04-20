@@ -10,7 +10,8 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-.aivote {
+.aivote
+{
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -19,7 +20,8 @@
 	max-width: 1000px;
 }
 
-.aivote__hint {
+.aivote__hint
+{
 	background: #f0f0f0;
 	padding: 0.6rem 1.2rem;
 	border-radius: 30px;
@@ -27,14 +29,16 @@
 	color: #555;
 }
 
-.aivote__grid {
+.aivote__grid
+{
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
 	gap: 2rem;
 	width: 100%;
 }
 
-.aivote__card {
+.aivote__card
+{
 	background: #fff;
 	border: 2px solid #eee;
 	border-radius: 12px;
@@ -46,17 +50,20 @@
 	transition: border-color 0.3s ease;
 }
 
-.aivote__card:hover {
+.aivote__card:hover
+{
 	border-color: #ddd;
 }
 
-.aivote__card-label {
+.aivote__card-label
+{
 	font-weight: 700;
 	color: #222;
 	font-size: 1.1rem;
 }
 
-.aivote__img {
+.aivote__img
+{
 	width: 100%;
 	aspect-ratio: 1/1;
 	object-fit: contain;
@@ -65,12 +72,14 @@
 	border: 1px solid #eee;
 }
 
-.aivote__score-row {
+.aivote__score-row
+{
 	display: flex;
 	gap: 0.6rem;
 }
 
-.aivote__score-btn {
+.aivote__score-btn
+{
 	width: 42px;
 	height: 42px;
 	border-radius: 50%;
@@ -81,12 +90,14 @@
 	transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.aivote__score-btn:hover {
+.aivote__score-btn:hover
+{
 	border-color: #111;
 	transform: translateY(-2px);
 }
 
-.aivote__score-btn--active {
+.aivote__score-btn--active
+{
 	background: #111 !important;
 	color: #fff !important;
 	border-color: #111 !important;
@@ -94,7 +105,8 @@
 	box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 }
 
-.aivote__submit {
+.aivote__submit
+{
 	margin-top: 2rem;
 	padding: 1rem 3rem;
 	background: #111;

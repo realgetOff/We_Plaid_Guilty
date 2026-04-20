@@ -1,0 +1,70 @@
+elasticsearchHosts: "https://elasticsearch-master.logging.svc:9200"
+
+elasticsearchCertificateSecret: "elasticsearch-master-certs"
+elasticsearchCertificateAuthoritiesFile: "ca.crt"
+
+elasticsearchCredentialSecret: elasticsearch-credentials
+
+replicas: 1
+
+imageTag: "8.5.1"
+
+resources:
+  requests:
+    cpu: "500m"
+    memory: "512Mi"
+  limits:
+    cpu: "1000m"
+    memory: "1Gi"
+
+extraEnvs:
+  - name: "NODE_OPTIONS"
+    value: "--max-old-space-size=512"
+
+# TODO: Vault PKI + Cilium
+podAnnotations:
+  vault.hashicorp.com/agent-inject: "false"
+
+kibanaConfig:
+  kibana.yml: |
+    server.ssl.enabled: false
+    elasticsearch.hosts: ["https://elasticsearch-master.logging.svc:9200"]
+    xpack.encryptedSavedObjects.encryptionKey: "{{ elk_encrypt_key }}" #TODO -> extraEnvs
+
+nodeSelector:
+  kubernetes.io/hostname: gartic-elk
+
+protocol: http
+serverHost: "0.0.0.0"
+httpPort: 5601
+
+# service:
+  # type: ClusterIP
+  # port: 5601
+
+service:
+  type: NodePort
+  nodePort: 30601
+  port: 5601
+
+ingress:
+  enabled: false
+
+tolerations:
+  - operator: Exists
+    effect: NoSchedule
+
+podSecurityContext:
+  fsGroup: 1000
+
+securityContext:
+  capabilities:
+    drop:
+      - ALL
+  runAsNonRoot: true
+  runAsUser: 1000
+
+updateStrategy:
+  type: "Recreate"
+
+dnsPolicy: ClusterFirstWithHostNet

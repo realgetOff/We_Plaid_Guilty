@@ -1,0 +1,77 @@
+clusterName: "elasticsearch"
+nodeGroup: "master"
+
+roles:
+  - master
+  - data
+  - ingest
+
+replicas: 1
+minimumMasterNodes: 1
+
+imageTag: "8.5.1"
+
+rbac:
+  create: true
+
+esJavaOpts: "-Xmx512m -Xms512m"
+
+resources:
+  requests:
+    cpu: "500m"
+    memory: "1Gi"
+  limits:
+    cpu: "1000m"
+    memory: "1Gi"
+
+# TODO: migrer vers Vault PKI + Cilium pour le mTLS complet
+createCert: true
+
+secret:
+  enabled: false
+
+extraEnvs:
+  - name: ELASTIC_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: elasticsearch-credentials
+        key: password
+
+podAnnotations:
+  vault.hashicorp.com/agent-inject: "false"
+
+nodeSelector:
+  kubernetes.io/hostname: gartic-elk
+
+volumeClaimTemplate:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 10Gi
+
+persistence:
+  enabled: true
+
+antiAffinity: "soft"
+
+protocol: https
+httpPort: 9200
+transportPort: 9300
+
+service:
+  enabled: true
+  type: ClusterIP
+
+ingress:
+  enabled: false
+
+sysctlInitContainer:
+  enabled: true
+
+sysctlVmMaxMapCount: 262144
+
+tolerations:
+  - operator: Exists
+    effect: NoSchedule
+
+dnsPolicy: ClusterFirstWithHostNet

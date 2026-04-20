@@ -16,7 +16,8 @@ import { connect, send, addListener, removeListener, getIDFromToken } from '../.
 import { roomsApi } from '../../api/rooms';
 import '../Game/CreateGame.css';
 
-const DENY_REASONS = {
+const DENY_REASONS =
+{
 	invalid:   'invalid room code format.',
 	not_found: 'room not found.',
 	started:   'this game has already started.',
@@ -261,7 +262,16 @@ const Lobby = () =>
 								{players.map((p) => (
 									<div key={p.id} className="creategame__player-row">
 										<span className="creategame__player-dot" />
-										<span className="creategame__player-name">{p.name}</span>
+									<span
+										className="creategame__player-name"
+										style={{
+											color:      p.color || '#000000',
+											fontWeight: p.font === 'bold'   ? 'bold'   : 'normal',
+											fontStyle:  p.font === 'italic' ? 'italic' : 'normal',
+										}}
+									>
+										{p.name}
+									</span>
 										{p.host && <span className="creategame__badge">HOST</span>}
 									</div>
 								))}

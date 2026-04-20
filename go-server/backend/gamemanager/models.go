@@ -55,6 +55,7 @@ type Player struct {
 type Notification struct {
 	PlayerID string      `json:"playerId"`
 	Data     interface{} `json:"data"`
+	End		bool
 }
 
 type BaseRoom struct {

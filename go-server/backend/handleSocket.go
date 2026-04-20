@@ -95,6 +95,7 @@ func (d *Dispatcher) Dispatch(ctx *WSContext, msg Message) {
 		ctx.client.Conn.WriteJSON(map[string]string{"type": "error", "message": "Action not recognized by the server",})
 		return
 	}
+	fmt.Printf("Message, %s", msg.Type)
 	handler(ctx, msg)
 }
 
@@ -782,6 +783,7 @@ func (d *Dispatcher) HandleAuth(ctx *WSContext, msg Message) {
 func (d *Dispatcher) HandleCreateRoom(ctx *WSContext, msg Message) {
 	if (!RunPipeLine(ctx, msg, d.PipeIsAuth)) { return }
 
+	fmt.Printf("DEBUG: create_room\n")
 	ctx.client.CurrentRoom = ctx.client.Hub.CreateRoom(false)
 	base := ctx.client.CurrentRoom.GetBase()
 	err := base.AddPlayer(*ctx.client.CurrUsrID, *ctx.client.CurrUsrName, ctx.client.Conn)
@@ -863,16 +865,20 @@ func (d *Dispatcher) HandleLeaveLobby(ctx *WSContext, msg Message) {
 	base.RemovePlayer(*ctx.client.CurrUsrID)
 	if classicRoom, ok := ctx.client.CurrentRoom.(*gamemanager.Room); ok {
 		classicRoom.SendSystemMsg(fmt.Sprintf("%s leave the lobby !", *ctx.client.CurrUsrName))
+		if len(base.Players) == 0 {
+			classicRoom.MessageChan <- gamemanager.Notification{
+				End: true,
+			}
+			ctx.client.Hub.DeleteRoom(base.ID)
+			return
+		}
 	}
 
-	if len(base.Players) == 0 {
-		ctx.client.Hub.DeleteRoom(base.ID)
-		return
-	}
 	if isHost {
 		base.TransferHost()
 	}
 	base.BroadcastLobbyState()
+	// TODO <- Notification End true
 }
 
 func (d *Dispatcher) HandleLeaveGame(ctx *WSContext, msg Message) { 

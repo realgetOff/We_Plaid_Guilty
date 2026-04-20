@@ -19,8 +19,13 @@ func (r *Room) waitForPhase(timeout time.Duration) {
 
 func (b *BaseRoom) listenForNotifaction() {
 
+	fmt.Printf("DEBUG: Entrer de la go routine listenNotification\n")
 	for notification := range b.MessageChan {
 
+		if (notification.End == true) {
+			fmt.Printf("Enter in the end\n")
+			break
+		}
 		b.mu.Lock()
 		player, ok := b.Players[notification.PlayerID]
 		b.mu.Unlock()
@@ -38,9 +43,11 @@ func (b *BaseRoom) listenForNotifaction() {
 			fmt.Printf("DEBUG: Erreur WriteJSON: %v\n", err)
 		}
 	}
+	fmt.Printf("DEBUG: Sortie de la go routine listenNotification\n")
 }
 
 func (r *Room) RunGameLoop() {
+	fmt.Printf("DEBUG: Entrer go_routine runGameLoop\n")
 	TotalRound := len(r.Players)
 
 	if TotalRound % 2 == 0 {
@@ -91,6 +98,7 @@ func (r *Room) RunGameLoop() {
 	r.broadcastGallery()
 
 	fmt.Printf("GG everyone game end !")
+	fmt.Printf("DEBUG: Sortie go_routine RunGameLoop\n")
 }
 
 func (r *Room) SubmiteAction(playerID string, data map[string]interface{}, isFinal bool) error {

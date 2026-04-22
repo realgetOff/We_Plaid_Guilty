@@ -13,6 +13,8 @@ import (
 	"github.com/gin-gonic/gin"
 	// "github.com/jackc/pgx/v5/pgxpool"
 	"github.com/golang-jwt/jwt/v5"
+
+	// "golang.org/x/crypto/bcrypt"
 )
 
 type LobbySettings struct {
@@ -216,9 +218,9 @@ func handleRegister(c *gin.Context, dbs *DBSafe){
 		return
 	}
 
-	userQuery := "INSERT INTO users (username, is_guest) VALUES ($1, FALSE) RETURNING id;"
+	userQuery := "INSERT INTO users (username, email) VALUES ($1, $2) RETURNING id;"
 
-	err := db.QueryRow(context.Background(), userQuery, login.Username).Scan(&userID);
+	err := db.QueryRow(context.Background(), userQuery, login.Username, login.Email).Scan(&userID);
 	if (err != nil) {
 		fmt.Println("User registration failed", err)
 		c.JSON(http.StatusInternalServerError, gin.H{

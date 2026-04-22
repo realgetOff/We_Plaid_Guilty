@@ -24,7 +24,10 @@ resource "aws_iam_role_policy" "k3s_kms" {
       {
         Effect   = "Allow"
         Action   = ["iam:GetRole", "iam:GetInstanceProfile"]
-        Resource = ["arn:aws:iam::${var.aws_account_id}:role/${var.project_name}-*", "arn:aws:iam::${var.aws_account_id}:instance-profile/${var.project_name}-*"]
+        Resource = [
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${var.project_name}-*",
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:instance-profile/${var.project_name}-*"
+        ]
       },
       {
         Effect   = "Allow"

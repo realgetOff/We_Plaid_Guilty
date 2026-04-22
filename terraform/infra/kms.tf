@@ -10,7 +10,7 @@ resource "aws_kms_key" "vault_unseal" {
         Sid    = "Enable IAM root permissions"
         Effect = "Allow"
         Principal = {
-          AWS = "arn:aws:iam::${var.aws_account_id}:root"
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
         }
         Action   = "kms:*"
         Resource = "*"
@@ -19,7 +19,7 @@ resource "aws_kms_key" "vault_unseal" {
         Sid    = "Allow K3s role to use the key"
         Effect = "Allow"
         Principal = {
-          AWS = "arn:aws:iam::${var.aws_account_id}:role/k3s-role"
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/k3s-role"
         }
         Action = [
           "kms:Encrypt",

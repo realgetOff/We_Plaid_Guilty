@@ -158,6 +158,7 @@ func handleGuestAuth(c *gin.Context, dbs *DBSafe){
 	}
 	fmt.Println("Guest name: " + guestName + " guest ID = " + userID)
 
+
 	profileQuery := "INSERT INTO profiles (id, display_name) VALUES ($1, $2)"
 	_, err = db.Exec(context.Background(), profileQuery, userID, guestName)
 		if (err != nil) {
@@ -243,6 +244,10 @@ func FortyTwoCallback(c *gin.Context, dbs *DBSafe){
 					ON CONFLICT (username) 
 					DO UPDATE SET username = EXCLUDED.username
 					RETURNING id;`
+
+	// PROMETHEUS
+	dbRequests.Inc()
+
 	err = db.QueryRow(context.Background(), userQuery, userProfile.Login).Scan(&userID);
 	if (err != nil) {
 		fmt.Printf("User creation failed %v\n", err)
@@ -250,21 +255,30 @@ func FortyTwoCallback(c *gin.Context, dbs *DBSafe){
 			"error": "Server couldn't insert a user in the database."})
 		return
 	}
+
+	// PROMETHEUS
+	dbRequestsSucessful.Inc()
+
 	fmt.Println("Username: " + userProfile.Login + " user ID = " + userID)
 
 	if (userID != ""){
-	profileQuery := 	`INSERT INTO profiles (id, display_name)
+		// PROMETHEUS
+		dbRequests.Inc()
+
+		profileQuery := 	`INSERT INTO profiles (id, display_name)
 						VALUES ($1, $2)
 						ON CONFLICT (id) DO NOTHING;`
-	_, err = db.Exec(context.Background(), profileQuery, userID, userProfile.Login)
+		_, err = db.Exec(context.Background(), profileQuery, userID, userProfile.Login)
 		if (err != nil) {
-		fmt.Printf("User profile creation failed %v\n", err)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Server couldn't create a user profile in the database."})
-		return
+			fmt.Printf("User profile creation failed %v\n", err)
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Server couldn't create a user profile in the database."})
+			return
+		}
 	}
-	} // dunno if this works
-
+	
+	// PROMETHEUS
+	dbRequestsSucessful.Inc()
 
 	var SignedString string
 	SignedString, err = generateJWT(userID, userProfile.Login)

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/jackc/pgx/v5"
@@ -578,7 +579,7 @@ func (d* Dispatcher) HandleGetProfile(ctx *WSContext, msg Message) {
 
 	err = ctx.client.Conn.WriteJSON(response)
 	if err != nil {
-		fmt.Printf("failed to send profile data: %v", err)
+		fmt.Printf("failed to send profile data: %v\n", err)
 	}
 }
 
@@ -919,7 +920,7 @@ func (d *Dispatcher) HandleCreateRoom(ctx *WSContext, msg Message) {
 	}
 	
 	base.BroadcastLobbyState()
-
+	
 	// go func(roomID string) {
 	// 	ctx.Db.Exec(context.Background(), "INSERT INTO rooms (room_code, created_at) VALUES ($1, NOW())", roomID)
 	// }(base.ID)
@@ -975,10 +976,13 @@ func (d *Dispatcher) HandleLeaveLobby(ctx *WSContext, msg Message) {
 	if classicRoom, ok := ctx.client.CurrentRoom.(*gamemanager.Room); ok {
 		classicRoom.SendSystemMsg(fmt.Sprintf("%s leave the lobby !", *ctx.client.CurrUsrName))
 		if len(base.Players) == 0 {
-			classicRoom.MessageChan <- gamemanager.Notification{
-				End: true,
+			time.Sleep(15 * time.Second)
+			if (len(base.Players) == 0) {
+				classicRoom.MessageChan <- gamemanager.Notification{
+					End: true,
+				}
+				ctx.client.Hub.DeleteRoom(base.ID)
 			}
-			ctx.client.Hub.DeleteRoom(base.ID)
 			return
 		}
 	}
@@ -999,7 +1003,7 @@ func (d *Dispatcher) HandleLeaveGame(ctx *WSContext, msg Message) {
 		del := classicRoom.LeaveGame(*ctx.client.CurrUsrID)
 		if del {
 			ctx.client.Hub.DeleteRoom(msg.Code)
-			fmt.Printf("DEBUG: DELETE ROOM nobody is in") // TODO Fix le isReady et set Prompt a "..."
+			fmt.Printf("DEBUG: DELETE ROOM nobody is in\n") // TODO Fix le isReady et set Prompt a "..."
 		}
 	}
 }

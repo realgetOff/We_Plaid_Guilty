@@ -40,6 +40,7 @@ func (h *Hub) generateRandID(lenght int) (roomId string) {
 func (h *Hub) DeleteRoom(id string) {
     h.mu.Lock()
     defer h.mu.Unlock()
+	fmt.Printf("DEBUG: DELETE ROOM\n")
     delete(h.Rooms, id)
 }
 
@@ -85,6 +86,19 @@ func (h *Hub) GetRoom(id string) (GameRoom, error) {
 	}
 	
 	return ptr, nil
+}
+
+func (h *Hub) LogRoom() {
+	for {
+		fmt.Printf("__________{NUMBER_OF_ROOM}_________\n")
+		fmt.Printf("nb_rooms = %d\n", len(h.Rooms))
+		for _, r := range h.Rooms {
+			base := r.GetID()
+			fmt.Printf("ROOM_%s\n", base)
+			fmt.Printf("______________")
+		}
+		time.Sleep(15 * time.Second)
+	}
 }
 
 func (h *Hub) CreateRoom(isAI bool) (GameRoom){

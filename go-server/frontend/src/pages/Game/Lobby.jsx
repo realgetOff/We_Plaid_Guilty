@@ -112,7 +112,7 @@ const Lobby = () =>
 			}
 
 			if (msg.type === 'start_game' && roomMatch)
-				navigate(`/game/play/${normalized}`);
+				navigate(`/game/play/${normalized}`), { replace: true };
 
 			if (msg.type === 'join_denied')
 			{

@@ -56,7 +56,7 @@ func socketLogic(client *Client, serverVars *serverVarsStruct) {
 		}
 
 		if len(base.Players) == 0 {
-			time.Sleep(15 * time.Second)
+			time.Sleep(1 * time.Second)
 			if len(base.Players) == 0 {
 				serverVars.globalHub.DeleteRoom(base.ID)
 			}

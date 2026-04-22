@@ -2,7 +2,7 @@ package gamemanager
 
 import (
 	"fmt"
-	"time"
+	// "time"
 
 	"github.com/gorilla/websocket"
 )
@@ -128,7 +128,7 @@ func (r *Room) LeaveGame(playerID string) (bool){
 		oldPlayer.IsConnected = false
 	}
 	var isAllDisconnect bool
-	time.Sleep(15 * time.Second)
+	// time.Sleep(15 * time.Second)
 	for _, p := range r.Players {
 		if !p.IsConnected {
 			isAllDisconnect = true

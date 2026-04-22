@@ -5,6 +5,11 @@ resource "aws_instance" "name" {
   }
   monitoring = true
   ebs_optimized = true //enable by default with GRAVITON
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_tokens                 = "required"
+    http_put_response_hop_limit = 1
+  }
   instance_type = var.instance_type
   ami = var.ami_id
   key_name = var.key_name

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
-	"time"
+	// "time"
 
 	"github.com/gorilla/websocket"
 	"github.com/jackc/pgx/v5"
@@ -976,13 +976,10 @@ func (d *Dispatcher) HandleLeaveLobby(ctx *WSContext, msg Message) {
 	if classicRoom, ok := ctx.client.CurrentRoom.(*gamemanager.Room); ok {
 		classicRoom.SendSystemMsg(fmt.Sprintf("%s leave the lobby !", *ctx.client.CurrUsrName))
 		if len(base.Players) == 0 {
-			time.Sleep(15 * time.Second)
-			if (len(base.Players) == 0) {
-				classicRoom.MessageChan <- gamemanager.Notification{
-					End: true,
-				}
-				ctx.client.Hub.DeleteRoom(base.ID)
+			classicRoom.MessageChan <- gamemanager.Notification{
+				End: true,
 			}
+			ctx.client.Hub.DeleteRoom(base.ID)
 			return
 		}
 	}

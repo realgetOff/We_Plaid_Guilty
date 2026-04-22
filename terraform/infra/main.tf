@@ -58,7 +58,7 @@ resource "local_file" "ansible_inventory" {
   filename = "${path.module}/inventory.ini"
   content  = <<-EOT
   [MASTER]
-  ${module.master.public_ip} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/github_actions
+  ${module.master.public_ip} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/github_actions master_private_ip=${module.master.private_ip}
   [WORKERS]
   ${module.worker1.public_ip} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/github_actions
   ${module.worker2.public_ip} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/github_actions

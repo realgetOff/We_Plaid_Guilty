@@ -70,12 +70,12 @@ prometheus:
             replacement: $1:9100
           - source_labels: [__meta_kubernetes_pod_node_name]
             target_label: node
-      # - job_name: 'gartic-app'
-        # scheme: https
-        # tls_config:
-          # cert_file: /vault/secrets/tls
-          # key_file: /vault/secrets/tls
-          # ca_file: /vault/secrets/tls
-        # static_configs:
-          # - targets:
-              # - 'gartic-app.app.svc.cluster.local:8080'
+      - job_name: 'gartic-app'
+        scheme: https
+        tls_config:
+          cert_file: /vault/secrets/tls
+          key_file: /vault/secrets/tls
+          ca_file: /vault/secrets/tls
+        static_configs:
+          - targets:
+              - 'gartic-app.app.svc.cluster.local:8080'

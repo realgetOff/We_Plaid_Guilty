@@ -327,6 +327,10 @@ func main() {
 		handleRegister(c, &serverVars.db)
 	})
 
+	serverVars.router.POST("/api/auth/login", func(c *gin.Context){
+		handleLogin(c, &serverVars.db)
+	})
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"

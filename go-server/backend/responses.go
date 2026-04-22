@@ -14,7 +14,7 @@ import (
 	// "github.com/jackc/pgx/v5/pgxpool"
 	"github.com/golang-jwt/jwt/v5"
 
-	// "golang.org/x/crypto/bcrypt"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type LobbySettings struct {
@@ -218,17 +218,24 @@ func handleRegister(c *gin.Context, dbs *DBSafe){
 		return
 	}
 
-	userQuery := "INSERT INTO users (username, email) VALUES ($1, $2) RETURNING id;"
 
-	err := db.QueryRow(context.Background(), userQuery, login.Username, login.Email).Scan(&userID);
+	bytes, err := bcrypt.GenerateFromPassword([]byte(login.Password), bcrypt.DefaultCost)
+	if (err != nil)	{
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Couldn't hash password: " + err.Error()})
+		return
+	}
+
+	userQuery := "INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id;"
+
+	err = db.QueryRow(context.Background(), userQuery, login.Username, login.Email, bytes).Scan(&userID);
 	if (err != nil) {
 		fmt.Println("User registration failed", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Server couldn't register a user in the database."})
 		return
 	}
-	fmt.Println("Registered username: " + login.Username + " user ID = " + userID)
 
+	fmt.Println("Registered username: " + login.Username + " user ID = " + userID)
 
 	profileQuery := "INSERT INTO profiles (id, display_name) VALUES ($1, $2)"
 	_, err = db.Exec(context.Background(), profileQuery, userID, login.Username)
@@ -239,6 +246,50 @@ func handleRegister(c *gin.Context, dbs *DBSafe){
 		return
 	}
 
+
+	var SignedString string
+	SignedString, err = generateJWT(userID, login.Username)
+	if (err != nil) {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Couldn't sign / generate JWT for user."})
+		return 
+	}
+
+	c.JSON(http.StatusOK, AuthResponse{
+		Token: SignedString,
+		})
+}
+
+func handleLogin( c *gin.Context, dbs *DBSafe ){
+	var login loginInfo
+	var userID string
+	var passHash string
+	
+	db := dbs.GetPool()	
+
+	if err := c.ShouldBindJSON(&login); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload: " + err.Error()})
+		return
+	}
+
+	userQuery := "SELECT id, password_hash FROM users WHERE username = $1 AND is_guest = false;"
+
+	err := db.QueryRow(context.Background(), userQuery, login.Username).Scan(&userID, &passHash);
+	if (err != nil) {
+		fmt.Println("Coulnd't get password hash for user: " + login.Username, err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Server get the password hash for the user."})
+		return
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(passHash), []byte(login.Password))
+	if (err != nil) {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "The passwords don't match / the hash comparison failed."})
+		return ;
+	}
+
+	fmt.Println("Password valid for: " + login.Username + " user ID = " + userID)
 
 	var SignedString string
 	SignedString, err = generateJWT(userID, login.Username)

@@ -30,6 +30,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/zsais/go-gin-prometheus"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -48,7 +49,10 @@ type serverVarsStruct struct { // the name is temporary
 	//db *pgxpool.Pool
 }
 
-func (d *DBSafe) GetPool() (pool *pgxpool.Pool){
+// this does nothing? whats the point?
+// it doesnt ensure thread safety or anything, it just slows down getting the pgxpool slightly
+
+func (d *DBSafe) GetPool() (pool *pgxpool.Pool){ 
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 	return d.Pool
@@ -181,8 +185,15 @@ func NewServerStructure () *serverVarsStruct {
 	}
 	r := gin.Default();
 
+	// PROMETHEUS START
+	prometheus.MustRegister(activeWebsockets)
+	prometheus.MustRegister(dbRequests)
+	prometheus.MustRegister(dbRequestsSucessful)
+	
 	gin_prom := ginprometheus.NewPrometheus("app")
 	gin_prom.Use(r)
+
+	// PROMETHEUS END
 
 	chub := &ClientHub{
 		Clients:	make(map[string]*Client),
@@ -234,6 +245,21 @@ var (
 	}
 	// this should be turned into a randomly generated string
 	oauthStateString = "pseudo-random-state"
+)
+
+var ( // PROMETHEUS METRICS	
+	activeWebsockets = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: "active_websockets",
+		Help: "The current number of open / active websocket connections.",
+	})
+	dbRequests = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "db_requests",
+		Help: "Number of SQL requests made to the postgresql database.",
+	})
+	dbRequestsSucessful = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "db_requests_successful",
+		Help: "Number of successful SQL requests made to the postgresql database.",
+	})
 )
 
 func main() {
@@ -290,14 +316,20 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{"url": url})
 	})
 
+	// CALLBACK FOR OAUTH2 WITH 42API
+
 	serverVars.router.GET("/api/auth/42/callback", func(c *gin.Context){
 		fmt.Println("42 CALLBACK URL")
 		FortyTwoCallback(c, &serverVars.db)
 	})
 
-	// need callback functions but im lost at the moment
-	// serverVars.router.GET("/auth/42/callback", ...)
-	// serverVars.router.GET("/auth/google/callback", ...) 
+	serverVars.router.POST("/api/auth/register", func(c *gin.Context){
+		handleRegister(c, &serverVars.db)
+	})
+
+	serverVars.router.POST("/api/auth/login", func(c *gin.Context){
+		handleLogin(c, &serverVars.db)
+	})
 
 	port := os.Getenv("PORT")
 	if port == "" {

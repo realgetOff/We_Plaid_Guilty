@@ -47,34 +47,3 @@ CREATE TABLE IF NOT EXISTS profiles (
 	color VARCHAR(7) DEFAULT '#000000', -- Allows hexadecimal RGB colours like #008800 to be stored
 	font VARCHAR(6) DEFAULT 'normal' -- bold, italic, normal
 );
-
-
--- INSERTION INTO FRIENDS
--- INSERT INTO friends (requester_id, addressee_id, status) 
--- VALUES (
---     'user_a_uuid', 
---     'user_b_uuid', 
---     'pending'
--- );
-
--- GETTING FRIENDS
--- SELECT 
---     users.id, 
---     users.username, 
---     users.is_online 
--- FROM users
--- JOIN friendships ON (users.id = friendships.requester_id OR users.id = friendships.addressee_id)
--- WHERE 
---     (friendships.requester_id = 'user_a_uuid' OR friendships.addressee_id = 'user_a_uuid')
---     AND users.id != 'user_a_uuid'
---     AND friendships.status = 'accepted';
-
--- REMOVING FRIENDS
--- DELETE FROM friendships 
--- WHERE (requester_id = 'user_a_uuid' AND addressee_id = 'user_b_uuid')
---    OR (requester_id = 'user_b_uuid' AND addressee_id = 'user_a_uuid');
-
--- if you already had a DB populated before friend requests used status = 'accepted'
--- in queries, existing rows may still be 'pending'. To keep them as accepted friends
--- after pulling this schema behavior, run manually once:
---   UPDATE friends SET status = 'accepted';

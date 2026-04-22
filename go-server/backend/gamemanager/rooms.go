@@ -2,6 +2,8 @@ package gamemanager
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/gorilla/websocket"
 )
 
@@ -89,14 +91,28 @@ func (b *BaseRoom) AddPlayer(playerID string, name string, conn *websocket.Conn)
 		return fmt.Errorf("Room is full")
 	}
 
-	newPlayer := &Player{
-		ID:          playerID,
-		Name:        name,
-		Conn:        conn,
-		IsHost:      len(b.Players) == 0,
-		IsConnected: true,
-		IsReady:     false,
-		Score:       0,
+	var newPlayer* Player
+	_, ok := b.Players[playerID]
+	if (ok && len(b.Players) == 1) {
+		newPlayer = &Player{
+			ID:          playerID,
+			Name:        name,
+			Conn:        conn,
+			IsHost:      true,
+			IsConnected: true,
+			IsReady:     false,
+			Score:       0,
+		}
+	} else {
+		newPlayer = &Player{
+			ID:          playerID,
+			Name:        name,
+			Conn:        conn,
+			IsHost:      len(b.Players) == 0,
+			IsConnected: true,
+			IsReady:     false,
+			Score:       0,
+		}
 	}
 
 	b.Players[playerID] = newPlayer
@@ -112,6 +128,7 @@ func (r *Room) LeaveGame(playerID string) (bool){
 		oldPlayer.IsConnected = false
 	}
 	var isAllDisconnect bool
+	time.Sleep(15 * time.Second)
 	for _, p := range r.Players {
 		if !p.IsConnected {
 			isAllDisconnect = true

@@ -3,12 +3,16 @@ package main
 import (
 	// "strings"
 	"fmt"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+
 	// "github.com/jackc/pgx/v5/pgxpool"
 	// "github.com/golang-jwt/jwt/v5"
-	"main.go/gamemanager"
 	"net/http"
+
+	"main.go/gamemanager"
 )
 
 
@@ -20,6 +24,7 @@ func socketLogic(client *Client, serverVars *serverVarsStruct) {
 		chub: serverVars.ClientHub,
 	}
 
+	// go ctx.client.Hub.LogRoom()
 	defer func() {
 		if client.CurrUsrID == nil || *client.CurrUsrID == "" {
 			return
@@ -34,6 +39,7 @@ func socketLogic(client *Client, serverVars *serverVarsStruct) {
 		if err != nil {
 			break
 		}
+		fmt.Printf("DEBUG: MSG = %s\n", msg.Type)
 		dispatcher.Dispatch(&ctx, msg)
 	}
 
@@ -50,7 +56,10 @@ func socketLogic(client *Client, serverVars *serverVarsStruct) {
 		}
 
 		if len(base.Players) == 0 {
-			serverVars.globalHub.DeleteRoom(base.ID)
+			time.Sleep(15 * time.Second)
+			if len(base.Players) == 0 {
+				serverVars.globalHub.DeleteRoom(base.ID)
+			}
 		} else {
 			if isHost {
 				base.TransferHost()

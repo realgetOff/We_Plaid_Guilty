@@ -266,7 +266,16 @@ const AILobby = () =>
 										.map(f => (
 											<div key={f.id} className="creategame__player-row">
 												<span className="creategame__player-dot" />
-												<span className="creategame__player-name">{f.username}</span>
+												<span
+													className="creategame__player-name"
+													style={{
+														color:      p.color || '#000000',
+														fontWeight: p.font === 'bold'   ? 'bold'   : 'normal',
+														fontStyle:  p.font === 'italic' ? 'italic' : 'normal',
+													}}
+												>
+													{p.name}
+												</span>
 												<button
 													className="creategame__invite-friend"
 													onClick={() => handleInviteFriend(f)}

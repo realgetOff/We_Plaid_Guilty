@@ -1,13 +1,13 @@
 /* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   CreateGame.jsx                                     :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: pmilner- <pmilner-@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/02/23 21:11:46 by mforest-          #+#    #+#             */
-/*   Updated: 2026/03/04 22:12:01 by pmilner-         ###   ########.fr       */
-/*                                                                            */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   CreateGame.jsx                                     :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mforest- <marvin@d42.fr>                   +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/04/18 14:32:29 by mforest-          #+#    #+#             */
+/*   Updated: 2026/04/18 14:32:29 by mforest-         ###   ########.fr       */
+/*                                                                            */
 /* ************************************************************************** */
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -245,7 +245,16 @@ const CreateGame = () =>
 								{players.map((p) => (
 									<div key={p.id} className="creategame__player-row">
 										<span className="creategame__player-dot" />
-										<span className="creategame__player-name">{p.name}</span>
+									<span
+										className="creategame__player-name"
+										style={{
+											color:      p.color || '#000000',
+											fontWeight: p.font === 'bold'   ? 'bold'   : 'normal',
+											fontStyle:  p.font === 'italic' ? 'italic' : 'normal',
+										}}
+									>
+										{p.name}
+									</span>
 										{p.host && <span className="creategame__badge">HOST</span>}
 									</div>
 								))}

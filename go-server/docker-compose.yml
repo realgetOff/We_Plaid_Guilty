@@ -17,6 +17,9 @@ services:
       - DB_NAME=transcendence
     depends_on:
       - db
+      # - prometheus
+    networks:
+      - monitoring
     restart: always
 
   # La base de données
@@ -28,10 +31,39 @@ services:
       - POSTGRES_DB=transcendence
     ports:
       - "5432:5432"
+    networks:
+      - monitoring
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     restart: always
+
+  prometheus:
+      image: prom/prometheus:latest
+      ports:
+        - "9090:9090"
+      volumes:
+        - ./prometheus_local.yml:/etc/prometheus/prometheus.yml
+      networks:
+        - monitoring
+      depends_on:
+        - app
+
+  grafana:
+      image: grafana/grafana:latest
+      ports:
+        - "3000:3000"
+      environment:
+        - GF_SECURITY_ADMIN_PASSWORD=admin # Change this for production!
+      networks:
+        - monitoring
+      depends_on:
+        - prometheus
+        - app
+  
+networks:
+  monitoring:
+    driver: bridge
 
 volumes:
   postgres_data:

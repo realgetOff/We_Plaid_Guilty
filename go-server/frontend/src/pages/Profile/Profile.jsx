@@ -10,7 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { connect, send, addListener, removeListener } from '../../api/socket';
 import './Profile.css';
@@ -26,7 +26,6 @@ const Profile = () =>
 {
   const { username } = useParams();
   const navigate     = useNavigate();
-  const fileRef      = useRef(null);
 
   const [status,     setStatus]     = useState('loading');
   const [user,       setUser]       = useState(null);
@@ -36,12 +35,11 @@ const Profile = () =>
   const [nameError,  setNameError]  = useState('');
   const [color,      setColor]      = useState('#000000');
   const [font,       setFont]       = useState('normal');
-  const [avatarSrc,  setAvatarSrc]  = useState(null);
   const [saved,      setSaved]      = useState(false);
 
   useEffect(() =>
   {
-	connect();
+    connect();
     const handler = (msg) =>
     {
       if (msg.type === 'profile_data')
@@ -53,7 +51,6 @@ const Profile = () =>
           setEditName(msg.user.username);
           setColor(msg.user.style?.color || '#000000');
           setFont(msg.user.style?.font || 'normal');
-          setAvatarSrc(msg.user.avatar_url);
           setStatus('ready');
         }
         else
@@ -70,69 +67,31 @@ const Profile = () =>
             ...prev,
             username: msg.user.username,
             style: msg.user.style,
-            avatar_url: msg.user.avatar_url
           }));
           setSaved(true);
           setTimeout(() => setSaved(false), 2500);
-		  if (msg.user.username !== username)
-      		navigate(`/profile/${msg.user.username}`, { replace: true });
+          if (msg.user.username !== username)
+            navigate(`/profile/${msg.user.username}`, { replace: true });
         }
         else
           setNameError(msg.error || 'Failed to update profile.');
       }
-      else if (msg.type === 'avatar_uploaded')
-      {
-        if (msg.success)
-        {
-          setAvatarSrc(msg.avatar_url);
-          setUser(prev => ({ ...prev, avatar_url: msg.avatar_url }));
-        }
-        else
-          console.error('Avatar upload failed:', msg.error);
-      }
     };
 
     addListener(handler);
-    
-    send({ 
-      type: 'get_profile', 
-      username: username 
+
+    send({
+      type: 'get_profile',
+      username: username
     });
 
     return () => removeListener(handler);
   }, [username]);
 
-  const handleAvatarClick = () =>
-  {
-    if (!isMe || user?.is_guest)
-      return;
-    fileRef.current?.click();
-  };
-
-  const handleFileChange = (e) =>
-  {
-    const file = e.target.files[0];
-    if (!file)
-      return;
-
-    const reader = new FileReader();
-    reader.onload = (ev) =>
-    {
-      const base64 = ev.target.result;
-      setAvatarSrc(base64);
-      
-      send({
-        type: 'upload_avatar',
-        avatar_data: base64
-      });
-    };
-    reader.readAsDataURL(file);
-  };
-
   const handleSave = async () =>
   {
     const name = editName.trim();
-	
+
     if (!name)
     {
       setNameError('Username cannot be empty.');
@@ -158,7 +117,6 @@ const Profile = () =>
         color: color,
         font: font
       },
-      avatar_url: avatarSrc
     });
   };
 
@@ -187,11 +145,14 @@ const Profile = () =>
     );
   }
 
-  let initials = user.username.slice(0, 2).toUpperCase();
+  const initials = user.username.slice(0, 2).toUpperCase();
 
-  let usernameStyle = { color: user.style?.color || '#000000' };
-  if (user.style?.font === 'bold')   usernameStyle.fontWeight = 'bold';
-  if (user.style?.font === 'italic') usernameStyle.fontStyle  = 'italic';
+  const usernameStyle =
+  {
+    color:      user.style?.color || '#000000',
+    fontWeight: user.style?.font === 'bold'   ? 'bold'   : 'normal',
+    fontStyle:  user.style?.font === 'italic' ? 'italic' : 'normal',
+  };
 
   const isGuestProfile = !!user.is_guest;
   const canEditProfile = isMe && !isGuestProfile;
@@ -216,27 +177,9 @@ const Profile = () =>
 
       <div className="profile__header">
 
-        <div
-          className={`profile__avatar${canEditProfile ? ' profile__avatar--editable' : ''}`}
-          onClick={handleAvatarClick}
-          title={canEditProfile ? 'click to change avatar' : ''}
-        >
-          {avatarSrc
-            ? <img src={avatarSrc} alt="avatar" className="profile__avatar-img" />
-            : <span>{initials}</span>
-          }
-          {canEditProfile && <span className="profile__avatar-overlay">✎</span>}
+        <div className="profile__avatar">
+          <span>{initials}</span>
         </div>
-
-        {canEditProfile && (
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            className="profile__file-input"
-            onChange={handleFileChange}
-          />
-        )}
 
         <div className="profile__info">
           <span className="profile__username" style={usernameStyle}>
@@ -321,8 +264,7 @@ const Profile = () =>
 
             <div className="profile__edit-footer">
               <span className="profile__preview-label">preview :</span>
-              <span className="profile__preview" style={
-              {
+              <span className="profile__preview" style={{
                 color,
                 fontWeight: font === 'bold'   ? 'bold'   : 'normal',
                 fontStyle:  font === 'italic' ? 'italic' : 'normal',

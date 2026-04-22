@@ -22,7 +22,10 @@ const WritePrompt = ({ onDone }) =>
 	const [seconds, setSeconds] = useState(TIMER_SEC);
 
 	const onDoneRef = useRef(onDone);
-	useEffect(() => { onDoneRef.current = onDone; }, [onDone]);
+	useEffect(() =>
+	{
+		onDoneRef.current = onDone;
+	}, [onDone]);
 
 	useEffect(() =>
 	{

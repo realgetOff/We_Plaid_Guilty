@@ -1,29 +1,13 @@
-
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
 /*   App.jsx                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pmilner- <pmilner-@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mforest- <marvin@d42.fr>                   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/02/20 03:51:04 by mforest-          #+#    #+#             */
-/*   Updated: 2026/03/04 20:44:42 by pmilner-         ###   ########.fr       */
+/*   Created: 2026/04/18 14:31:57 by mforest-          #+#    #+#             */
+/*   Updated: 2026/04/18 14:31:57 by mforest-         ###   ########.fr       */
 /*                                                                            */
-/* ************************************************************************** */
-
-/* ************************************************************************** */
-/* */
-/* :::      ::::::::   */
-/* App.jsx                                            :+:      :+:    :+:   */
-/* +:+ +:+         +:+     */
-/* By: pmilner- <pmilner-@student.42.fr>          +#+  +:+       +#+        */
-/* +#+#+#+#+#+   +#+           */
-/* Created: 2026/02/20 03:51:04 by mforest-          #+#    #+#             */
-/* */
-/* Updated: 2026/04/11 22:21:49 by pmilner-         ###   ########.fr       */
-/* */
-/* Updated: 2026/03/04 20:44:42 by pmilner-         ###   ########.fr       */
-/* */
 /* ************************************************************************** */
 
 import React, { useState, useEffect } from 'react';
@@ -46,11 +30,11 @@ import Game from './pages/Game/Game';
 import Profile from './pages/Profile/Profile';
 import Friends from './pages/Friends/Friends';
 import Credits from './pages/Legal/Credits';
-import Logout from './pages/Auth/Logout';
 import AICreateGame from './pages/AIGame/AICreateGame';
 import AIJoinGame from './pages/AIGame/AIJoinGame';
 import AILobby from './pages/AIGame/AILobby';
 import AIGame from './pages/AIGame/AIGame';
+import AuthCallback from './pages/Auth/Callback';
 import './styles/global.css';
 import './styles/hypercard.css';
 
@@ -100,7 +84,6 @@ const App = () =>
 							<Route path="/tos" element={<Tos />} />
 							<Route path="/credits" element={<Credits />} />
 							<Route path="/login" element={<Login />} />
-							<Route path="/logout" element={<Logout />} />
 							<Route path="/game" element={<HomeGame />} />
 							<Route path="/game/create" element={<CreateGame />} />
 							<Route path="/game/join/:code" element={<JoinGame />} />
@@ -112,6 +95,7 @@ const App = () =>
 							<Route path="/aigame/play/:code" element={<AIGame />} />
 							<Route path="/profile/:username" element={<Profile />} />
 							<Route path="/friends" element={<Friends />} />
+							<Route path="/callback" element={<AuthCallback />} />
 							<Route path="*" element={<NotFound />} />
 						</Routes>
 					</MacWindow>

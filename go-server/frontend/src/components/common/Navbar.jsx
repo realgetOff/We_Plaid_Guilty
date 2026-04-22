@@ -96,7 +96,7 @@ const Navbar = () =>
 				<div
 					className="hc-menubar__item_useful"
 					role="menuitem"
-					onClick={() => navigate('/logout')}
+					onClick={() => navigate('/login')}
 				>
 					Logout
 				</div>
@@ -117,7 +117,6 @@ const Navbar = () =>
 			>
 				Profile
 			</div>
-				{/* FIXME guest when login can see friends first iter */}
 			{!guest && (
 				<div
 					className="hc-menubar__item_useful"

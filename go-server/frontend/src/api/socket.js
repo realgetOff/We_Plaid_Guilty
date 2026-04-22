@@ -198,18 +198,17 @@ const connect = async () =>
 {
     const token = await getAuthToken();
     if (!token)
-		return;
+        return;
     if (socket && socket.readyState === WebSocket.OPEN)
-	{
-		wsAuthReady = false;
-		socket.send(JSON.stringify({ type: 'authenticate', token: token }));
+    {
+        if (wsAuthReady)
+            return;
+        socket.send(JSON.stringify({ type: 'authenticate', token: token }));
         return;
     }
     if (socket && socket.readyState === WebSocket.CONNECTING)
-	{
         return;
-    }
-    
+
     socket = new WebSocket(getWsUrl());
     setupSocketHandlers(token);
 };

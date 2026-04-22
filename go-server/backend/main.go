@@ -316,14 +316,16 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{"url": url})
 	})
 
+	// CALLBACK FOR OAUTH2 WITH 42API
+
 	serverVars.router.GET("/api/auth/42/callback", func(c *gin.Context){
 		fmt.Println("42 CALLBACK URL")
 		FortyTwoCallback(c, &serverVars.db)
 	})
 
-	// need callback functions but im lost at the moment
-	// serverVars.router.GET("/auth/42/callback", ...)
-	// serverVars.router.GET("/auth/google/callback", ...) 
+	serverVars.router.POST("/api/auth/register", func(c *gin.Context){
+		handleRegister(c, &serverVars.db)
+	})
 
 	port := os.Getenv("PORT")
 	if port == "" {

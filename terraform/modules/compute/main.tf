@@ -3,6 +3,7 @@ resource "aws_instance" "name" {
     Name = var.instance_name
     Project = var.project_name
   }
+  monitoring = true
   instance_type = var.instance_type
   ami = var.ami_id
   key_name = var.key_name

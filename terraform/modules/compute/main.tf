@@ -4,6 +4,7 @@ resource "aws_instance" "name" {
     Project = var.project_name
   }
   monitoring = true
+  ebs_optimized = true //enable by default with GRAVITON
   instance_type = var.instance_type
   ami = var.ami_id
   key_name = var.key_name

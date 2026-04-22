@@ -107,6 +107,7 @@ resource "aws_security_group" "master_sg" {
     to_port     = 9100
   }
   egress {
+    description = "Allow all outbound traffic"
     cidr_blocks = ["0.0.0.0/0"]
     from_port   = 0
     protocol    = "-1"
@@ -203,6 +204,7 @@ resource "aws_security_group" "worker_sg" {
     to_port     = 9100
   }
   egress {
+    description = "Allow all outbound traffic"
     cidr_blocks = ["0.0.0.0/0"]
     from_port   = 0
     protocol    = "-1"

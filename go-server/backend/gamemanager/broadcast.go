@@ -15,12 +15,15 @@ func (r *Room) BroadcastChat(playerID string, content string) {
 
 	var userName string
 	var isSystem bool
-
+	var color string
+	var font string
 	messageId := fmt.Sprintf("%d", time.Now().UnixNano())
 
 	if playerID == "SYSTEM" {
 		userName = "📢 System"
 		isSystem = true
+		color = "#000000"
+		font = "normal"
 	} else {
 		sender, ok := r.Players[playerID]
 		if !ok {
@@ -28,6 +31,8 @@ func (r *Room) BroadcastChat(playerID string, content string) {
 		}
 		userName = sender.Name
 		isSystem = false
+		color = sender.Color
+		font = sender.Font
 	}
 
 	for _, p := range r.Players {
@@ -44,8 +49,8 @@ func (r *Room) BroadcastChat(playerID string, content string) {
 				"id":        messageId,
 				"is_system": isSystem,
 				"room": r.ID,
-				"color": p.Color,
-				"font": p.Font,
+				"color": color,
+				"font": font,
 			},
 		}
 	}

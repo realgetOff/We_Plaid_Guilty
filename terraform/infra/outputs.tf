@@ -40,3 +40,7 @@ output "vault_reader_elk_role_name" {
 output "k3s_role_name" {
   value = aws_iam_role.k3s.name
 }
+
+output "master_private_ip" {
+  value = module.master.private_ip
+}

@@ -26,6 +26,13 @@ resource "aws_security_group" "master_sg" {
     protocol    = "tcp"
   } //make vault
   ingress {
+    description = "Vault NodePort"
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port   = 30820
+    to_port     = 30820
+    protocol    = "tcp"
+  }
+  ingress {
     description = "HTTPS ingress nginx"
     cidr_blocks = ["0.0.0.0/0"]
     from_port   = 30443
@@ -83,11 +90,25 @@ resource "aws_security_group" "master_sg" {
     protocol    = "tcp"
   }
   egress {
-    description = "DNS outbound"
+    description = "DNS UDP outbound"
     cidr_blocks = ["0.0.0.0/0"]
     from_port   = 53
     to_port     = 53
     protocol    = "udp"
+  }
+  egress {
+    description = "DNS TCP outbound"
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port   = 53
+    to_port     = 53
+    protocol    = "tcp"
+  }
+  egress {
+    description = "HTTP outbound"
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
   }
   egress {
     description = "VPC interne"
@@ -162,6 +183,13 @@ resource "aws_security_group" "worker_sg" {
     protocol    = "tcp"
   }
   egress {
+    description = "HTTP outbound"
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+  }
+  egress {
     description = "DNS outbound"
     cidr_blocks = ["0.0.0.0/0"]
     from_port   = 53
@@ -175,4 +203,11 @@ resource "aws_security_group" "worker_sg" {
     to_port     = 0
     protocol    = "-1"
   }
+  egress {
+    description = "K3s API server"
+    cidr_blocks = ["172.31.0.0/16"]
+    from_port   = 6443
+    to_port     = 6443
+    protocol    = "tcp"
+}
 }

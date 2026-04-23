@@ -8,7 +8,7 @@ resource "vault_auth_backend" "kubernetes" {
 
 resource "vault_kubernetes_auth_backend_config" "config" {
   backend         = vault_auth_backend.kubernetes.path
-  kubernetes_host = "https://${data.terraform_remote_state.infra.outputs.master_ip}:6443"
+  kubernetes_host = "https://${data.terraform_remote_state.infra.outputs.master_private_ip}:6443"
 }
 
 resource "vault_mount" "pki" {

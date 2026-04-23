@@ -1,8 +1,10 @@
 elasticsearchHosts: "https://elasticsearch-master.logging.svc:9200"
 
+# checkov:skip=CKV_SECRET_6:K8s secret name not a secret value
 elasticsearchCertificateSecret: "elasticsearch-master-certs"
 elasticsearchCertificateAuthoritiesFile: "ca.crt"
 
+# checkov:skip=CKV_SECRET_6:elasticsearchCredentialSecret is a K8s secret name not a value
 elasticsearchCredentialSecret: elasticsearch-credentials
 
 replicas: 1

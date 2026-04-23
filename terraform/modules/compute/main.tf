@@ -8,7 +8,7 @@ resource "aws_instance" "name" {
   metadata_options {
     http_endpoint               = "enabled"
     http_tokens                 = "required"
-    http_put_response_hop_limit = 1
+    http_put_response_hop_limit = 2
   }
   instance_type = var.instance_type
   ami = var.ami_id

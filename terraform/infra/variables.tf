@@ -18,8 +18,3 @@ variable "email" {
   description = "email-alert"
   type        = string
 }
-
-variable "aws_account_id" {
-  description = "id aws cc"
-  type        = string
-}

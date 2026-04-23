@@ -7,3 +7,7 @@ output "instance_id" {
   description = "Instance ID for (debug/ref)"
   value = aws_instance.name.id
 }
+
+output "private_ip" {
+  value = aws_instance.name.private_ip
+}

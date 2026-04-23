@@ -4,10 +4,15 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE IF NOT EXISTS users (
 	id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 	username VARCHAR(20) UNIQUE NOT NULL,
-	email TEXT UNIQUE NOT NULL,
-	password_hash TEXT NOT NULL,
+	email TEXT UNIQUE,
+	password_hash TEXT,
 	is_guest BOOLEAN DEFAULT FALSE,
-	is_online BOOLEAN DEFAULT FALSE
+	is_online BOOLEAN DEFAULT FALSE,
+	CONSTRAINT guest_auth CHECK (
+		(is_guest = TRUE AND email IS NULL AND password_hash IS NULL)
+		OR
+		(is_guest = FALSE AND email IS NOT NULL AND password_hash IS NOT NULL)
+	)
 );
 
 CREATE TYPE friendship_status AS ENUM ('pending', 'accepted', 'rejected');

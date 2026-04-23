@@ -6,15 +6,10 @@ import (
 	"net/http"
 	"os"
 	"time"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
-
-	// Legacy Vault direct auth — replaced by Vault Agent Injector
-	// Keep for reference only, do not uncomment in production
-	// "context"
-	// vault "github.com/hashicorp/vault/api"
-	// awsauth "github.com/hashicorp/vault/api/auth/aws"
 )
 
 type Config struct {
@@ -59,44 +54,12 @@ func loadSecrets() error {
 	return nil
 }
 
-// Legacy Vault direct auth — replaced by Vault Agent Injector
-// Keep for reference only, do not uncomment in production
-//
-// func loadSecretsFromVault() error {
-// 	vaultAddr := os.Getenv("VAULT_ADDR")
-// 	if vaultAddr == "" {
-// 		vaultAddr = "http://vault:8200"
-// 	}
-// 	cfg := vault.DefaultConfig()
-// 	cfg.Address = vaultAddr
-// 	client, err := vault.NewClient(cfg)
-// 	if err != nil {
-// 		return fmt.Errorf("unable to create vault client: %w", err)
-// 	}
-// 	if token := os.Getenv("VAULT_TOKEN"); token != "" {
-// 		client.SetToken(token)
-// 		log.Println("Using direct VAULT_TOKEN (Local Dev/Test Mode)")
-// 	} else {
-// 		awsAuth, err := awsauth.NewAWSAuth(awsauth.WithRole("app-role"))
-// 		if err != nil {
-// 			return fmt.Errorf("unable to create AWS auth: %w", err)
-// 		}
-// 		authInfo, err := client.Auth().Login(context.Background(), awsAuth)
-// 		if err != nil {
-// 			return fmt.Errorf("vault login failed: %w", err)
-// 		}
-// 		if authInfo == nil {
-// 			return fmt.Errorf("no auth info returned")
-// 		}
-// 		log.Println("Authenticated via AWS IAM")
-// 	}
-// 	kv, err := client.KVv2("secret").Get(context.Background(), "app/config")
-// 	if err != nil {
-// 		return fmt.Errorf("failed to read secrets: %w", err)
-// 	}
-// 	config.APIKey	 = kv.Data["api_key"].(string)
-// 	config.DBPassword = kv.Data["db_password"].(string)
-// 	config.JWTSecret  = kv.Data["jwt_secret"].(string)
-// 	log.Println("Secrets loaded from Vault successfully")
-// 	return nil
-// }
+func addnewlinestotls() []byte {
+	content, err := os.ReadFile("/vault/secrets/tls")
+	if err != nil {
+		return nil
+	}
+	delimiter := "-----END CERTIFICATE-----"
+	replacement := delimiter + "\n"
+	return []byte(strings.ReplaceAll(string(content), delimiter, replacement))
+}

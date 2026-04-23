@@ -29,12 +29,14 @@
   until: _result.status != -1
   retries: 10
   delay: 2
+  # checkov:skip=CKV2_ANSIBLE_1:Vault API uses HTTP on loopback interface
 
 - name: "Check init of Vault"
   uri:
     url: "{{ vault_api_url }}/v1/sys/init"
     method: GET
   register: vault_init_status
+  # checkov:skip=CKV2_ANSIBLE_1:Vault API uses HTTP on loopback interface
 
 - name: "Init Vault"
   uri:
@@ -48,6 +50,7 @@
   when: not vault_init_status.json.initialized
   register: vault_init_result
   no_log: true
+  # checkov:skip=CKV2_ANSIBLE_1:Vault API uses HTTP on loopback interface
 
 - name: "Set active root token"
   set_fact:
@@ -99,6 +102,8 @@
       X-Vault-Token: "{{ active_root_token }}"
     status_code: [200, 404, 400]
   register: kv_status
+  # checkov:skip=CKV2_ANSIBLE_1:Vault API uses HTTP on loopback interface
+
 
 - name: "Enable KV v2"
   uri:
@@ -113,6 +118,8 @@
         version: "2"
     status_code: [200, 204]
   when: kv_status.status == 404 or kv_status.status == 400
+  # checkov:skip=CKV2_ANSIBLE_1:Vault API uses HTTP on loopback interface
+
 
 - name: "Feed Vault for db"
   uri:
@@ -128,6 +135,7 @@
         db_name: "{{ db_name }}"
     status_code: [200, 204]
   no_log: true
+  # checkov:skip=CKV2_ANSIBLE_1:Vault API uses HTTP on loopback interface
 
 - name: "Feed Vault for app"
   uri:
@@ -147,6 +155,7 @@
         api_key: "{{ app_api_key }}"
     status_code: [200, 204]
   no_log: true
+  # checkov:skip=CKV2_ANSIBLE_1:Vault API uses HTTP on loopback interface
 
 - name: "Feed Vault for elk"
   uri:
@@ -162,6 +171,7 @@
         encrypt_key: "{{ elk_encrypt_key }}"
     status_code: [200, 204]
   no_log: true
+  # checkov:skip=CKV2_ANSIBLE_1:Vault API uses HTTP on loopback interface
 
 - name: "Feed Vault for grafana"
   uri:
@@ -175,3 +185,5 @@
         grafana_password: "{{ grafana_pass }}"
     status_code: [200, 204]
   no_log: true
+  # checkov:skip=CKV2_ANSIBLE_1:Vault API uses HTTP on loopback interface
+

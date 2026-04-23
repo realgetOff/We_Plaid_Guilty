@@ -70,7 +70,7 @@ func NewServerStructure () *serverVarsStruct {
 
 var (
 	fortyTwoOauthConfig = &oauth2.Config {
-		RedirectURL: "http://localhost:8080/api/auth/42/callback",
+		RedirectURL: "https://play-stupid.games:30443/api/auth/42/callback",
 		ClientID: "u-s4t2ud-a03d8fc82a14a0f36fb4c5e26b33b5414ad93d52a73918090f17c8aa4a9f6364",
 		ClientSecret: "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",
 		Scopes: []string{"public"},

@@ -31,18 +31,18 @@ const Lobby = () =>
 	const navigate = useNavigate();
 	const msgEndRef = useRef(null);
 
-	const [status,   setStatus]   = useState('checking');
-	const [deny,     setDeny]     = useState('');
-	const [players,  setPlayers]  = useState([]);
-	const [messages, setMessages] = useState([]);
-	const [input,    setInput]    = useState('');
-	const [isHost,   setIsHost]   = useState(false);
-	const [myName,   setMyName]   = useState('');
+	const [status,         setStatus]         = useState('checking');
+	const [deny,           setDeny]           = useState('');
+	const [players,        setPlayers]        = useState([]);
+	const [messages,       setMessages]       = useState([]);
+	const [input,          setInput]          = useState('');
+	const [isHost,         setIsHost]         = useState(false);
+	const [myName,         setMyName]         = useState('');
 
-	const [showFriends, setShowFriends] = useState(false);
-	const [friends, setFriends] = useState([]);
+	const [showFriends,    setShowFriends]    = useState(false);
+	const [friends,        setFriends]        = useState([]);
 	const [friendsLoading, setFriendsLoading] = useState(false);
-	const [inviting, setInviting] = useState(null);
+	const [inviting,       setInviting]       = useState(null);
 
 	const normalized = code?.toUpperCase();
 
@@ -102,17 +102,20 @@ const Lobby = () =>
 
 			if (msg.type === 'chat_message' && roomMatch)
 			{
-				console.log("msg.type modal received: ", msg.text);
+				const isSys = msg.user === 'System' || !msg.user;
 				setMessages((prev) => [...prev,
 				{
-					id:   msg.id || Date.now(),
-					user: msg.user,
-					text: msg.text,
+					id:    msg.id || Date.now(),
+					user:  msg.user || 'System',
+					text:  msg.text,
+					color: isSys ? null : msg.color,
+					font:  isSys ? null : msg.font,
+					isSys: isSys
 				}]);
 			}
 
 			if (msg.type === 'start_game' && roomMatch)
-				navigate(`/game/play/${normalized}`), { replace: true };
+				navigate(`/game/play/${normalized}`, { replace: true });
 
 			if (msg.type === 'join_denied')
 			{
@@ -128,8 +131,8 @@ const Lobby = () =>
 
 			if (msg.type === 'friend_online_status')
 			{
-				setFriends(prev => prev.map(f => 
-					f.username === msg.username 
+				setFriends(prev => prev.map(f =>
+					f.username === msg.username
 						? { ...f, online: msg.online }
 						: f
 				));
@@ -196,10 +199,10 @@ const Lobby = () =>
 	{
 		if (!normalized) return;
 		setInviting(friend.id);
-		send({ 
-			type: 'invite_friend', 
-			to: friend.username, 
-			code: normalized 
+		send({
+			type: 'invite_friend',
+			to: friend.username,
+			code: normalized
 		});
 	};
 
@@ -229,13 +232,12 @@ const Lobby = () =>
 
 	return (
 		<div className="creategame">
-			<button 
-				className="creategame__friends-toggle" 
+			<button
+				className="creategame__friends-toggle"
 				onClick={toggleFriends}
 			>
 				👥 friends ({friends.filter(f => f.online).length} online)
 			</button>
-			
 			<div className="creategame__layout">
 				<div className="creategame__main">
 					<div className="creategame__card">
@@ -249,7 +251,6 @@ const Lobby = () =>
 							</div>
 						</div>
 					</div>
-
 					<div className="creategame__columns">
 						<div className="creategame__card creategame__card--grow">
 							<div className="creategame__card-header">
@@ -262,16 +263,16 @@ const Lobby = () =>
 								{players.map((p) => (
 									<div key={p.id} className="creategame__player-row">
 										<span className="creategame__player-dot" />
-									<span
-										className="creategame__player-name"
-										style={{
-											color:      p.color || '#000000',
-											fontWeight: p.font === 'bold'   ? 'bold'   : 'normal',
-											fontStyle:  p.font === 'italic' ? 'italic' : 'normal',
-										}}
-									>
-										{p.name}
-									</span>
+										<span
+											className="creategame__player-name"
+											style={{
+												color:      p.color || 'inherit',
+												fontWeight: p.font === 'bold'   ? 'bold'   : 'normal',
+												fontStyle:  p.font === 'italic' ? 'italic' : 'normal',
+											}}
+										>
+											{p.name}
+										</span>
 										{p.host && <span className="creategame__badge">HOST</span>}
 									</div>
 								))}
@@ -280,13 +281,23 @@ const Lobby = () =>
 								)}
 							</div>
 						</div>
-
 						<div className="creategame__card creategame__card--chat">
 							<div className="creategame__card-header">💬 chat</div>
 							<div className="creategame__chat-messages">
 								{messages.map((m) => (
-									<div key={m.id} className={`creategame__msg ${m.user === myName ? 'creategame__msg--me' : ''}`}>
-										<strong>{m.user}:</strong> {m.text}
+									<div
+										key={m.id}
+										className={`creategame__msg ${m.user === myName ? 'creategame__msg--me' : ''} ${m.isSys ? 'creategame__msg--sys' : ''}`}
+									>
+										<strong
+											style={{
+												color:      m.color || '#000000',
+												fontWeight: m.font === 'bold'   ? 'bold'   : 'normal',
+												fontStyle:  m.font === 'italic' ? 'italic' : 'normal',
+											}}
+										>
+											{m.isSys ? '📢 ' : ''}{m.user}:
+										</strong> {m.text}
 									</div>
 								))}
 								<div ref={msgEndRef} />
@@ -301,7 +312,6 @@ const Lobby = () =>
 							</div>
 						</div>
 					</div>
-
 					<div className="creategame__actions">
 						<button className="creategame__btn creategame__btn--leave" onClick={handleLeave}>
 							✕ leave room
@@ -324,20 +334,18 @@ const Lobby = () =>
 							</button>
 						)}
 					</div>
-
 					{players.length < 3 && (
 						<p className="creategame__start-hint">
 							⚠ settings will be automatically adjusted based on player count.
 						</p>
 					)}
 				</div>
-
 				{showFriends && (
 					<div className="creategame__friends-sidebar">
 						<div className="creategame__card">
 							<div className="creategame__card-header">
 								👥 friends online
-								<button 
+								<button
 									className="creategame__friends-close"
 									onClick={() => setShowFriends(false)}
 								>
@@ -356,7 +364,7 @@ const Lobby = () =>
 											<div key={f.id} className="creategame__player-row">
 												<span className="creategame__player-dot" />
 												<span className="creategame__player-name">{f.username}</span>
-												<button 
+												<button
 													className="creategame__invite-friend"
 													onClick={() => handleInviteFriend(f)}
 													disabled={inviting === f.id}

@@ -108,6 +108,8 @@ func (r *AIRoom) BroadcastChat(playerID string, content string) {
 				"id": messageId,
 				"is_system": isSystem,
 				"room": r.ID,
+				"color": p.Color,
+				"font": p.Font,
 			},
 		}
 	}

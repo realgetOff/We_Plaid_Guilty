@@ -44,6 +44,8 @@ func (r *Room) BroadcastChat(playerID string, content string) {
 				"id":        messageId,
 				"is_system": isSystem,
 				"room": r.ID,
+				"color": p.Color,
+				"font": p.Font,
 			},
 		}
 	}
@@ -66,6 +68,8 @@ func (b *BaseRoom) BroadcastLobbyState() {
 			"name":   p.Name,
 			"host":   p.IsHost,
 			"online": p.IsConnected,
+			"color": p.Color,
+			"font": p.Font, // NOTE EXEMPLE
 		})
 		targets = append(targets, toNotify{id: p.ID, name: p.Name, host: p.IsHost})
 	}
@@ -85,6 +89,8 @@ func (b *BaseRoom) BroadcastLobbyState() {
 					"id":   target.id,
 					"name": target.name,
 					"host": target.host,
+					"color": "#0000aa",
+					"font": "italic", // NOTE EXEMPLE
 				},
 			},
 		}

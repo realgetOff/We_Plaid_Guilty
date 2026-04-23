@@ -126,3 +126,12 @@ func connectToDatabase () (*pgxpool.Pool, error) {
 	return pgxpool.NewWithConfig(context.Background(), cfg)
 }
 
+/*
+
+func DbExec() {
+	
+}
+
+func DbQueryRow()
+
+*/

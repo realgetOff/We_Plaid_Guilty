@@ -80,16 +80,22 @@ func (r *AIRoom) BroadcastChat(playerID string, content string) {
 	var userName string
 	var messageId string
 	var isSystem bool
+	var color string
+	var font string
 
 	if (playerID == "SYSTEM") {
 		userName = "📢 System"
 		messageId = fmt.Sprintf("%d", time.Now().UnixNano())
 		isSystem = true
+		color = "#000000"
+		font = "normal"
 	} else {
 		sender, ok := r.Players[playerID]
 		if !ok { return }
 		userName = sender.Name
 		isSystem = false
+		color = sender.Color
+		font = sender.Font
 	}
 
 	messageId = fmt.Sprintf("%d", time.Now().UnixNano())
@@ -108,8 +114,8 @@ func (r *AIRoom) BroadcastChat(playerID string, content string) {
 				"id": messageId,
 				"is_system": isSystem,
 				"room": r.ID,
-				"color": p.Color,
-				"font": p.Font,
+				"color": color,
+				"font": font,
 			},
 		}
 	}

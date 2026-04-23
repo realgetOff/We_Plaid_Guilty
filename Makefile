@@ -18,10 +18,21 @@ PLAYBOOK      := deploy.yml
 VAULT_FILE    := ~/.vault_pass
 DEPLOY_USER   ?= manual
 DOMAIN        := play-stupid.games
+SECRETS_FILE  := $(ANSIBLE_DIR)/secrets.yml
 
 # ─── Internal helpers ────────────────────────────────────────────────────────
 define tf_output
 $(shell cd $(TF_INFRA_DIR) && terraform output -raw $(1) 2>/dev/null)
+endef
+
+# Extract vault root token from secrets.yml (run from repo root)
+define vault_token
+$$(ansible-vault decrypt \
+	--vault-password-file $(VAULT_FILE) \
+	--output - $(SECRETS_FILE) \
+	| grep vault_root_token \
+	| awk '{print $$2}' \
+	| tr -d '"')
 endef
 
 # Re-import Route53 zone if it exists in AWS but not in state
@@ -116,19 +127,14 @@ output: ## Show Terraform outputs
 
 tf-vault: ## Apply Terraform vault only (infra already up)
 	@echo "$(YELLOW)Applying Terraform Vault...$(RESET)"
-	@aws s3 cp s3://$(BUCKET)/secrets.yml $(ANSIBLE_DIR)/secrets.yml 2>/dev/null || true
+	@aws s3 cp s3://$(BUCKET)/secrets.yml $(SECRETS_FILE) 2>/dev/null || true
 	@if [ ! -f $(VAULT_FILE) ]; then \
 	  read -p "Ansible Vault password: " ANSIBLE_VAULT_PASSWORD && \
 	  echo "$$ANSIBLE_VAULT_PASSWORD" > $(VAULT_FILE) && \
 	  chmod 600 $(VAULT_FILE); \
 	fi
 	@cd $(TF_VAULT_DIR) && terraform init && \
-	TF_VAR_vault_root_token=$$(ansible-vault decrypt \
-		--vault-password-file $(VAULT_FILE) \
-		--output - ../$(ANSIBLE_DIR)/secrets.yml \
-		| grep vault_root_token \
-		| awk '{print $$2}' \
-		| tr -d '"') \
+	TF_VAR_vault_root_token=$(call vault_token) \
 	terraform apply -auto-approve
 	@echo "$(GREEN)Terraform Vault done!$(RESET)"
 
@@ -149,7 +155,7 @@ packer: ## Build base AMI with Packer
 
 deploy: ## Deploy full infrastructure (interactive)
 	@echo "$(YELLOW)Fetching secrets from S3...$(RESET)"
-	@aws s3 cp s3://$(BUCKET)/secrets.yml $(ANSIBLE_DIR)/secrets.yml 2>/dev/null || true
+	@aws s3 cp s3://$(BUCKET)/secrets.yml $(SECRETS_FILE) 2>/dev/null || true
 	@read -p "Ansible Vault password: " ANSIBLE_VAULT_PASSWORD && \
 	  echo "$$ANSIBLE_VAULT_PASSWORD" > $(VAULT_FILE) && \
 	  chmod 600 $(VAULT_FILE)
@@ -166,15 +172,10 @@ deploy: ## Deploy full infrastructure (interactive)
 	  -e "deploy_user=$(DEPLOY_USER)" \
 	  --vault-password-file $(VAULT_FILE)
 	@echo "$(YELLOW)Uploading secrets to S3...$(RESET)"
-	@aws s3 cp $(ANSIBLE_DIR)/secrets.yml s3://$(BUCKET)/secrets.yml
+	@aws s3 cp $(SECRETS_FILE) s3://$(BUCKET)/secrets.yml
 	@echo "$(YELLOW)--- Step 3/3: Terraform Vault (policies + roles) ---$(RESET)"
 	@cd $(TF_VAULT_DIR) && terraform init && \
-	TF_VAR_vault_root_token=$$(ansible-vault decrypt \
-		--vault-password-file $(VAULT_FILE) \
-		--output - ../$(ANSIBLE_DIR)/secrets.yml \
-		| grep vault_root_token \
-		| awk '{print $$2}' \
-		| tr -d '"') \
+	TF_VAR_vault_root_token=$(call vault_token) \
 	terraform apply -auto-approve
 	@echo "$(GREEN)Deployed by $(DEPLOY_USER) — done!$(RESET)"
 
@@ -184,7 +185,7 @@ deploy-ci: bootstrap ## Deploy infrastructure (CI/CD, no prompt)
 	  echo "$(RED)ANSIBLE_VAULT_PASSWORD is not set$(RESET)"; exit 1; fi
 	@echo "$$ANSIBLE_VAULT_PASSWORD" > $(VAULT_FILE) && chmod 600 $(VAULT_FILE)
 	@echo "$(YELLOW)Fetching secrets from S3...$(RESET)"
-	@aws s3 cp s3://$(BUCKET)/secrets.yml $(ANSIBLE_DIR)/secrets.yml 2>/dev/null || true
+	@aws s3 cp s3://$(BUCKET)/secrets.yml $(SECRETS_FILE) 2>/dev/null || true
 	@echo "$(YELLOW)--- Step 1/3: Terraform AWS infra ---$(RESET)"
 	@cd $(TF_INFRA_DIR) && terraform init
 	$(call import_route53)
@@ -205,15 +206,11 @@ deploy-ci: bootstrap ## Deploy infrastructure (CI/CD, no prompt)
 	  -e "deploy_user=$$DEPLOY_USER" \
 	  --vault-password-file $(VAULT_FILE)
 	@echo "$(YELLOW)Uploading secrets to S3...$(RESET)"
-	@aws s3 cp $(ANSIBLE_DIR)/secrets.yml s3://$(BUCKET)/secrets.yml
+	@aws s3 cp $(SECRETS_FILE) s3://$(BUCKET)/secrets.yml
 	@echo "$(YELLOW)--- Step 3/3: Terraform Vault (policies + roles) ---$(RESET)"
+	@aws s3 rm s3://$(BUCKET)/terraform-vault.tfstate || true
 	@cd $(TF_VAULT_DIR) && terraform init && \
-	TF_VAR_vault_root_token=$$(ansible-vault decrypt \
-		--vault-password-file $(VAULT_FILE) \
-		--output - ../$(ANSIBLE_DIR)/secrets.yml \
-		| grep vault_root_token \
-		| awk '{print $$2}' \
-		| tr -d '"') \
+	TF_VAR_vault_root_token=$(call vault_token) \
 	terraform apply -auto-approve
 	@echo "$(GREEN)Deployed by $$DEPLOY_USER — done!$(RESET)"
 
@@ -234,9 +231,9 @@ deploy-debug: ## Run Ansible in verbose mode (debug)
 
 # ─── Ansible only (infra already up) ─────────────────────────────────────────
 
-ansible: ## Run Ansible only (make ansible [role=<name>])
+ansible: ## Run Ansible only (make ansible [role=<n>])
 	@echo "$(YELLOW)Fetching secrets from S3...$(RESET)"
-	@aws s3 cp s3://$(BUCKET)/secrets.yml $(ANSIBLE_DIR)/secrets.yml 2>/dev/null || true
+	@aws s3 cp s3://$(BUCKET)/secrets.yml $(SECRETS_FILE) 2>/dev/null || true
 	@read -p "Ansible Vault password: " ANSIBLE_VAULT_PASSWORD && \
 	  echo "$$ANSIBLE_VAULT_PASSWORD" > $(VAULT_FILE) && \
 	  chmod 600 $(VAULT_FILE) && \
@@ -246,7 +243,7 @@ ansible: ## Run Ansible only (make ansible [role=<name>])
 	    -e "deploy_user=$(DEPLOY_USER)" \
 	    --vault-password-file $(VAULT_FILE) \
 	    $(if $(role),--tags "$(role)")
-	@aws s3 cp $(ANSIBLE_DIR)/secrets.yml s3://$(BUCKET)/secrets.yml
+	@aws s3 cp $(SECRETS_FILE) s3://$(BUCKET)/secrets.yml
 	@echo "$(GREEN)Ansible done$(if $(role), [role(s): $(role)])!$(RESET)"
 
 # ─── Kubectl ─────────────────────────────────────────────────────────────────
@@ -291,14 +288,14 @@ destroy-full: ## Destroy everything (Route53 zone preserved)
 	    --query '{Objects: DeleteMarkers[].{Key:Key,VersionId:VersionId}}' \
 	    --output json)" 2>/dev/null || true
 	@aws s3 rb s3://$(BUCKET) || true
-	@rm -f $(ANSIBLE_DIR)/secrets.yml
+	@rm -f $(SECRETS_FILE)
 	@echo "$(GREEN)Full destruction complete! Route53 zone preserved.$(RESET)"
 
 # ─── Cleanup ─────────────────────────────────────────────────────────────────
 
 clean: ## Remove local temporary files
 	@echo "$(YELLOW)Cleaning up temporary files...$(RESET)"
-	@rm -f $(VAULT_FILE) $(ANSIBLE_DIR)/secrets.yml
+	@rm -f $(VAULT_FILE) $(SECRETS_FILE)
 	@echo "$(GREEN)Cleanup done.$(RESET)"
 
 plan-all: ## Plan all Terraform workspaces

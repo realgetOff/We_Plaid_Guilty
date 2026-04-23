@@ -22,6 +22,22 @@ services:
       - monitoring
     restart: always
 
+  # Le scanner qui envoie le code vers SonarCloud
+  sonar-scanner:
+    image: sonarsource/sonar-scanner-cli
+    container_name: sonar-scanner
+    volumes:
+      - .:/usr/src
+    environment:
+      - SONAR_HOST_URL=https://sonarcloud.io
+      - SONAR_TOKEN=${SONAR_TOKEN}
+    command:
+      - "-Dsonar.organization=lvira66"
+      - "-Dsonar.projectKey=lvira66_transcendence"
+      - "-Dsonar.sources=./backend,./frontend"
+      - "-Dsonar.exclusions=**/node_modules/**,**/dist/**"
+    profiles:
+      - tools
   # La base de données
   db:
     image: postgres:16-alpine

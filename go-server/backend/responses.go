@@ -151,7 +151,7 @@ func handleGuestAuth(c *gin.Context, dbs *DBSafe){
 	db := dbs.GetPool()	
 	
 	userQuery := "INSERT INTO users (username, is_guest) VALUES ($1, TRUE) RETURNING id;"
-	err := db.QueryRow(context.Background(), userQuery, guestName).Scan(&userID);
+	err := db.QueryRow(context.Background(), userQuery, guestName).Scan(&userID)
 	if (err != nil) {
 		fmt.Println("Guest creation failed", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -227,7 +227,7 @@ func handleRegister(c *gin.Context, dbs *DBSafe){
 
 	userQuery := "INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id;"
 
-	err = db.QueryRow(context.Background(), userQuery, login.Username, login.Email, bytes).Scan(&userID);
+	err = db.QueryRow(context.Background(), userQuery, login.Username, login.Email, bytes).Scan(&userID)
 	if (err != nil) {
 		fmt.Println("User registration failed", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -274,7 +274,7 @@ func handleLogin( c *gin.Context, dbs *DBSafe ){
 
 	userQuery := "SELECT id, password_hash FROM users WHERE username = $1 AND is_guest = false;"
 
-	err := db.QueryRow(context.Background(), userQuery, login.Username).Scan(&userID, &passHash);
+	err := db.QueryRow(context.Background(), userQuery, login.Username).Scan(&userID, &passHash)
 	if (err != nil) {
 		fmt.Println("Coulnd't get password hash for user: " + login.Username, err)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -286,7 +286,7 @@ func handleLogin( c *gin.Context, dbs *DBSafe ){
 	if (err != nil) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "The passwords don't match / the hash comparison failed."})
-		return ;
+		return 
 	}
 
 	fmt.Println("Password valid for: " + login.Username + " user ID = " + userID)
@@ -354,7 +354,7 @@ func FortyTwoCallback(c *gin.Context, dbs *DBSafe){ // change this to just be a 
 	// PROMETHEUS
 	dbRequests.Inc()
 
-	err = db.QueryRow(context.Background(), userQuery, userProfile.Login, userProfile.Email).Scan(&userID);
+	err = db.QueryRow(context.Background(), userQuery, userProfile.Login, userProfile.Email).Scan(&userID)
 	if (err != nil) {
 		fmt.Printf("User creation failed %v\n", err)
 		c.JSON(http.StatusInternalServerError, gin.H{

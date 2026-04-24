@@ -104,7 +104,6 @@
   register: kv_status
   # checkov:skip=CKV2_ANSIBLE_1:Vault API uses HTTP on loopback interface
 
-
 - name: "Enable KV v2"
   uri:
     url: "{{ vault_api_url }}/v1/sys/mounts/secret"
@@ -119,7 +118,6 @@
     status_code: [200, 204]
   when: kv_status.status == 404 or kv_status.status == 400
   # checkov:skip=CKV2_ANSIBLE_1:Vault API uses HTTP on loopback interface
-
 
 - name: "Feed Vault for db"
   uri:
@@ -186,4 +184,3 @@
     status_code: [200, 204]
   no_log: true
   # checkov:skip=CKV2_ANSIBLE_1:Vault API uses HTTP on loopback interface
-

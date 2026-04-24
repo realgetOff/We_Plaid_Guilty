@@ -15,12 +15,15 @@ func (r *Room) BroadcastChat(playerID string, content string) {
 
 	var userName string
 	var isSystem bool
-
+	var color string
+	var font string
 	messageId := fmt.Sprintf("%d", time.Now().UnixNano())
 
 	if playerID == "SYSTEM" {
 		userName = "📢 System"
 		isSystem = true
+		color = "#000000"
+		font = "normal"
 	} else {
 		sender, ok := r.Players[playerID]
 		if !ok {
@@ -28,6 +31,8 @@ func (r *Room) BroadcastChat(playerID string, content string) {
 		}
 		userName = sender.Name
 		isSystem = false
+		color = sender.Color
+		font = sender.Font
 	}
 
 	for _, p := range r.Players {
@@ -44,6 +49,8 @@ func (r *Room) BroadcastChat(playerID string, content string) {
 				"id":        messageId,
 				"is_system": isSystem,
 				"room": r.ID,
+				"color": color,
+				"font": font,
 			},
 		}
 	}
@@ -66,6 +73,8 @@ func (b *BaseRoom) BroadcastLobbyState() {
 			"name":   p.Name,
 			"host":   p.IsHost,
 			"online": p.IsConnected,
+			"color": p.Color,
+			"font": p.Font, // NOTE EXEMPLE
 		})
 		targets = append(targets, toNotify{id: p.ID, name: p.Name, host: p.IsHost})
 	}
@@ -85,6 +94,8 @@ func (b *BaseRoom) BroadcastLobbyState() {
 					"id":   target.id,
 					"name": target.name,
 					"host": target.host,
+					"color": "#0000aa",
+					"font": "italic", // NOTE EXEMPLE
 				},
 			},
 		}

@@ -83,7 +83,7 @@ func (b *BaseRoom) GetPlayer(playerID string) (*Player, error) {
 /*
 * Add a player to the room
 */
-func (b *BaseRoom) AddPlayer(playerID string, name string, conn *websocket.Conn) error {
+func (b *BaseRoom) AddPlayer(playerID string, name string, conn *websocket.Conn, color string, font string) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
@@ -101,6 +101,8 @@ func (b *BaseRoom) AddPlayer(playerID string, name string, conn *websocket.Conn)
 			IsHost:      true,
 			IsConnected: true,
 			IsReady:     false,
+			Color: color,
+			Font: font,
 			Score:       0,
 		}
 	} else {
@@ -111,6 +113,8 @@ func (b *BaseRoom) AddPlayer(playerID string, name string, conn *websocket.Conn)
 			IsHost:      len(b.Players) == 0,
 			IsConnected: true,
 			IsReady:     false,
+			Color: color,
+			Font: font,
 			Score:       0,
 		}
 	}

@@ -22,18 +22,18 @@ const AILobby = () =>
 	const msgEndRef = useRef(null);
 	const normalized = code?.toUpperCase();
 
-	const [players, setPlayers] = useState([]);
-	const [messages, setMessages] = useState([]);
-	const [input, setInput] = useState('');
-	const [isHost, setIsHost] = useState(false);
-	const [isStarting, setIsStarting] = useState(false);
-	const [myName, setMyName] = useState('');
-	const [deny, setDeny] = useState('');
+	const [players,        setPlayers]        = useState([]);
+	const [messages,       setMessages]       = useState([]);
+	const [input,          setInput]          = useState('');
+	const [isHost,         setIsHost]         = useState(false);
+	const [isStarting,     setIsStarting]     = useState(false);
+	const [myName,         setMyName]         = useState('');
+	const [deny,           setDeny]           = useState('');
 
-	const [showFriends, setShowFriends] = useState(false);
-	const [friends, setFriends] = useState([]);
+	const [showFriends,    setShowFriends]    = useState(false);
+	const [friends,        setFriends]        = useState([]);
 	const [friendsLoading, setFriendsLoading] = useState(false);
-	const [inviting, setInviting] = useState(null);
+	const [inviting,       setInviting]       = useState(null);
 
 	useEffect(() =>
 	{
@@ -53,7 +53,18 @@ const AILobby = () =>
 				}
 			}
 			if (msg.type === 'ai_chat_message' && roomMatch)
-				setMessages(prev => [...prev, { id: Date.now(), user: msg.user, text: msg.text }]);
+			{
+				const isSys = msg.user === 'System' || !msg.user;
+				setMessages(prev => [...prev,
+				{
+					id:    Date.now(),
+					user:  msg.user || 'System',
+					text:  msg.text,
+					color: isSys ? null : msg.color,
+					font:  isSys ? null : msg.font,
+					isSys: isSys
+				}]);
+			}
 			if (msg.type === 'start_ai_game' && roomMatch)
 				navigate(`/aigame/play/${normalized}`);
 			if (msg.type === 'join_denied')
@@ -110,7 +121,6 @@ const AILobby = () =>
 			return;
 		setIsStarting(true);
 		send({ type: 'start_ai_game', code: normalized });
-
 		setTimeout(() => setIsStarting(false), 10000);
 	};
 
@@ -129,9 +139,9 @@ const AILobby = () =>
 		if (!normalized) return;
 		setInviting(friend.id);
 		send({
-			type: 'invite_friend',
-			to: friend.username,
-			code: normalized,
+			type:  'invite_friend',
+			to:    friend.username,
+			code:  normalized,
 			is_ai: true,
 		});
 	};
@@ -182,7 +192,16 @@ const AILobby = () =>
 								{players.map((p) => (
 									<div key={p.id} className="creategame__player-row">
 										<span className="creategame__player-dot" />
-										<span className="creategame__player-name">{p.name}</span>
+										<span
+											className="creategame__player-name"
+											style={{
+												color:      p.color || 'inherit',
+												fontWeight: p.font === 'bold'   ? 'bold'   : 'normal',
+												fontStyle:  p.font === 'italic' ? 'italic' : 'normal',
+											}}
+										>
+											{p.name}
+										</span>
 										{p.host && <span className="creategame__badge">HOST</span>}
 									</div>
 								))}
@@ -196,8 +215,19 @@ const AILobby = () =>
 							<div className="creategame__card-header">💬 chat</div>
 							<div className="creategame__chat-messages">
 								{messages.map((m) => (
-									<div key={m.id} className={`creategame__msg ${m.user === myName ? 'creategame__msg--me' : ''}`}>
-										<strong>{m.user}:</strong> {m.text}
+									<div
+										key={m.id}
+										className={`creategame__msg ${m.user === myName ? 'creategame__msg--me' : ''} ${m.isSys ? 'creategame__msg--sys' : ''}`}
+									>
+										<strong
+											style={{
+												color:      m.color || 'inherit',
+												fontWeight: m.font === 'bold'   ? 'bold'   : 'normal',
+												fontStyle:  m.font === 'italic' ? 'italic' : 'normal',
+											}}
+										>
+											{m.isSys ? '📢 ' : ''}{m.user}:
+										</strong> {m.text}
 									</div>
 								))}
 								<div ref={msgEndRef} />
@@ -266,16 +296,7 @@ const AILobby = () =>
 										.map(f => (
 											<div key={f.id} className="creategame__player-row">
 												<span className="creategame__player-dot" />
-												<span
-													className="creategame__player-name"
-													style={{
-														color:      p.color || '#000000',
-														fontWeight: p.font === 'bold'   ? 'bold'   : 'normal',
-														fontStyle:  p.font === 'italic' ? 'italic' : 'normal',
-													}}
-												>
-													{p.name}
-												</span>
+												<span className="creategame__player-name">{f.username}</span>
 												<button
 													className="creategame__invite-friend"
 													onClick={() => handleInviteFriend(f)}

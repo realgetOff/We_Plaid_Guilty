@@ -209,5 +209,25 @@ resource "aws_security_group" "worker_sg" {
     from_port   = 6443
     to_port     = 6443
     protocol    = "tcp"
+  }
 }
+
+resource "aws_route53_zone" "main" {
+  name = "play-stupid.games"
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "aws_route53_record" "app" {
+  zone_id = aws_route53_zone.main.zone_id
+  name    = "play-stupid.games"
+  type    = "A"
+  ttl     = 60
+  records = [module.master.public_ip]
+}
+
+output "nameservers" {
+  value = aws_route53_zone.main.name_servers
 }

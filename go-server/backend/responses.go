@@ -324,11 +324,7 @@ func FortyTwoCallback(c *gin.Context, dbs *DBSafe){ // change this to just be a 
 
 	var userProfile struct {
 		Login string `json:"login"`
-		// Email string `json:"email"`
-		// ID    int    `json:"id"`
-		// Image struct {
-		//     Link string `json:"link"`
-		// } `json:"image"`
+		Email string `json:"email"`
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&userProfile); err != nil {
@@ -339,7 +335,7 @@ func FortyTwoCallback(c *gin.Context, dbs *DBSafe){ // change this to just be a 
 
 	fmt.Println("\n--- NEW LOGIN DETECTED ---")
 	fmt.Printf("Username: %s\n", userProfile.Login)
-	// fmt.Printf("Email:    %s\n", userProfile.Email)
+	fmt.Printf("Email:    %s\n", userProfile.Email)
 	// fmt.Printf("42 ID:    %d\n", userProfile.ID)
 	fmt.Println("--------------------------\n")
 
@@ -347,16 +343,18 @@ func FortyTwoCallback(c *gin.Context, dbs *DBSafe){ // change this to just be a 
 	var userID string
 	db := dbs.GetPool()	
 	
-	userQuery := 	`INSERT INTO users (username, is_guest) 
-					VALUES ($1, FALSE) 
+	userQuery := 	`INSERT INTO users (username, email, is_guest) 
+					VALUES ($1, $2, FALSE) 
 					ON CONFLICT (username) 
-					DO UPDATE SET username = EXCLUDED.username
+					DO UPDATE SET 
+					    email = EXCLUDED.email,
+					    is_guest = FALSE
 					RETURNING id;`
 
 	// PROMETHEUS
 	dbRequests.Inc()
 
-	err = db.QueryRow(context.Background(), userQuery, userProfile.Login).Scan(&userID);
+	err = db.QueryRow(context.Background(), userQuery, userProfile.Login, userProfile.Email).Scan(&userID);
 	if (err != nil) {
 		fmt.Printf("User creation failed %v\n", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -373,7 +371,7 @@ func FortyTwoCallback(c *gin.Context, dbs *DBSafe){ // change this to just be a 
 		// PROMETHEUS
 		dbRequests.Inc()
 
-		profileQuery := 	`INSERT INTO profiles (id, display_name)
+		profileQuery := `INSERT INTO profiles (id, display_name)
 						VALUES ($1, $2)
 						ON CONFLICT (id) DO NOTHING;`
 		_, err = db.Exec(context.Background(), profileQuery, userID, userProfile.Login)

@@ -31,8 +31,10 @@ ingress:
   # tls: []
 
 admin:
+  # checkov:skip=CKV_SECRET_6:K8s secret name not a secret value
   existingSecret: "grafana-admin-secret"
   userKey: admin-user
+  # checkov:skip=CKV_SECRET_6:K8s secret key name not a secret value
   passwordKey: admin-password
 
 env:
@@ -47,12 +49,6 @@ grafana.ini:
     check_for_updates: false
   plugin_admin:
     enabled: false
-
-service:
-  type: NodePort
-  nodePort: 30300
-  port: 80
-  targetPort: 3000
 
 service:
   type: NodePort

@@ -733,8 +733,25 @@ func (d *Dispatcher) HandleJoinAIGame(ctx *WSContext, msg Message) {
 func (d *Dispatcher) HandleJoinAIRoom(ctx *WSContext, msg Message) {
 	if (!RunPipeLine(ctx, msg, d.PipeIsAuth, d.PipeRoomExist)) { return }
 
+	var color string
+	var font string
+	if !ctx.client.IsGuest {
+		dbRequests.Inc()
+		query := `SELECT color, font FROM profiles WHERE id = $1`
+
+		err := ctx.chub.Db.QueryRow(context.Background(), query, ctx.client.CurrUsrID).Scan(&color, &font)
+
+		if err != nil {
+			fmt.Printf("ERROR: Player not found in the DB\n")
+			return
+		}
+		dbRequestsSucessful.Inc()
+	} else {
+		color = "#000000"
+		font = "normal"
+	}
 	base := ctx.client.CurrentRoom.GetBase()
-	err := base.AddPlayer(*ctx.client.CurrUsrID, *ctx.client.CurrUsrName, ctx.client.Conn)
+	err := base.AddPlayer(*ctx.client.CurrUsrID, *ctx.client.CurrUsrName, ctx.client.Conn, color, font)
 	if err != nil {
 		fmt.Println("AddPlayer error:", err)
 		return
@@ -778,9 +795,26 @@ func (d *Dispatcher) HandleLeaveAILobby(ctx *WSContext, msg Message) {
 func (d *Dispatcher) HandleCreateAIRoom(ctx *WSContext, msg Message) {
 	if (!RunPipeLine(ctx, msg, d.PipeIsAuth)) { return }
 
+	var color string
+	var font string
+	if !ctx.client.IsGuest {
+		dbRequests.Inc()
+		query := `SELECT color, font FROM profiles WHERE id = $1`
+
+		err := ctx.chub.Db.QueryRow(context.Background(), query, ctx.client.CurrUsrID).Scan(&color, &font)
+
+		if err != nil {
+			fmt.Printf("ERROR: Player not found in the DB\n")
+			return
+		}
+		dbRequestsSucessful.Inc()
+	} else {
+		color = "#000000"
+		font = "normal"
+	}
 	newRoom := ctx.client.Hub.CreateRoom(true)
 	base := newRoom.GetBase()
-	err := base.AddPlayer(*ctx.client.CurrUsrID, *ctx.client.CurrUsrName, ctx.client.Conn)
+	err := base.AddPlayer(*ctx.client.CurrUsrID, *ctx.client.CurrUsrName, ctx.client.Conn, color, font)
 	if err != nil { return }
 	fmt.Printf("DEGUB: AI_ROOM created\n")	
 
@@ -894,9 +928,28 @@ func (d *Dispatcher) HandleCreateRoom(ctx *WSContext, msg Message) {
 	if (!RunPipeLine(ctx, msg, d.PipeIsAuth)) { return }
 
 	fmt.Printf("DEBUG: create_room\n")
+	var color string
+	var font string
+
+	if !ctx.client.IsGuest {
+		dbRequests.Inc()
+		query := `SELECT color, font FROM profiles WHERE id = $1`
+
+		err := ctx.chub.Db.QueryRow(context.Background(), query, ctx.client.CurrUsrID).Scan(&color, &font)
+
+		if err != nil {
+			fmt.Printf("ERROR: Player not found in the DB\n")
+			return
+		}
+		dbRequestsSucessful.Inc()
+	} else {
+		color = "#000000"
+		font = "normal"
+	}
+
 	ctx.client.CurrentRoom = ctx.client.Hub.CreateRoom(false)
 	base := ctx.client.CurrentRoom.GetBase()
-	err := base.AddPlayer(*ctx.client.CurrUsrID, *ctx.client.CurrUsrName, ctx.client.Conn)
+	err := base.AddPlayer(*ctx.client.CurrUsrID, *ctx.client.CurrUsrName, ctx.client.Conn, color, font)
 	if err != nil {
 		fmt.Println("DEBUG: ", err)
 		return
@@ -929,8 +982,26 @@ func (d *Dispatcher) HandleCreateRoom(ctx *WSContext, msg Message) {
 func (d *Dispatcher) HandleJoinRoom(ctx *WSContext, msg Message) {
 	if (!RunPipeLine(ctx, msg, d.PipeIsAuth, d.PipeRoomExist)) { return }
 
+	var color string
+	var font string
+	if !ctx.client.IsGuest {
+		dbRequests.Inc()
+		query := `SELECT color, font FROM profiles WHERE id = $1`
+
+		err := ctx.chub.Db.QueryRow(context.Background(), query, ctx.client.CurrUsrID).Scan(&color, &font)
+
+		if err != nil {
+			fmt.Printf("ERROR: Player not found in the DB\n")
+			return
+		}
+		dbRequestsSucessful.Inc()
+	} else {
+		color = "#000000"
+		font = "normal"
+	}
+
 	base := ctx.client.CurrentRoom.GetBase()
-	err := base.AddPlayer(*ctx.client.CurrUsrID, *ctx.client.CurrUsrName, ctx.client.Conn)
+	err := base.AddPlayer(*ctx.client.CurrUsrID, *ctx.client.CurrUsrName, ctx.client.Conn, color, font)
 	if err != nil {
 		fmt.Println("AddPlayer error:", err)
 		return

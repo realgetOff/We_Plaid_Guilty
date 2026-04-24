@@ -1,0 +1,347 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: '3'
+
+vars:
+  BUCKET: transcendance-secrets-43783683331
+  REGION: eu-north-1
+  TF_INFRA_DIR: terraform/infra
+  TF_VAULT_DIR: terraform/vault
+  ANSIBLE_DIR: ansible
+  PACKER_DIR: packer
+  PLAYBOOK: deploy.yml
+  VAULT_FILE: ~/.vault_pass
+  SECRETS_FILE: ansible/secrets.yml
+  DOMAIN: play-stupid.games
+  DEPLOY_USER:
+    sh: echo "${DEPLOY_USER:-manual}"
+
+tasks:
+
+  # ─── Default ───────────────────────────────────────────────────────────────
+
+  default:
+    desc: Display available tasks
+    cmds:
+      - task --list
+    silent: true
+
+  # ─── Bootstrap ─────────────────────────────────────────────────────────────
+
+  bootstrap:
+    desc: Create S3 secrets bucket (run once)
+    cmds:
+      - aws s3 mb s3://{{.BUCKET}} --region {{.REGION}} || true
+      - aws s3api put-bucket-versioning --bucket {{.BUCKET}} --versioning-configuration Status=Enabled || true
+      - >
+        aws s3api put-bucket-encryption --bucket {{.BUCKET}}
+        --server-side-encryption-configuration
+        '{"Rules":[{"ApplyServerSideEncryptionByDefault":{"SSEAlgorithm":"AES256"}}]}' || true
+      - >
+        aws s3api put-public-access-block --bucket {{.BUCKET}}
+        --public-access-block-configuration
+        "BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true" || true
+      - echo "Bootstrap done — bucket {{.BUCKET}} ready!"
+
+  # ─── Internal helpers ──────────────────────────────────────────────────────
+
+  fetch-secrets:
+    internal: true
+    cmds:
+      - aws s3 cp s3://{{.BUCKET}}/secrets.yml {{.SECRETS_FILE}} 2>/dev/null || true
+
+  upload-secrets:
+    internal: true
+    cmds:
+      - aws s3 cp {{.SECRETS_FILE}} s3://{{.BUCKET}}/secrets.yml
+
+  ask-vault-password:
+    internal: true
+    cmds:
+      - |
+        if [ ! -f {{.VAULT_FILE}} ]; then
+          read -p "Ansible Vault password: " ANSIBLE_VAULT_PASSWORD
+          echo "$ANSIBLE_VAULT_PASSWORD" > {{.VAULT_FILE}}
+          chmod 600 {{.VAULT_FILE}}
+        fi
+
+  import-route53:
+    internal: true
+    cmds:
+      - |
+        ZONE_ID=$(aws route53 list-hosted-zones \
+          --query "HostedZones[?Name=='{{.DOMAIN}}.'].Id" \
+          --output text 2>/dev/null | cut -d'/' -f3)
+        if [ -n "$ZONE_ID" ]; then
+          echo "Re-importing Route53 zone $ZONE_ID..."
+          cd {{.TF_INFRA_DIR}} && terraform import aws_route53_zone.main $ZONE_ID 2>/dev/null || true
+        fi
+
+  uninstall-k3s:
+    internal: true
+    cmds:
+      - |
+        echo "Cleaning K3s network interfaces..."
+        MASTER_IP=$(cd {{.TF_INFRA_DIR}} && terraform output -raw master_ip 2>/dev/null)
+        WORKER1_IP=$(cd {{.TF_INFRA_DIR}} && terraform output -raw worker1_ip 2>/dev/null)
+        WORKER2_IP=$(cd {{.TF_INFRA_DIR}} && terraform output -raw worker2_ip 2>/dev/null)
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/github_actions ec2-user@$MASTER_IP "sudo k3s-uninstall.sh" 2>/dev/null || true
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/github_actions ec2-user@$WORKER1_IP "sudo k3s-agent-uninstall.sh" 2>/dev/null || true
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/github_actions ec2-user@$WORKER2_IP "sudo k3s-agent-uninstall.sh" 2>/dev/null || true
+
+  apply-vault-tf:
+    internal: true
+    cmds:
+      - |
+        VAULT_TOKEN=$(ansible-vault decrypt \
+          --vault-password-file {{.VAULT_FILE}} \
+          --output - {{.SECRETS_FILE}} \
+          | grep vault_root_token \
+          | awk '{print $2}' \
+          | tr -d '"')
+        cd {{.TF_VAULT_DIR}} && terraform init && \
+        TF_VAR_vault_root_token=$VAULT_TOKEN terraform apply -auto-approve
+
+  wait-vault:
+    internal: true
+    cmds:
+      - |
+        echo "Waiting for Vault to be ready..."
+        MASTER_IP=$(cd {{.TF_INFRA_DIR}} && terraform output -raw master_ip)
+        for i in $(seq 1 20); do
+          curl -sf http://$MASTER_IP:30820/v1/sys/health 2>/dev/null && break
+          echo "Attempt $i/20..."
+          sleep 10
+        done
+
+  # ─── Terraform ─────────────────────────────────────────────────────────────
+
+  init:
+    desc: Initialize Terraform
+    cmds:
+      - cd {{.TF_INFRA_DIR}} && terraform init
+      - cd {{.TF_VAULT_DIR}} && terraform init
+
+  init-upgrade:
+    desc: Upgrade Terraform providers
+    cmds:
+      - cd {{.TF_INFRA_DIR}} && terraform init -upgrade
+      - cd {{.TF_VAULT_DIR}} && terraform init -upgrade
+
+  fmt:
+    desc: Format Terraform files
+    cmds:
+      - cd {{.TF_INFRA_DIR}} && terraform fmt -recursive
+      - cd {{.TF_VAULT_DIR}} && terraform fmt -recursive
+
+  validate:
+    desc: Validate Terraform configuration
+    cmds:
+      - cd {{.TF_INFRA_DIR}} && terraform validate
+      - cd {{.TF_VAULT_DIR}} && terraform validate
+
+  plan:
+    desc: Show Terraform plan
+    cmds:
+      - cd {{.TF_INFRA_DIR}} && terraform plan
+      - cd {{.TF_VAULT_DIR}} && terraform plan
+
+  show:
+    desc: Show Terraform state
+    cmds:
+      - cd {{.TF_INFRA_DIR}} && terraform show
+      - cd {{.TF_VAULT_DIR}} && terraform show
+
+  output:
+    desc: Show Terraform outputs
+    cmds:
+      - echo "Terraform infra outputs..."
+      - cd {{.TF_INFRA_DIR}} && terraform output
+      - echo "Terraform vault outputs..."
+      - cd {{.TF_VAULT_DIR}} && terraform output
+
+  tf-infra:
+    desc: Apply Terraform infra only
+    cmds:
+      - cd {{.TF_INFRA_DIR}} && terraform init
+      - task: import-route53
+      - cd {{.TF_INFRA_DIR}} && terraform apply -auto-approve
+
+  tf-vault:
+    desc: Apply Terraform vault only (infra already up)
+    cmds:
+      - task: fetch-secrets
+      - task: ask-vault-password
+      - task: apply-vault-tf
+
+  # ─── Packer ────────────────────────────────────────────────────────────────
+
+  packer:
+    desc: Build base AMI with Packer
+    cmds:
+      - task: ask-vault-password
+      - ANSIBLE_VAULT_PASSWORD_FILE={{.VAULT_FILE}} packer build {{.PACKER_DIR}}/alma.pkr.hcl
+
+  # ─── Deployment ────────────────────────────────────────────────────────────
+
+  deploy:
+    desc: Deploy full infrastructure (interactive)
+    cmds:
+      - task: fetch-secrets
+      - task: ask-vault-password
+      - task: bootstrap
+      - echo "--- Step 1/3 Terraform AWS infra ---"
+      - task: tf-infra
+      - echo "Waiting for SSH (30s)..."
+      - sleep 30
+      - echo "--- Step 2/3 Ansible (K3s + Vault init) ---"
+      - |
+        cd {{.ANSIBLE_DIR}} && ansible-playbook {{.PLAYBOOK}} \
+          -e "kms_key_id=$(cd ../{{.TF_INFRA_DIR}} && terraform output -raw kms_key_id)" \
+          -e "aws_account_id=$(cd ../{{.TF_INFRA_DIR}} && terraform output -raw aws_account_id)" \
+          -e "deploy_user={{.DEPLOY_USER}}" \
+          --vault-password-file {{.VAULT_FILE}}
+      - task: upload-secrets
+      - echo "--- Step 3/3 Terraform Vault ---"
+      - task: wait-vault
+      - task: apply-vault-tf
+      - echo "Deployed by {{.DEPLOY_USER}} — done!"
+
+  deploy-ci:
+    desc: Deploy infrastructure (CI/CD, no prompt)
+    cmds:
+      - |
+        if [ -z "$ANSIBLE_VAULT_PASSWORD" ]; then
+          echo "ANSIBLE_VAULT_PASSWORD is not set"
+          exit 1
+        fi
+        echo "$ANSIBLE_VAULT_PASSWORD" > {{.VAULT_FILE}}
+        chmod 600 {{.VAULT_FILE}}
+      - task: bootstrap
+      - task: fetch-secrets
+      - echo "--- Step 1/3 Terraform AWS infra ---"
+      - task: tf-infra
+      - echo "Waiting for SSH..."
+      - |
+        MASTER_IP=$(cd {{.TF_INFRA_DIR}} && terraform output -raw master_ip)
+        for i in $(seq 1 20); do
+          ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 \
+            -i ~/.ssh/github_actions \
+            ec2-user@$MASTER_IP exit 2>/dev/null && break
+          echo "Attempt $i/20..."
+          sleep 10
+        done
+      - echo "--- Step 2/3 Ansible (K3s + Vault init) ---"
+      - |
+        cd {{.ANSIBLE_DIR}} && ansible-playbook {{.PLAYBOOK}} \
+          -e "kms_key_id=$(cd ../{{.TF_INFRA_DIR}} && terraform output -raw kms_key_id)" \
+          -e "aws_account_id=$(cd ../{{.TF_INFRA_DIR}} && terraform output -raw aws_account_id)" \
+          -e "deploy_user=$DEPLOY_USER" \
+          --vault-password-file {{.VAULT_FILE}}
+      - task: upload-secrets
+      - echo "--- Step 3/3 Terraform Vault ---"
+      - aws s3 rm s3://{{.BUCKET}}/terraform-vault.tfstate || true
+      - task: wait-vault
+      - task: apply-vault-tf
+      - echo "Deployed by $DEPLOY_USER — done!"
+
+  deploy-debug:
+    desc: Run Ansible in verbose mode (debug)
+    cmds:
+      - task: ask-vault-password
+      - |
+        cd {{.ANSIBLE_DIR}} && \
+        ANSIBLE_SSH_PIPELINING=0 \
+        ANSIBLE_SCP_IF_SSH=y \
+        ANSIBLE_SSH_ARGS="-o ControlMaster=no -o ControlPersist=0" \
+        ansible-playbook {{.PLAYBOOK}} -vvv \
+          -e "kms_key_id=$(cd ../{{.TF_INFRA_DIR}} && terraform output -raw kms_key_id)" \
+          -e "aws_account_id=$(cd ../{{.TF_INFRA_DIR}} && terraform output -raw aws_account_id)" \
+          -e "deploy_user={{.DEPLOY_USER}}" \
+          --vault-password-file {{.VAULT_FILE}}
+
+  # ─── Ansible only ──────────────────────────────────────────────────────────
+
+  ansible:
+    desc: "Run Ansible only (task ansible -- <tags>)"
+    cmds:
+      - task: fetch-secrets
+      - task: ask-vault-password
+      - |
+        cd {{.ANSIBLE_DIR}} && ansible-playbook {{.PLAYBOOK}} \
+          -e "kms_key_id=$(cd ../{{.TF_INFRA_DIR}} && terraform output -raw kms_key_id)" \
+          -e "aws_account_id=$(cd ../{{.TF_INFRA_DIR}} && terraform output -raw aws_account_id)" \
+          -e "deploy_user={{.DEPLOY_USER}}" \
+          --vault-password-file {{.VAULT_FILE}} \
+          {{if .CLI_ARGS}}--tags "{{.CLI_ARGS}}"{{end}}
+      - task: upload-secrets
+
+  # ─── Kubectl ───────────────────────────────────────────────────────────────
+
+  kubectl:
+    desc: "Run kubectl on master (task kubectl -- get nodes)"
+    vars:
+      CMD: '{{.CLI_ARGS}}{{.cmd}}'
+    cmds:
+      - |
+        MASTER_IP=$(cd {{.TF_INFRA_DIR}} && terraform output -raw master_ip)
+        ssh -i ~/.ssh/github_actions ec2-user@$MASTER_IP "k3s kubectl {{.CMD}}"
+
+  # ─── Destruction ───────────────────────────────────────────────────────────
+
+  destroy:
+    desc: Destroy EC2 instances (keeps KMS, S3, Route53)
+    cmds:
+      - |
+        if [ -z "$CI" ] && [ -z "$FORCE" ]; then
+          read -p "Destroy EC2 instances? (yes/no): " CONFIRM
+          [ "$CONFIRM" = "yes" ] || exit 1
+        fi
+      - task: uninstall-k3s
+      - cd {{.TF_INFRA_DIR}} && terraform state rm aws_route53_zone.main || true
+      - cd {{.TF_INFRA_DIR}} && terraform destroy -auto-approve
+
+  destroy-full:
+    desc: Destroy everything (Route53 zone preserved)
+    cmds:
+      - |
+        if [ -z "$CI" ] && [ -z "$FORCE" ]; then
+          read -p "FULL DESTRUCTION — Continue? (yes/no): " CONFIRM
+          [ "$CONFIRM" = "yes" ] || exit 1
+        fi
+      - task: uninstall-k3s
+      - echo "Resetting Terraform Vault state..."
+      - aws s3 rm s3://{{.BUCKET}}/terraform-vault.tfstate || true
+      - echo "Destroying Terraform Vault..."
+      - cd {{.TF_VAULT_DIR}} && terraform init && terraform destroy -auto-approve || true
+      - echo "Removing Route53 zone from state..."
+      - cd {{.TF_INFRA_DIR}} && terraform state rm aws_route53_zone.main || true
+      - echo "Destroying Terraform infra..."
+      - cd {{.TF_INFRA_DIR}} && terraform init && terraform destroy -auto-approve
+      - echo "Cleaning KMS alias..."
+      - aws kms delete-alias --alias-name alias/vault-unseal --region {{.REGION}} || true
+      - echo "Cleaning S3 bucket..."
+      - aws s3 rm s3://{{.BUCKET}} --recursive || true
+      - |
+        aws s3api delete-objects --bucket {{.BUCKET}} \
+          --delete "$(aws s3api list-object-versions \
+            --bucket {{.BUCKET}} \
+            --query '{Objects: Versions[].{Key:Key,VersionId:VersionId}}' \
+            --output json)" 2>/dev/null || true
+      - |
+        aws s3api delete-objects --bucket {{.BUCKET}} \
+          --delete "$(aws s3api list-object-versions \
+            --bucket {{.BUCKET}} \
+            --query '{Objects: DeleteMarkers[].{Key:Key,VersionId:VersionId}}' \
+            --output json)" 2>/dev/null || true
+      - aws s3 rb s3://{{.BUCKET}} || true
+      - rm -f {{.SECRETS_FILE}}
+      - echo "Full destruction complete! Route53 zone preserved."
+
+  # ─── Cleanup ───────────────────────────────────────────────────────────────
+
+  clean:
+    desc: Remove local temporary files
+    cmds:
+      - rm -f {{.VAULT_FILE}} {{.SECRETS_FILE}}
+      - echo "Cleanup done."

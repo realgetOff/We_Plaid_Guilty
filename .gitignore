@@ -21,4 +21,13 @@ compile_commands.json
 log.txt
 
 ansible/secrets.yml
+
+	ROADMAP
+	ansible/roles/app/
+	ansible/roles/ingress/
+	ansible/roles/logging/
+	ansible/roles/monitoring/
+	network.txt
+	out
+
 terraform/vault/ansible/

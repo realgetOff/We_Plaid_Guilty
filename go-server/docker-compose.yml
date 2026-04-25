@@ -31,11 +31,6 @@ services:
     environment:
       - SONAR_HOST_URL=https://sonarcloud.io
       - SONAR_TOKEN=${SONAR_TOKEN}
-    command:
-      - "-Dsonar.organization=lvira66"
-      - "-Dsonar.projectKey=lvira66_transcendence"
-      - "-Dsonar.sources=./backend,./frontend"
-      - "-Dsonar.exclusions=**/node_modules/**,**/dist/**"
     profiles:
       - tools
   # La base de données

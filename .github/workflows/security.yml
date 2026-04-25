@@ -11,6 +11,7 @@ permissions:
   contents: read
   security-events: write
   actions: read
+  checks: write
 
 jobs:
   checkov:
@@ -25,15 +26,22 @@ jobs:
         with:
           directory: .
           soft_fail: true
-          output_format: sarif
-          output_file_path: checkov.sarif
+          output_format: junittxml
+          output_file_path: checkov_report.xml
 
       - name: Upload Checkov results as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: checkov
-          path: checkov.sarif
+          name: junit-checkov
+          path: checkov_report.xml
 
+      - name: Publish Report
+        uses: mikepenz/action-junit-report@v4
+        if: always()
+        with:
+          report_paths: 'checkov_report.xml'
+          detailed_summary: true
+          check_name: "Resume"
 
   trivy:
     name: Trivy Scan

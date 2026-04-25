@@ -27,19 +27,19 @@ jobs:
           directory: .
           soft_fail: true
           output_format: junitxml
-          output_file_path: checkov_report.xml
+          output_file_path: checkov_result.xml
 
       - name: Upload Checkov results as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: artifact-checkov
-          path: checkov_report.xml
+          name: security-reports
+          path: checkov_result.xml
 
       - name: Publish Report
         uses: mikepenz/action-junit-report@v4
         if: always()
         with:
-          report_paths: '**/checkov_report.xml'
+          report_paths: 'checkov_result.xml'
           detailed_summary: true
           check_name: "Resume"
 

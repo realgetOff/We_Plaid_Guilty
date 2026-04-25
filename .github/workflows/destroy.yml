@@ -1,0 +1,57 @@
+name: Destroy
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Destruction type'
+        required: true
+        type: choice
+        options:
+          - destroy
+          - destroy-full
+
+permissions:
+  contents: read
+
+jobs:
+  destroy:
+    name: Destroy infrastructure
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-north-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Install Task
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/github_actions
+          chmod 600 ~/.ssh/github_actions
+          ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+
+      - name: Destroy
+        env:
+          CI: "true"
+        run: |
+          if [ "${{ github.event.inputs.action }}" = "destroy-full" ]; then
+            task destroy-full
+          else
+            task destroy
+          fi

@@ -15,16 +15,14 @@ import (
 	"main.go/gamemanager"
 )
 
-
 func socketLogic(client *Client, serverVars *serverVarsStruct) {
 	dispatcher := NewDispatcher()
 
-	ctx := WSContext {
+	ctx := WSContext{
 		client: client,
-		chub: serverVars.ClientHub,
+		chub:   serverVars.ClientHub,
 	}
 
-	// go ctx.client.Hub.LogRoom()
 	defer func() {
 		if client.CurrUsrID == nil || *client.CurrUsrID == "" {
 			return
@@ -43,30 +41,31 @@ func socketLogic(client *Client, serverVars *serverVarsStruct) {
 		dispatcher.Dispatch(&ctx, msg)
 	}
 
-	if client.CurrentRoom != nil && client.CurrUsrID != nil && *client.CurrUsrID != "" {
-		isHost := false
-		base := client.CurrentRoom.GetBase()
-		if p, err := base.GetPlayer(*client.CurrUsrID); err == nil {
-			isHost = p.IsHost
-		}
-
-		base.RemovePlayer(*client.CurrUsrID)
-		if classicRoom, ok := client.CurrentRoom.(*gamemanager.Room); ok {
-			classicRoom.SendSystemMsg(fmt.Sprintf("%s leave the lobby !", *client.CurrUsrName))
-		}
-
-		if len(base.Players) == 0 {
-			time.Sleep(15 * time.Second)
-			if len(base.Players) == 0 {
-				serverVars.globalHub.DeleteRoom(base.ID)
-			}
-		} else {
-			if isHost {
-				base.TransferHost()
-			}
-			base.BroadcastLobbyState()
-		}
+	if client.CurrentRoom == nil && client.CurrUsrID == nil && *client.CurrUsrID == "" {
+		return
 	}
+
+	isHost := false
+	base := client.CurrentRoom.GetBase()
+	if p, err := base.GetPlayer(*client.CurrUsrID); err == nil {
+		isHost = p.IsHost
+	}
+
+	base.RemovePlayer(*client.CurrUsrID)
+	if classicRoom, ok := client.CurrentRoom.(*gamemanager.Room); ok {
+		classicRoom.SendSystemMsg(fmt.Sprintf("%s leave the lobby !", *client.CurrUsrName))
+	}
+
+	time.Sleep(15 * time.Second)
+	if len(base.Players) == 0 {
+		serverVars.globalHub.DeleteRoom(base.ID)
+		return
+	}
+
+	if isHost {
+		base.TransferHost()
+	}
+	base.BroadcastLobbyState()
 }
 
 var upgrader = websocket.Upgrader{
@@ -84,10 +83,10 @@ func handleWebsocket(c *gin.Context, serverVars *serverVarsStruct) {
 	}
 
 	client := &Client{
-		Conn:	conn,
-		Hub:	serverVars.globalHub,
+		Conn: conn,
+		Hub:  serverVars.globalHub,
 	}
-	
+
 	defer conn.Close()
 
 	// increase / decrease the activeWebsockets gauge for metrics

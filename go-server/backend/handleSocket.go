@@ -37,6 +37,8 @@ type WSContext struct {
 	chub *ClientHub
 }
 
+const DEFAULT_COLOR = "#000000"
+
 type HandleFunc func(ctx *WSContext, msg Message)
 type PipeFunc func(ctx	 *WSContext, msg Message) bool
 
@@ -55,6 +57,16 @@ func RunPipeLine(ctx *WSContext, msg Message, pipes ...PipeFunc) bool {
 
 func (d *Dispatcher) PipeIsValidChat(ctx *WSContext, msg Message) bool {
 	if len(strings.TrimSpace(msg.Text)) == -1 { return false }
+	return true
+}
+
+func (d *Dispatcher) PipeIsGuest(ctx *WSContext, msg Message) bool {
+	if ctx.client.IsGuest {
+		_ = ctx.client.Conn.WriteJSON(map[string]interface{}{
+			"type": "friend_add_failed", "success": false, "error": "Guests cannot add friends.",
+		})
+		return false
+	}
 	return true
 }
 
@@ -390,15 +402,10 @@ func (d *Dispatcher) HandleAcceptFriend(ctx *WSContext, msg Message) {
 
 func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 	fmt.Println("DEBUG: HandleAddFriend triggered!")
-	if !RunPipeLine(ctx, msg, d.PipeIsAuth) {
+	if !RunPipeLine(ctx, msg, d.PipeIsAuth, d.PipeIsGuest){
 		return
 	}
-	if ctx.client.IsGuest {
-		_ = ctx.client.Conn.WriteJSON(map[string]interface{}{
-			"type": "friend_add_failed", "success": false, "error": "Guests cannot add friends.",
-		})
-		return
-	}
+
 	me := *ctx.client.CurrUsrID
 	myName := *ctx.client.CurrUsrName
 	targetName := strings.TrimSpace(msg.Username)
@@ -438,15 +445,54 @@ func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 		 (f.requester_id = $1::uuid AND f.addressee_id = $2::uuid)
 		 OR (f.requester_id = $2::uuid AND f.addressee_id = $1::uuid)`,
 		me, targetID).Scan(&st, &reqID)
-	if err == nil {
+
+		if errors.Is(err, pgx.ErrNoRows){
+
+			dbRequestsSucessful.Inc()
+
+			// PROMETHEUS
+			dbRequests.Inc()
+			_, err = ctx.chub.Db.Exec(context.Background(),
+			`INSERT INTO friends (requester_id, addressee_id, status) VALUES ($1::uuid, $2::uuid, 'pending')`,
+			me, targetID)
+
+			if err != nil {
+				fmt.Printf("Friend invite insert failed :: %v\n", err)
+				_ = ctx.client.Conn.WriteJSON(map[string]interface{}{
+					"type": "friend_add_failed", "success": false, "error": "Could not send friend request.",
+				})
+				return
+			}
+
+			dbRequestsSucessful.Inc()
+
+			addresseeOnline := ctx.chub.Clients[targetID] != nil
+			if c := ctx.chub.Clients[targetID]; c != nil {
+				_ = c.Conn.WriteJSON(map[string]interface{}{
+					"type": "friend_request",
+					"user": Friend{ID: me, Username: myName, Online: true},
+				})
+			}
+			_ = ctx.client.Conn.WriteJSON(map[string]interface{}{
+				"type": "friend_request_sent",
+				"user": Friend{ID: targetID, Username: targetName, Online: addresseeOnline},
+			})
+
+			return
+		}
+		if err != nil {
+			fmt.Printf("Friend lookup failed :: %v\n", err)
+			return
+		}
+
 		if st == "accepted" {
 			_ = ctx.client.Conn.WriteJSON(map[string]interface{}{
 				"type": "friend_add_failed", "success": false, "error": "Already friends.",
 			})
 			return
 		}
-		if st == "pending" {
-			if reqID == me {
+
+		if st == "pending" && reqID == me {
 				_ = ctx.client.Conn.WriteJSON(map[string]interface{}{
 					"type": "friend_add_failed", "success": false, "error": "Friend request already sent.",
 				})
@@ -460,6 +506,7 @@ func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 				`UPDATE friends SET status = 'accepted', updated_at = NOW()
 				 WHERE requester_id = $1::uuid AND addressee_id = $2::uuid AND status = 'pending'`,
 				targetID, me)
+
 			if err != nil {
 				fmt.Printf("mutual accept failed: %v\n", err)
 				return
@@ -467,7 +514,6 @@ func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 
 			// PROMETHEUS
 			dbRequestsSucessful.Inc()
-
 			dbRequests.Inc()
 
 			var requesterName string
@@ -479,41 +525,6 @@ func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 			
 			d.broadcastFriendAdded(ctx, targetID, requesterName, me, myName)
 			return
-		}
-	} else if !errors.Is(err, pgx.ErrNoRows) {
-		fmt.Printf("Friend lookup failed :: %v\n", err)
-		return
-	}
-	// PROMETHEUS
-	dbRequestsSucessful.Inc()
-
-	dbRequests.Inc()
-
-	_, err = ctx.chub.Db.Exec(context.Background(),
-		`INSERT INTO friends (requester_id, addressee_id, status) VALUES ($1::uuid, $2::uuid, 'pending')`,
-		me, targetID)
-	if err != nil {
-		fmt.Printf("Friend invite insert failed :: %v\n", err)
-		_ = ctx.client.Conn.WriteJSON(map[string]interface{}{
-			"type": "friend_add_failed", "success": false, "error": "Could not send friend request.",
-		})
-		return
-	}
-
-	// PROMETHEUS
-	dbRequestsSucessful.Inc()
-
-	addresseeOnline := ctx.chub.Clients[targetID] != nil
-	if c := ctx.chub.Clients[targetID]; c != nil {
-		_ = c.Conn.WriteJSON(map[string]interface{}{
-			"type": "friend_request",
-			"user": Friend{ID: me, Username: myName, Online: true},
-		})
-	}
-	_ = ctx.client.Conn.WriteJSON(map[string]interface{}{
-		"type": "friend_request_sent",
-		"user": Friend{ID: targetID, Username: targetName, Online: addresseeOnline},
-	})
 }
 
 type ProfileStyle struct {
@@ -725,7 +736,6 @@ func (d *Dispatcher) HandleJoinAIGame(ctx *WSContext, msg Message) {
 			},
 		}
 	}
-	fmt.Printf("DEGUB: %s\n", msg.Type)
 }
 
 func (d *Dispatcher) HandleJoinAIRoom(ctx *WSContext, msg Message) {
@@ -745,7 +755,7 @@ func (d *Dispatcher) HandleJoinAIRoom(ctx *WSContext, msg Message) {
 		}
 		dbRequestsSucessful.Inc()
 	} else {
-		color = "#000000"
+		color = DEFAULT_COLOR
 		font = "normal"
 	}
 	base := ctx.client.CurrentRoom.GetBase()
@@ -777,7 +787,7 @@ func (d *Dispatcher) HandleLeaveAILobby(ctx *WSContext, msg Message) {
 
 	base.RemovePlayer(*ctx.client.CurrUsrID)
 	if AIRoom, ok := ctx.client.CurrentRoom.(*gamemanager.AIRoom); ok {
-		AIRoom.SendSystemMsg(fmt.Sprintf("%s leave the lobby !", *ctx.client.CurrUsrName))
+		AIRoom.SendSystemMsg(fmt.Sprintf("%s leave the AI room !", *ctx.client.CurrUsrName))
 	}
 
 	if len(base.Players) == 0 {
@@ -807,7 +817,7 @@ func (d *Dispatcher) HandleCreateAIRoom(ctx *WSContext, msg Message) {
 		}
 		dbRequestsSucessful.Inc()
 	} else {
-		color = "#000000"
+		color = DEFAULT_COLOR
 		font = "normal"
 	}
 	newRoom := ctx.client.Hub.CreateRoom(true)
@@ -941,7 +951,7 @@ func (d *Dispatcher) HandleCreateRoom(ctx *WSContext, msg Message) {
 		}
 		dbRequestsSucessful.Inc()
 	} else {
-		color = "#000000"
+		color = DEFAULT_COLOR
 		font = "normal"
 	}
 
@@ -994,7 +1004,7 @@ func (d *Dispatcher) HandleJoinRoom(ctx *WSContext, msg Message) {
 		}
 		dbRequestsSucessful.Inc()
 	} else {
-		color = "#000000"
+		color = DEFAULT_COLOR
 		font = "normal"
 	}
 
@@ -1043,7 +1053,7 @@ func (d *Dispatcher) HandleLeaveLobby(ctx *WSContext, msg Message) {
 
 	base.RemovePlayer(*ctx.client.CurrUsrID)
 	if classicRoom, ok := ctx.client.CurrentRoom.(*gamemanager.Room); ok {
-		classicRoom.SendSystemMsg(fmt.Sprintf("%s leave the lobby !", *ctx.client.CurrUsrName))
+		classicRoom.SendSystemMsg(fmt.Sprintf("%s leave the room !", *ctx.client.CurrUsrName))
 		if len(base.Players) == 0 {
 			classicRoom.MessageChan <- gamemanager.Notification{
 				End: true,
@@ -1065,7 +1075,7 @@ func (d *Dispatcher) HandleLeaveGame(ctx *WSContext, msg Message) {
 	if (!RunPipeLine(ctx, msg, d.PipeIsAuth, d.PipeRoomExist)) { return }
 
 	if classicRoom, ok := ctx.client.CurrentRoom.(*gamemanager.Room); ok {
-		classicRoom.SendSystemMsg(fmt.Sprintf("%s leave the lobby !", *ctx.client.CurrUsrName))
+		// classicRoom.SendSystemMsg(fmt.Sprintf("%s leave the lobby !", *ctx.client.CurrUsrName))
 		del := classicRoom.LeaveGame(*ctx.client.CurrUsrID)
 		if del {
 			ctx.client.Hub.DeleteRoom(msg.Code)
@@ -1085,9 +1095,9 @@ func (d *Dispatcher) HandlePrompt(ctx *WSContext, msg Message) {
 	}
 	fmt.Printf("DEGUB: %s\n", msg.Type)
 	if classicRoom, ok := ctx.client.CurrentRoom.(*gamemanager.Room); ok {
-		err := classicRoom.SubmiteAction(*ctx.client.CurrUsrID, data, true);
+		err := classicRoom.SubmiteAction(*ctx.client.CurrUsrID, data, true)
 		if (err != nil) {
-			fmt.Printf("Error: Submited prompt: %v\n", err);
+			fmt.Printf("Error: Submited prompt: %v\n", err)
 		}
 	}
 }
@@ -1099,12 +1109,11 @@ func (d *Dispatcher) HandleDraw(ctx *WSContext, msg Message) {
 		"type": "draw",
 		"drawing": msg.Drawing,
 	}
-	fmt.Printf("DEGUB: %s\n", msg.Type)
 	if classicRoom, ok := ctx.client.CurrentRoom.(*gamemanager.Room); ok {
 		fmt.Printf("DEBUG: draw_submitted code = %s\n", msg.Code)
-		err := classicRoom.SubmiteAction(*ctx.client.CurrUsrID, data, true);
+		err := classicRoom.SubmiteAction(*ctx.client.CurrUsrID, data, true)
 		if (err != nil) {
-			fmt.Printf("Error: Submited draw: %v\n", err);
+			fmt.Printf("Error: Submited draw: %v\n", err)
 		}
 	}
 }
@@ -1118,9 +1127,9 @@ func (d *Dispatcher) HandleGuess(ctx *WSContext, msg Message) {
 	}
 	fmt.Printf("DEGUB: %s\n", msg.Type)
 	if classicRoom, ok := ctx.client.CurrentRoom.(*gamemanager.Room); ok {
-		err := classicRoom.SubmiteAction(*ctx.client.CurrUsrID, data, true);
+		err := classicRoom.SubmiteAction(*ctx.client.CurrUsrID, data, true)
 		if (err != nil) {
-			fmt.Printf("Error: Submited guess: %v\n", err);
+			fmt.Printf("Error: Submited guess: %v\n", err)
 		}
 	}
 }

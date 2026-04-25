@@ -1,12 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
-	"time"
-	"context"
 	"net/http"
 	"strings"
+	"time"
 
 	"encoding/json"
 
@@ -26,7 +26,7 @@ type playerNameTemp struct {
 }
 
 type CreateLobbyRequest struct {
-	HostID string `json:"hostId"`
+	HostID   string        `json:"hostId"`
 	Settings LobbySettings `json:"settings"`
 }
 
@@ -41,24 +41,23 @@ code: room code
 omitempty: omits empty strings, lowering network traffic
 */
 
-
 type Message struct {
-	Type	string			`json:"type"`
-	Text	string			`json:"text,omitempty"`
-	Token	string			`json:"token,omitempty"`
-	Code	string			`json:"code,omitempty"`
-	Reason	string			`json:"reason,omitempty"`
-	Prompt	string			`json:"prompt,omitempty"`
-	Drawing	string			`json:"drawing,omitempty"`
-	Guess	string			`json:"guess,omitempty"`
-	Votes	map[string]int	`json:"votes,omitempty"`
-	Title		string		`json:"title,omitempty"`
-	Description string		`json:"description,omitempty"`
-	Username string			`json:"username,omitempty"`
-	To		string			`json:"to,omitempty"`
-	ID string				`json:"id,omitempty"`
-	IsAI	bool			`json:"is_ai,omitempty"`
-	Style	ProfileStyle	`json:"style,omitempty"`
+	Type        string         `json:"type"`
+	Text        string         `json:"text,omitempty"`
+	Token       string         `json:"token,omitempty"`
+	Code        string         `json:"code,omitempty"`
+	Reason      string         `json:"reason,omitempty"`
+	Prompt      string         `json:"prompt,omitempty"`
+	Drawing     string         `json:"drawing,omitempty"`
+	Guess       string         `json:"guess,omitempty"`
+	Votes       map[string]int `json:"votes,omitempty"`
+	Title       string         `json:"title,omitempty"`
+	Description string         `json:"description,omitempty"`
+	Username    string         `json:"username,omitempty"`
+	To          string         `json:"to,omitempty"`
+	ID          string         `json:"id,omitempty"`
+	IsAI        bool           `json:"is_ai,omitempty"`
+	Style       ProfileStyle   `json:"style,omitempty"`
 }
 
 type AuthResponse struct {
@@ -75,14 +74,14 @@ func pong(c *gin.Context) {
 
 func health(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
-			"status": "ok",
+		"status": "ok",
 	})
 }
 
 func generateLobbyCode(length int) string {
 	const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" // Removed the numeric arguements as 0123456789
 	seededRand := rand.New(rand.NewSource(time.Now().UnixNano()))
-	
+
 	ret := make([]byte, length)
 	for i := range ret {
 		ret[i] = charset[seededRand.Intn(len(charset))]
@@ -93,7 +92,7 @@ func generateLobbyCode(length int) string {
 
 func createLobby(c *gin.Context) { // obsolete code
 	lobbyCode := generateLobbyCode(6)
-	
+
 	//fmt.Println("The generated lobby code is: " + lobbyCode) //debug command
 
 	c.JSON(http.StatusOK, CreateLobbyResponse{
@@ -105,14 +104,14 @@ var jwtSecret = []byte("replace_with_env_or_equivalent_later")
 
 type MyCustomClaims struct {
 	Username string `json:"username"`
-	UserID string `json:"id"`
+	UserID   string `json:"id"`
 	jwt.RegisteredClaims
 }
 
 func generateJWT(userID string, guestName string) (string, error) {
 	claims := MyCustomClaims{
-		Username:	guestName,
-		UserID:		userID,
+		Username: guestName,
+		UserID:   userID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)), // change later, temporarily 24h
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -120,9 +119,9 @@ func generateJWT(userID string, guestName string) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	
+
 	signedToken, err := token.SignedString(jwtSecret)
-	if ( err != nil ) {
+	if err != nil {
 		fmt.Println("Couldn't sign / generate JWT for guest " + guestName + " where id = " + userID)
 		return "", err
 	}
@@ -145,14 +144,14 @@ func validateAndGetClaims(tokenString string) (*MyCustomClaims, error) {
 	return nil, fmt.Errorf("token is invalid or claims are corrupted")
 }
 
-func handleGuestAuth(c *gin.Context, dbs *DBSafe){
+func handleGuestAuth(c *gin.Context, dbs *DBSafe) {
 	guestName := fmt.Sprintf("guest_%d%d", rand.Intn(99), time.Now().UnixNano()%1000)
 	var userID string
-	db := dbs.GetPool()	
-	
-	userQuery := "INSERT INTO users (username, type) VALUES ($1, 'guest') RETURNING id;"
-	err := db.QueryRow(context.Background(), userQuery, guestName).Scan(&userID);
-	if (err != nil) {
+	db := dbs.GetPool()
+
+	userQuery := "INSERT INTO users (username, is_guest) VALUES ($1, TRUE) RETURNING id;"
+	err := db.QueryRow(context.Background(), userQuery, guestName).Scan(&userID)
+	if err != nil {
 		fmt.Println("Guest creation failed", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Server couldn't create a guest user in the database."})
@@ -160,31 +159,29 @@ func handleGuestAuth(c *gin.Context, dbs *DBSafe){
 	}
 	fmt.Println("Guest name: " + guestName + " guest ID = " + userID)
 
-
 	profileQuery := "INSERT INTO profiles (id, display_name) VALUES ($1, $2)"
 	_, err = db.Exec(context.Background(), profileQuery, userID, guestName)
-		if (err != nil) {
+	if err != nil {
 		fmt.Println("Guest profile creation failed", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Server couldn't create a guest profile in the database."})
 		return
 	}
 
-
 	var SignedString string
 	SignedString, err = generateJWT(userID, guestName)
-	if (err != nil) {
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Couldn't sign / generate JWT for guest."})
-		return 
+		return
 	}
 
 	c.JSON(http.StatusOK, AuthResponse{
 		Token: SignedString,
-		})
+	})
 }
 
-func findRoom(c *gin.Context, serverVars *serverVarsStruct){
+func findRoom(c *gin.Context, serverVars *serverVarsStruct) {
 	code := strings.ToUpper(c.Param("code"))
 	room, err := serverVars.globalHub.GetRoom(code)
 	if err != nil {
@@ -192,9 +189,9 @@ func findRoom(c *gin.Context, serverVars *serverVarsStruct){
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"code":		room.GetBase().ID,
-		"status":	room.GetBase().Status,
-		"players":	len(room.GetBase().Players),
+		"code":    room.GetBase().ID,
+		"status":  room.GetBase().Status,
+		"players": len(room.GetBase().Players),
 	})
 }
 
@@ -203,32 +200,31 @@ func findRoom(c *gin.Context, serverVars *serverVarsStruct){
 */
 
 type loginInfo struct {
-	Username	string			`json:"username" binding:"required"`
-	Password	string			`json:"password" binding:"required"`
-	Email		string			`json:"email,omitempty"`
+	Username string `json:"username" binding:"required"`
+	Password string `json:"password" binding:"required"`
+	Email    string `json:"email,omitempty"`
 }
 
-func handleRegister(c *gin.Context, dbs *DBSafe){
+func handleRegister(c *gin.Context, dbs *DBSafe) {
 	var login loginInfo
 	var userID string
-	db := dbs.GetPool()	
+	db := dbs.GetPool()
 
 	if err := c.ShouldBindJSON(&login); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload: " + err.Error()})
 		return
 	}
 
-
 	bytes, err := bcrypt.GenerateFromPassword([]byte(login.Password), bcrypt.DefaultCost)
-	if (err != nil)	{
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Couldn't hash password: " + err.Error()})
 		return
 	}
 
 	userQuery := "INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id;"
 
-	err = db.QueryRow(context.Background(), userQuery, login.Username, login.Email, bytes).Scan(&userID);
-	if (err != nil) {
+	err = db.QueryRow(context.Background(), userQuery, login.Username, login.Email, bytes).Scan(&userID)
+	if err != nil {
 		fmt.Println("User registration failed", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Server couldn't register a user in the database."})
@@ -239,33 +235,32 @@ func handleRegister(c *gin.Context, dbs *DBSafe){
 
 	profileQuery := "INSERT INTO profiles (id, display_name) VALUES ($1, $2)"
 	_, err = db.Exec(context.Background(), profileQuery, userID, login.Username)
-		if (err != nil) {
+	if err != nil {
 		fmt.Println("User profile creation failed", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Server couldn't create a user profile in the database."})
 		return
 	}
 
-
 	var SignedString string
 	SignedString, err = generateJWT(userID, login.Username)
-	if (err != nil) {
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Couldn't sign / generate JWT for user."})
-		return 
+		return
 	}
 
 	c.JSON(http.StatusOK, AuthResponse{
 		Token: SignedString,
-		})
+	})
 }
 
-func handleLogin( c *gin.Context, dbs *DBSafe ){
+func handleLogin(c *gin.Context, dbs *DBSafe) {
 	var login loginInfo
 	var userID string
 	var passHash string
-	
-	db := dbs.GetPool()	
+
+	db := dbs.GetPool()
 
 	if err := c.ShouldBindJSON(&login); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload: " + err.Error()})
@@ -274,37 +269,37 @@ func handleLogin( c *gin.Context, dbs *DBSafe ){
 
 	userQuery := "SELECT id, password_hash FROM users WHERE username = $1 AND type = 'standard';"
 
-	err := db.QueryRow(context.Background(), userQuery, login.Username).Scan(&userID, &passHash);
-	if (err != nil) {
-		fmt.Println("Coulnd't get password hash for user: " + login.Username, err)
+	err := db.QueryRow(context.Background(), userQuery, login.Username).Scan(&userID, &passHash)
+	if err != nil {
+		fmt.Println("Coulnd't get password hash for user: "+login.Username, err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Server get the password hash for the user."})
 		return
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(passHash), []byte(login.Password))
-	if (err != nil) {
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "The passwords don't match / the hash comparison failed."})
-		return ;
+		return
 	}
 
 	fmt.Println("Password valid for: " + login.Username + " user ID = " + userID)
 
 	var SignedString string
 	SignedString, err = generateJWT(userID, login.Username)
-	if (err != nil) {
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Couldn't sign / generate JWT for user."})
-		return 
+		return
 	}
 
 	c.JSON(http.StatusOK, AuthResponse{
 		Token: SignedString,
-		})
+	})
 }
 
-func FortyTwoCallback(c *gin.Context, dbs *DBSafe){ // change this to just be a pgxpool, dbsafe is useless
+func FortyTwoCallback(c *gin.Context, dbs *DBSafe) { // change this to just be a pgxpool, dbsafe is useless
 	code := c.Query("code")
 
 	token, err := fortyTwoOauthConfig.Exchange(context.Background(), code)
@@ -332,18 +327,16 @@ func FortyTwoCallback(c *gin.Context, dbs *DBSafe){ // change this to just be a 
 		return
 	}
 
-
 	fmt.Println("\n--- NEW LOGIN DETECTED ---")
 	fmt.Printf("Username: %s\n", userProfile.Login)
 	fmt.Printf("Email:    %s\n", userProfile.Email)
 	// fmt.Printf("42 ID:    %d\n", userProfile.ID)
 	fmt.Println("--------------------------\n")
 
-
 	var userID string
-	db := dbs.GetPool()	
-	
-	userQuery := 	`INSERT INTO users (username, email, type) 
+	db := dbs.GetPool()
+
+	userQuery := `INSERT INTO users (username, email, type) 
 					VALUES ($1, $2, 'api42') 
 					ON CONFLICT (username) 
 					DO UPDATE SET 
@@ -354,8 +347,8 @@ func FortyTwoCallback(c *gin.Context, dbs *DBSafe){ // change this to just be a 
 	// PROMETHEUS
 	dbRequests.Inc()
 
-	err = db.QueryRow(context.Background(), userQuery, userProfile.Login, userProfile.Email).Scan(&userID);
-	if (err != nil) {
+	err = db.QueryRow(context.Background(), userQuery, userProfile.Login, userProfile.Email).Scan(&userID)
+	if err != nil {
 		fmt.Printf("User creation failed %v\n", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Server couldn't insert a user in the database."})
@@ -367,7 +360,7 @@ func FortyTwoCallback(c *gin.Context, dbs *DBSafe){ // change this to just be a 
 
 	fmt.Println("Username: " + userProfile.Login + " user ID = " + userID)
 
-	if (userID != ""){
+	if userID != "" {
 		// PROMETHEUS
 		dbRequests.Inc()
 
@@ -375,25 +368,25 @@ func FortyTwoCallback(c *gin.Context, dbs *DBSafe){ // change this to just be a 
 						VALUES ($1, $2)
 						ON CONFLICT (id) DO NOTHING;`
 		_, err = db.Exec(context.Background(), profileQuery, userID, userProfile.Login)
-		if (err != nil) {
+		if err != nil {
 			fmt.Printf("User profile creation failed %v\n", err)
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": "Server couldn't create a user profile in the database."})
 			return
 		}
 	}
-	
+
 	// PROMETHEUS
 	dbRequestsSucessful.Inc()
 
 	var SignedString string
 	SignedString, err = generateJWT(userID, userProfile.Login)
-	if (err != nil) {
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Couldn't sign / generate JWT for user."})
-		return 
+		return
 	}
 
-	frontendRedirectURL := fmt.Sprintf("http://localhost:8080/callback?token=%s", SignedString)	
+	frontendRedirectURL := fmt.Sprintf("http://localhost:8080/callback?token=%s", SignedString)
 	c.Redirect(http.StatusTemporaryRedirect, frontendRedirectURL)
 }

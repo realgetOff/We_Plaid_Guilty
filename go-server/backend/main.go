@@ -47,7 +47,7 @@ func NewServerStructure () *serverVarsStruct {
 	hub := &gamemanager.Hub{
 		Rooms: make(map[string]gamemanager.GameRoom),
 	}
-	r := gin.Default();
+	r := gin.Default()
 
 	gin_prom := ginprometheus.NewPrometheus("app")
 	gin_prom.Use(r)

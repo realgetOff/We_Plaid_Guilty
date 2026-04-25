@@ -22,11 +22,11 @@ resource "aws_iam_role_policy" "k3s_kms" {
         Resource = aws_kms_key.vault_unseal.arn
       },
       {
-        Effect   = "Allow"
-        Action   = ["iam:GetRole", "iam:GetInstanceProfile"]
+        Effect = "Allow"
+        Action = ["iam:GetRole", "iam:GetInstanceProfile"]
         Resource = [
           "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/k3s-role",
-          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:instance-profile/k3s-profile"]
+        "arn:aws:iam::${data.aws_caller_identity.current.account_id}:instance-profile/k3s-profile"]
       },
       {
         Effect   = "Allow"

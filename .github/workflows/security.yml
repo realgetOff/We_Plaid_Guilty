@@ -56,8 +56,8 @@ jobs:
         with:
           scan-type: fs
           scan-ref: .
-          severity: HIGH,CRITICAL
-          format: template
+          severity: MEDIUM,HIGH,CRITICAL
+          format: table
           template: '@/contrib/junit.tpl'
           output: trivy-results.xml
           exit-code: 0

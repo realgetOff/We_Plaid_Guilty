@@ -36,19 +36,32 @@ spec:
           {{`{{ .CA }}`}}
           {{`{{ .Key }}`}}
           {{`{{ end }}`}}
-
     spec:
-      # hostAliases:
-        # - ip: "10.43.216.181"
-      # hostnames:
-        # - "vault"
       serviceAccountName: gartic-app
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
       imagePullSecrets:
         - name: ecr-secret
       containers:
         - name: gartic-app
+          # checkov:skip=CKV_K8S_14:Image tag managed by CI/CD pipeline via SHA
+          # checkov:skip=CKV_K8S_43:Image digest managed by CI/CD pipeline
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 10001
+            capabilities:
+              drop:
+                - ALL
           ports:
             - containerPort: 8080
           env:
@@ -58,15 +71,35 @@ spec:
               value: "{{ .Values.db.host }}"
             - name: DB_PORT
               value: "{{ .Values.db.port }}"
-          # volumeMounts:
-            # - name: secrets
-              # mountPath: /vault/secrets
-              # readOnly: true
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+              scheme: HTTPS
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+              scheme: HTTPS
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 3
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: vault-secrets
+              mountPath: /vault/secrets
+              readOnly: true
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-      # volumes:
-        # - name: secrets
-          # emptyDir:
-            # medium: Memory
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: vault-secrets
+          emptyDir:
+            medium: Memory
       nodeSelector:
         {{- toYaml .Values.nodeSelector | nindent 8 }}

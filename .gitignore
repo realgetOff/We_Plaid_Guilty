@@ -22,12 +22,13 @@ log.txt
 
 ansible/secrets.yml
 
-	ROADMAP
-	ansible/roles/app/
-	ansible/roles/ingress/
-	ansible/roles/logging/
-	ansible/roles/monitoring/
-	network.txt
-	out
+ROADMAP
+ansible/roles/app/
+ansible/roles/ingress/
+ansible/roles/logging/
+ansible/roles/monitoring/
+network.txt
+out
+.gitignore
 
 terraform/vault/ansible/

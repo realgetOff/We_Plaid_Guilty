@@ -90,16 +90,10 @@ spec:
           volumeMounts:
             - name: tmp
               mountPath: /tmp
-            - name: vault-secrets
-              mountPath: /vault/secrets
-              readOnly: true
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       volumes:
         - name: tmp
           emptyDir: {}
-        - name: vault-secrets
-          emptyDir:
-            medium: Memory
       nodeSelector:
         {{- toYaml .Values.nodeSelector | nindent 8 }}

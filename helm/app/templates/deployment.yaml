@@ -64,6 +64,7 @@ spec:
                 - ALL
           ports:
             - containerPort: 8080
+            - containerPort: 8081
           env:
             - name: VAULT_ADDR
               value: "{{ .Values.vault.addr }}:{{ .Values.vault.port }}"
@@ -74,16 +75,16 @@ spec:
           livenessProbe:
             httpGet:
               path: /health
-              port: 8080
-              scheme: HTTPS
+              port: 8081
+              scheme: HTTP
             initialDelaySeconds: 15
             periodSeconds: 10
             failureThreshold: 3
           readinessProbe:
             httpGet:
               path: /health
-              port: 8080
-              scheme: HTTPS
+              port: 8081
+              scheme: HTTP
             initialDelaySeconds: 10
             periodSeconds: 5
             failureThreshold: 3

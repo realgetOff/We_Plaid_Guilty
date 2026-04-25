@@ -100,9 +100,6 @@ tasks:
           | awk '{print $2}' \
           | tr -d '"')
         cd {{.TF_VAULT_DIR}} && terraform init && \
-        TF_VAR_vault_root_token=$VAULT_TOKEN terraform import vault_auth_backend.aws aws 2>/dev/null || true && \
-        TF_VAR_vault_root_token=$VAULT_TOKEN terraform import vault_auth_backend.kubernetes kubernetes 2>/dev/null || true && \
-        TF_VAR_vault_root_token=$VAULT_TOKEN terraform import vault_mount.pki pki 2>/dev/null || true && \
         TF_VAR_vault_root_token=$VAULT_TOKEN terraform apply -auto-approve
 
   wait-vault:
@@ -243,7 +240,6 @@ tasks:
           --vault-password-file {{.VAULT_FILE}}
       - task: upload-secrets
       - echo "--- Step 3/3 Terraform Vault ---"
-      - aws s3 rm s3://{{.BUCKET}}/terraform-vault.tfstate || true
       - task: wait-vault
       - task: apply-vault-tf
       - echo "Deployed by $DEPLOY_USER — done!"

@@ -38,7 +38,7 @@ spec:
           {{`{{ end }}`}}
     spec:
       serviceAccountName: gartic-app
-      automountServiceAccountToken: false
+      #automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
         runAsUser: 10001

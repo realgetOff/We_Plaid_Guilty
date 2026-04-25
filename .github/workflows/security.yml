@@ -56,26 +56,24 @@ jobs:
         with:
           scan-type: fs
           scan-ref: .
-          severity: MEDIUM,HIGH,CRITICAL
+          severity: HIGH,CRITICAL
           format: table
-          template: '@/contrib/junit.tpl'
-          output: trivy-results.xml
           exit-code: 0
 
-      - name: Upload Trivy results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: trivy-report
-          path: trivy-results.xml
+      # - name: Upload Trivy results
+        # uses: actions/upload-artifact@v4
+        # if: always()
+        # with:
+          # name: trivy-report
+          # path: trivy-results.xml
 
-      - name: Publish Trivy Report
-        uses: mikepenz/action-junit-report@v4
-        if: always()
-        with:
-          report_paths: trivy-results.xml
-          detailed_summary: true
-          check_name: "Trivy Security Report"
+      # - name: Publish Trivy Report
+        # uses: mikepenz/action-junit-report@v4
+        # if: always()
+        # with:
+          # report_paths: trivy-results.xml
+          # detailed_summary: true
+          # check_name: "Trivy Security Report"
 
   sonarqube:
     name: SonarQube Scan

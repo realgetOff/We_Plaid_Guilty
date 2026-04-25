@@ -98,7 +98,13 @@ func connectToDatabase () (*pgxpool.Pool, error) {
 		name = os.Getenv("DB_NAME")
 	}
 
-	connection_url := fmt.Sprintf("postgres://%s:%s@%s:%s/%s", user, pass, host, port, name)
+	var connection_url string
+
+	if (os.Getenv("LOCAL") != "") {
+		connection_url = fmt.Sprintf("postgres://%s:%s@%s:%s/%s", user, pass, host, port, name)
+	} else {
+		connection_url = fmt.Sprintf("postgres://%s:%s@%s:%s/%ssslmode=verify-full", user, pass, host, port, name)
+	}
 
 	cfg, err := pgxpool.ParseConfig(connection_url)
 	if err != nil { return nil, err }

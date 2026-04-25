@@ -46,6 +46,12 @@
     dest: "{{ db_path }}/postgresql.conf"
     mode: '0644'
 
+- name: "Copy hba.conf"
+  template:
+    src: pg_hba.conf.j2
+    dest: "{{ db_path }}/pg_hba.conf"
+    mode: '0644'
+
 - name: "Copy init.sql"
   copy:
     src: "{{ playbook_dir }}/../go-server/init.sql"

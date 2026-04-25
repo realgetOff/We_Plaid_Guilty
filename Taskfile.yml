@@ -240,7 +240,6 @@ tasks:
           --vault-password-file {{.VAULT_FILE}}
       - task: upload-secrets
       - echo "--- Step 3/3 Terraform Vault ---"
-      - aws s3 rm s3://{{.BUCKET}}/terraform-vault.tfstate || true
       - task: wait-vault
       - task: apply-vault-tf
       - echo "Deployed by $DEPLOY_USER — done!"

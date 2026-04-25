@@ -10,9 +10,10 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { roomsApi, getApiBaseUrl } from '../../api/rooms';
+import { connect } from '../../api/socket'
 import './HomeGame.css';
 
 const VALID_CODE_RE = /^[A-Z]{6}$/;
@@ -20,6 +21,11 @@ const VALID_CODE_RE = /^[A-Z]{6}$/;
 const HomeGame = () =>
 {
 	const navigate = useNavigate();
+
+	useEffect(() => {
+	    connect();
+    }, []);
+
 
 	const [joinCode,     setJoinCode]     = useState('');
 	const [joinError,    setJoinError]    = useState('');

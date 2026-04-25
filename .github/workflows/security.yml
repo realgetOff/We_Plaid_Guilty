@@ -27,21 +27,22 @@ jobs:
           directory: .
           soft_fail: true
           output_format: junitxml
-          output_file_path: checkov_result.xml
+          output_file_path: console
 
-      - name: Upload Checkov results as artifact
+      - name: Upload Checkov results
         uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: security-reports
-          path: checkov_result.xml
+          name: checkov-report
+          path: '**/results_junitxml.xml'
 
-      - name: Publish Report
+      - name: Publish Checkov Report
         uses: mikepenz/action-junit-report@v4
         if: always()
         with:
-          report_paths: 'checkov_result.xml'
+          report_paths: '**/results_junitxml.xml'
           detailed_summary: true
-          check_name: "Resume"
+          check_name: "Checkov Security Report"
 
   trivy:
     name: Trivy Scan
@@ -56,15 +57,25 @@ jobs:
           scan-type: fs
           scan-ref: .
           severity: HIGH,CRITICAL
-          format: sarif
-          output: trivy.sarif
+          format: template
+          template: '@/contrib/junit.tpl'
+          output: trivy-results.xml
           exit-code: 0
 
-      - name: Upload Trivy results as artifact
+      - name: Upload Trivy results
         uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: trivy
-          path: trivy.sarif
+          name: trivy-report
+          path: trivy-results.xml
+
+      - name: Publish Trivy Report
+        uses: mikepenz/action-junit-report@v4
+        if: always()
+        with:
+          report_paths: trivy-results.xml
+          detailed_summary: true
+          check_name: "Trivy Security Report"
 
   sonarqube:
     name: SonarQube Scan

@@ -28,11 +28,12 @@ jobs:
           output_format: sarif
           output_file_path: checkov.sarif
 
-      - name: Upload Checkov results
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
+      - name: Upload Checkov results as artifact
+        uses: actions/upload-artifact@v4
         with:
-          sarif_file: checkov.sarif
+          name: checkov
+          path: checkov.sarif
+
 
   trivy:
     name: Trivy Scan

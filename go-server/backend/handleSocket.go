@@ -60,6 +60,16 @@ func (d *Dispatcher) PipeIsValidChat(ctx *WSContext, msg Message) bool {
 	return true
 }
 
+func (d *Dispatcher) PipeIsGuest(ctx *WSContext, msg Message) bool {
+	if ctx.client.IsGuest {
+		_ = ctx.client.Conn.WriteJSON(map[string]interface{}{
+			"type": "friend_add_failed", "success": false, "error": "Guests cannot add friends.",
+		})
+		return false
+	}
+	return true
+}
+
 func (d *Dispatcher) PipeIsAuth(ctx *WSContext, msg Message) bool {
 
 	if ctx.client.CurrUsrID == nil || *ctx.client.CurrUsrID == "" {
@@ -395,15 +405,10 @@ func (d *Dispatcher) HandleAcceptFriend(ctx *WSContext, msg Message) {
 
 func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 	fmt.Println("DEBUG: HandleAddFriend triggered!")
-	if !RunPipeLine(ctx, msg, d.PipeIsAuth) {
+	if !RunPipeLine(ctx, msg, d.PipeIsAuth, d.PipeIsGuest){
 		return
 	}
-	if ctx.client.IsGuest {
-		_ = ctx.client.Conn.WriteJSON(map[string]interface{}{
-			"type": "friend_add_failed", "success": false, "error": "Guests cannot add friends.",
-		})
-		return
-	}
+
 	me := *ctx.client.CurrUsrID
 	myName := *ctx.client.CurrUsrName
 	targetName := strings.TrimSpace(msg.Username)
@@ -443,15 +448,54 @@ func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 		 (f.requester_id = $1::uuid AND f.addressee_id = $2::uuid)
 		 OR (f.requester_id = $2::uuid AND f.addressee_id = $1::uuid)`,
 		me, targetID).Scan(&st, &reqID)
-	if err == nil {
+
+		if errors.Is(err, pgx.ErrNoRows){
+
+			dbRequestsSucessful.Inc()
+
+			// PROMETHEUS
+			dbRequests.Inc()
+			_, err = ctx.chub.Db.Exec(context.Background(),
+			`INSERT INTO friends (requester_id, addressee_id, status) VALUES ($1::uuid, $2::uuid, 'pending')`,
+			me, targetID)
+
+			if err != nil {
+				fmt.Printf("Friend invite insert failed :: %v\n", err)
+				_ = ctx.client.Conn.WriteJSON(map[string]interface{}{
+					"type": "friend_add_failed", "success": false, "error": "Could not send friend request.",
+				})
+				return
+			}
+
+			dbRequestsSucessful.Inc()
+
+			addresseeOnline := ctx.chub.Clients[targetID] != nil
+			if c := ctx.chub.Clients[targetID]; c != nil {
+				_ = c.Conn.WriteJSON(map[string]interface{}{
+					"type": "friend_request",
+					"user": Friend{ID: me, Username: myName, Online: true},
+				})
+			}
+			_ = ctx.client.Conn.WriteJSON(map[string]interface{}{
+				"type": "friend_request_sent",
+				"user": Friend{ID: targetID, Username: targetName, Online: addresseeOnline},
+			})
+
+			return
+		}
+		if err != nil {
+			fmt.Printf("Friend lookup failed :: %v\n", err)
+			return
+		}
+
 		if st == "accepted" {
 			_ = ctx.client.Conn.WriteJSON(map[string]interface{}{
 				"type": "friend_add_failed", "success": false, "error": "Already friends.",
 			})
 			return
 		}
-		if st == "pending" {
-			if reqID == me {
+
+		if st == "pending" && reqID == me {
 				_ = ctx.client.Conn.WriteJSON(map[string]interface{}{
 					"type": "friend_add_failed", "success": false, "error": "Friend request already sent.",
 				})
@@ -465,6 +509,7 @@ func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 				`UPDATE friends SET status = 'accepted', updated_at = NOW()
 				 WHERE requester_id = $1::uuid AND addressee_id = $2::uuid AND status = 'pending'`,
 				targetID, me)
+
 			if err != nil {
 				fmt.Printf("mutual accept failed: %v\n", err)
 				return
@@ -472,7 +517,6 @@ func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 
 			// PROMETHEUS
 			dbRequestsSucessful.Inc()
-
 			dbRequests.Inc()
 
 			var requesterName string
@@ -484,41 +528,6 @@ func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 			
 			d.broadcastFriendAdded(ctx, targetID, requesterName, me, myName)
 			return
-		}
-	} else if !errors.Is(err, pgx.ErrNoRows) {
-		fmt.Printf("Friend lookup failed :: %v\n", err)
-		return
-	}
-	// PROMETHEUS
-	dbRequestsSucessful.Inc()
-
-	dbRequests.Inc()
-
-	_, err = ctx.chub.Db.Exec(context.Background(),
-		`INSERT INTO friends (requester_id, addressee_id, status) VALUES ($1::uuid, $2::uuid, 'pending')`,
-		me, targetID)
-	if err != nil {
-		fmt.Printf("Friend invite insert failed :: %v\n", err)
-		_ = ctx.client.Conn.WriteJSON(map[string]interface{}{
-			"type": "friend_add_failed", "success": false, "error": "Could not send friend request.",
-		})
-		return
-	}
-
-	// PROMETHEUS
-	dbRequestsSucessful.Inc()
-
-	addresseeOnline := ctx.chub.Clients[targetID] != nil
-	if c := ctx.chub.Clients[targetID]; c != nil {
-		_ = c.Conn.WriteJSON(map[string]interface{}{
-			"type": "friend_request",
-			"user": Friend{ID: me, Username: myName, Online: true},
-		})
-	}
-	_ = ctx.client.Conn.WriteJSON(map[string]interface{}{
-		"type": "friend_request_sent",
-		"user": Friend{ID: targetID, Username: targetName, Online: addresseeOnline},
-	})
 }
 
 type ProfileStyle struct {

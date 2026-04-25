@@ -272,7 +272,7 @@ func handleLogin( c *gin.Context, dbs *DBSafe ){
 		return
 	}
 
-	userQuery := "SELECT id, password_hash FROM users WHERE username = $1 AND is_guest = false;"
+	userQuery := "SELECT id, password_hash FROM users WHERE username = $1 AND type = 'standard';"
 
 	err := db.QueryRow(context.Background(), userQuery, login.Username).Scan(&userID, &passHash);
 	if (err != nil) {

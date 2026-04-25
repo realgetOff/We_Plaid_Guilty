@@ -409,13 +409,13 @@ func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 		return
 	}
 	var targetID string
-	var targetIsGuest bool
+	var targetType string
 
 	// PROMETHEUS
 	dbRequests.Inc()
 
 	err := ctx.chub.Db.QueryRow(context.Background(),
-		`SELECT id, COALESCE(is_guest, false) FROM users WHERE username = $1`, targetName).Scan(&targetID, &targetIsGuest)
+		`SELECT id, type FROM users WHERE username = $1`, targetName).Scan(&targetID, &targetType)
 	if err != nil {
 		fmt.Printf("Friend add: user not found :: %v\n", err)
 		return
@@ -424,7 +424,7 @@ func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 	// PROMETHEUS
 	dbRequestsSucessful.Inc()
 
-	if targetIsGuest {
+	if targetType == "guest" {
 		_ = ctx.client.Conn.WriteJSON(map[string]interface{}{
 			"type": "friend_add_failed", "success": false, "error": "Cannot add guest accounts as friends.",
 		})
@@ -551,12 +551,12 @@ func (d* Dispatcher) HandleGetProfile(ctx *WSContext, msg Message) {
 	// PROMETHEUS
 	dbRequests.Inc()
 
-	query := `SELECT p.id, p.display_name, p.color, p.font, COALESCE(u.is_guest, false)
+	query := `SELECT p.id, p.display_name, p.color, p.font
 				FROM profiles p
 				INNER JOIN users u ON p.id = u.id
 				WHERE u.username = $1;`
 	err := ctx.chub.Db.QueryRow(context.Background(), query, msg.Username).Scan(
-		&profileID, &user.Username, &user.Style.Color, &user.Style.Font, &user.IsGuest)
+		&profileID, &user.Username, &user.Style.Color, &user.Style.Font)
 
 	var response ProfileResponse
 	
@@ -898,19 +898,19 @@ func (d *Dispatcher) HandleAuth(ctx *WSContext, msg Message) {
 	ctx.client.CurrUsrName = &claims.Username
 	ctx.client.CurrUsrID = &claims.UserID
 
-	var isGuest bool
+	var clientType string
 
 	// PROMETHEUS
 	dbRequests.Inc()
 
 	_ = ctx.chub.Db.QueryRow(context.Background(),
-		`SELECT COALESCE(is_guest, false) FROM users WHERE id = $1`, claims.UserID).Scan(&isGuest)
+		`SELECT type FROM users WHERE id = $1`, claims.UserID).Scan(&clientType)
 	
 	
 	// PROMETHEUS
 	dbRequestsSucessful.Inc()
 	
-	ctx.client.IsGuest = isGuest
+	ctx.client.IsGuest = (clientType == "guest")
 
 	ctx.chub.mu.Lock()
 	ctx.chub.Clients[claims.UserID] = ctx.client

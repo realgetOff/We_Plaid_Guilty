@@ -37,6 +37,8 @@ type WSContext struct {
 	chub *ClientHub
 }
 
+const DEFAULT_COLOR = "#000000"
+
 type HandleFunc func(ctx *WSContext, msg Message)
 type PipeFunc func(ctx	 *WSContext, msg Message) bool
 
@@ -727,7 +729,6 @@ func (d *Dispatcher) HandleJoinAIGame(ctx *WSContext, msg Message) {
 			},
 		}
 	}
-	fmt.Printf("DEGUB: %s\n", msg.Type)
 }
 
 func (d *Dispatcher) HandleJoinAIRoom(ctx *WSContext, msg Message) {
@@ -747,7 +748,7 @@ func (d *Dispatcher) HandleJoinAIRoom(ctx *WSContext, msg Message) {
 		}
 		dbRequestsSucessful.Inc()
 	} else {
-		color = "#000000"
+		color = DEFAULT_COLOR
 		font = "normal"
 	}
 	base := ctx.client.CurrentRoom.GetBase()
@@ -779,7 +780,7 @@ func (d *Dispatcher) HandleLeaveAILobby(ctx *WSContext, msg Message) {
 
 	base.RemovePlayer(*ctx.client.CurrUsrID)
 	if AIRoom, ok := ctx.client.CurrentRoom.(*gamemanager.AIRoom); ok {
-		AIRoom.SendSystemMsg(fmt.Sprintf("%s leave the lobby !", *ctx.client.CurrUsrName))
+		AIRoom.SendSystemMsg(fmt.Sprintf("%s leave the AI room !", *ctx.client.CurrUsrName))
 	}
 
 	if len(base.Players) == 0 {
@@ -809,7 +810,7 @@ func (d *Dispatcher) HandleCreateAIRoom(ctx *WSContext, msg Message) {
 		}
 		dbRequestsSucessful.Inc()
 	} else {
-		color = "#000000"
+		color = DEFAULT_COLOR
 		font = "normal"
 	}
 	newRoom := ctx.client.Hub.CreateRoom(true)
@@ -943,7 +944,7 @@ func (d *Dispatcher) HandleCreateRoom(ctx *WSContext, msg Message) {
 		}
 		dbRequestsSucessful.Inc()
 	} else {
-		color = "#000000"
+		color = DEFAULT_COLOR
 		font = "normal"
 	}
 
@@ -996,7 +997,7 @@ func (d *Dispatcher) HandleJoinRoom(ctx *WSContext, msg Message) {
 		}
 		dbRequestsSucessful.Inc()
 	} else {
-		color = "#000000"
+		color = DEFAULT_COLOR
 		font = "normal"
 	}
 
@@ -1045,7 +1046,7 @@ func (d *Dispatcher) HandleLeaveLobby(ctx *WSContext, msg Message) {
 
 	base.RemovePlayer(*ctx.client.CurrUsrID)
 	if classicRoom, ok := ctx.client.CurrentRoom.(*gamemanager.Room); ok {
-		classicRoom.SendSystemMsg(fmt.Sprintf("%s leave the lobby !", *ctx.client.CurrUsrName))
+		classicRoom.SendSystemMsg(fmt.Sprintf("%s leave the room !", *ctx.client.CurrUsrName))
 		if len(base.Players) == 0 {
 			classicRoom.MessageChan <- gamemanager.Notification{
 				End: true,
@@ -1067,7 +1068,7 @@ func (d *Dispatcher) HandleLeaveGame(ctx *WSContext, msg Message) {
 	if (!RunPipeLine(ctx, msg, d.PipeIsAuth, d.PipeRoomExist)) { return }
 
 	if classicRoom, ok := ctx.client.CurrentRoom.(*gamemanager.Room); ok {
-		classicRoom.SendSystemMsg(fmt.Sprintf("%s leave the lobby !", *ctx.client.CurrUsrName))
+		// classicRoom.SendSystemMsg(fmt.Sprintf("%s leave the lobby !", *ctx.client.CurrUsrName))
 		del := classicRoom.LeaveGame(*ctx.client.CurrUsrID)
 		if del {
 			ctx.client.Hub.DeleteRoom(msg.Code)
@@ -1087,9 +1088,9 @@ func (d *Dispatcher) HandlePrompt(ctx *WSContext, msg Message) {
 	}
 	fmt.Printf("DEGUB: %s\n", msg.Type)
 	if classicRoom, ok := ctx.client.CurrentRoom.(*gamemanager.Room); ok {
-		err := classicRoom.SubmiteAction(*ctx.client.CurrUsrID, data, true);
+		err := classicRoom.SubmiteAction(*ctx.client.CurrUsrID, data, true)
 		if (err != nil) {
-			fmt.Printf("Error: Submited prompt: %v\n", err);
+			fmt.Printf("Error: Submited prompt: %v\n", err)
 		}
 	}
 }
@@ -1101,12 +1102,11 @@ func (d *Dispatcher) HandleDraw(ctx *WSContext, msg Message) {
 		"type": "draw",
 		"drawing": msg.Drawing,
 	}
-	fmt.Printf("DEGUB: %s\n", msg.Type)
 	if classicRoom, ok := ctx.client.CurrentRoom.(*gamemanager.Room); ok {
 		fmt.Printf("DEBUG: draw_submitted code = %s\n", msg.Code)
-		err := classicRoom.SubmiteAction(*ctx.client.CurrUsrID, data, true);
+		err := classicRoom.SubmiteAction(*ctx.client.CurrUsrID, data, true)
 		if (err != nil) {
-			fmt.Printf("Error: Submited draw: %v\n", err);
+			fmt.Printf("Error: Submited draw: %v\n", err)
 		}
 	}
 }
@@ -1120,9 +1120,9 @@ func (d *Dispatcher) HandleGuess(ctx *WSContext, msg Message) {
 	}
 	fmt.Printf("DEGUB: %s\n", msg.Type)
 	if classicRoom, ok := ctx.client.CurrentRoom.(*gamemanager.Room); ok {
-		err := classicRoom.SubmiteAction(*ctx.client.CurrUsrID, data, true);
+		err := classicRoom.SubmiteAction(*ctx.client.CurrUsrID, data, true)
 		if (err != nil) {
-			fmt.Printf("Error: Submited guess: %v\n", err);
+			fmt.Printf("Error: Submited guess: %v\n", err)
 		}
 	}
 }

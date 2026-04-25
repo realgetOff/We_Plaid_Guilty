@@ -22,6 +22,17 @@ services:
       - monitoring
     restart: always
 
+  # Le scanner qui envoie le code vers SonarCloud
+  sonar-scanner:
+    image: sonarsource/sonar-scanner-cli
+    container_name: sonar-scanner
+    volumes:
+      - .:/usr/src
+    environment:
+      - SONAR_HOST_URL=https://sonarcloud.io
+      - SONAR_TOKEN=${SONAR_TOKEN}
+    profiles:
+      - tools
   # La base de données
   db:
     image: postgres:16-alpine

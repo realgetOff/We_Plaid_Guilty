@@ -18,7 +18,7 @@ func main() {
 	dbName := os.Getenv("DB_NAME")
 
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable", 
-		dbHost, dbUser, dbPass, dbName)
+		dbHost, dbUser, dbPass, dbName) // NOTE for ssl certif with infra sslmode=verify-full
 
 	// 2. Test de connexion DB
 	db, err := sql.Open("postgres", dsn)

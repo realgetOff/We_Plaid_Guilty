@@ -58,6 +58,7 @@ jobs:
           scan-ref: .
           severity: HIGH,CRITICAL
           format: table
+          output: trivy-results.txt
           exit-code: 0
 
       # - name: Upload Trivy results
@@ -67,13 +68,19 @@ jobs:
           # name: trivy-report
           # path: trivy-results.xml
 
-      # - name: Publish Trivy Report
+      - name: Publish Trivy Report
         # uses: mikepenz/action-junit-report@v4
-        # if: always()
+        if: always()
         # with:
           # report_paths: trivy-results.xml
           # detailed_summary: true
           # check_name: "Trivy Security Report"
+        run: |
+          echo "Trivy Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat trivy-results.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
 
   sonarqube:
     name: SonarQube Scan

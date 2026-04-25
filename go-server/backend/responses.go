@@ -150,7 +150,7 @@ func handleGuestAuth(c *gin.Context, dbs *DBSafe){
 	var userID string
 	db := dbs.GetPool()	
 	
-	userQuery := "INSERT INTO users (username, is_guest) VALUES ($1, TRUE) RETURNING id;"
+	userQuery := "INSERT INTO users (username, type) VALUES ($1, 'guest') RETURNING id;"
 	err := db.QueryRow(context.Background(), userQuery, guestName).Scan(&userID);
 	if (err != nil) {
 		fmt.Println("Guest creation failed", err)
@@ -272,7 +272,7 @@ func handleLogin( c *gin.Context, dbs *DBSafe ){
 		return
 	}
 
-	userQuery := "SELECT id, password_hash FROM users WHERE username = $1 AND is_guest = false;"
+	userQuery := "SELECT id, password_hash FROM users WHERE username = $1 AND type = 'standard';"
 
 	err := db.QueryRow(context.Background(), userQuery, login.Username).Scan(&userID, &passHash);
 	if (err != nil) {
@@ -343,12 +343,12 @@ func FortyTwoCallback(c *gin.Context, dbs *DBSafe){ // change this to just be a 
 	var userID string
 	db := dbs.GetPool()	
 	
-	userQuery := 	`INSERT INTO users (username, email, is_guest) 
-					VALUES ($1, $2, FALSE) 
+	userQuery := 	`INSERT INTO users (username, email, type) 
+					VALUES ($1, $2, 'api42') 
 					ON CONFLICT (username) 
 					DO UPDATE SET 
 					    email = EXCLUDED.email,
-					    is_guest = FALSE
+					    type = 'api42'
 					RETURNING id;`
 
 	// PROMETHEUS
@@ -397,18 +397,3 @@ func FortyTwoCallback(c *gin.Context, dbs *DBSafe){ // change this to just be a 
 	frontendRedirectURL := fmt.Sprintf("http://localhost:8080/callback?token=%s", SignedString)	
 	c.Redirect(http.StatusTemporaryRedirect, frontendRedirectURL)
 }
-
-// func handleLogin(c *gin.Context) {
-// 	var name playerNameTemp
-
-// 	if err := c.ShouldBindJSON(&name); err != nil {
-// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload: " + err.Error()})
-// 		return
-// 	}
-
-// 	fmt.Println("Player name is : " + name.PlayerName)	
-
-// 	c.JSON(http.StatusOK, gin.H{
-// 		"login": "success",
-// 	})
-// }

@@ -165,9 +165,6 @@ func (d *Dispatcher) HandleGetFriend(ctx *WSContext, msg Message) {
 	if ctx.client.IsGuest {
 		_ = ctx.client.Conn.WriteJSON(FriendsListResponse{
 			Type:           "friends_list",
-			Friends:        []Friend{},
-			PendingIn:      []Friend{},
-			PendingOut:     []Friend{},
 			GuestNoFriends: true,
 		})
 		return
@@ -563,6 +560,7 @@ func (d* Dispatcher) HandleGetProfile(ctx *WSContext, msg Message) {
 	response.Type = "profile_data"
 
 	user.Online = (ctx.chub.Clients[profileID] != nil) 
+	user.IsGuest = ctx.client.IsGuest
 
 	if (err != nil) {
 		response.Success = false

@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
 		(type = 'api42' AND email IS NOT NULL AND password_hash IS NULL)
 		OR
 		(type = 'standard' AND email IS NOT NULL AND password_hash IS NOT NULL)
-	),
+	)
 	--created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 

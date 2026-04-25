@@ -19,9 +19,16 @@ const Home = () =>
 {
   const navigate = useNavigate();
 
-  useEffect(() => {
-    connect();
-    }, []);
+
+	useEffect(() => {
+	  const login_check = localStorage.getItem("authToken"); // or whatever your key is
+	 
+	  console.log("TEST LOGIN_CHECK", login_check);
+	 
+	  if (login_check) {
+	    connect();
+	  }
+	}, []);
 
   return (
     <div className="home">

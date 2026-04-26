@@ -114,3 +114,42 @@ jobs:
             sonar-scan \
             sonar-scanner \
               -Dsonar.token=${{ secrets.SONAR_TOKEN }}
+
+  gosec:
+    name: Gosec Scan
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.head_commit.message, '[skip tests]') }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+      - name: Check files
+        run: find go-server/backend -name "*.go" | head -20
+      - name: Install Gosec
+        run: go install github.com/securego/gosec/v2/cmd/gosec@latest
+      - name: Run Gosec
+        working-directory: go-server/backend
+        run: gosec ./... 2>&1 | tee gosec-results.txt || true
+      - name: Publish Gosec Report
+        if: always()
+        run: |
+          echo "Gosec Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat go-server/backend/gosec-results.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+      # - name: Upload Gosec results
+        # uses: actions/upload-artifact@v4
+        # if: always()
+        # with:
+          # name: gosec-report
+          # path: gosec-results.xml
+# 
+      # - name: Publish Gosec Report
+        # uses: mikepenz/action-junit-report@v4
+        # if: always()
+        # with:
+          # report_paths: gosec-results.xml
+          # detailed_summary: true
+          # check_name: "Gosec Security Report"
+          # include_passed: true

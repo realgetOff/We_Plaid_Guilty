@@ -24,7 +24,7 @@ type serverVarsStruct struct {
 	globalHub *gamemanager.Hub
 	ClientHub *ClientHub
 	router *gin.Engine
-	db DBSafe
+	db *DBSafe
 }
 
 func NewServerStructure () *serverVarsStruct {
@@ -62,7 +62,7 @@ func NewServerStructure () *serverVarsStruct {
 	return &serverVarsStruct{
 		globalHub:		hub,
 		router:			r,
-		db:				dbs,
+		db:				&dbs,
 		ClientHub:		chub,
 	}
 }
@@ -130,13 +130,13 @@ func main() {
 		findRoom(c, serverVars)
 	})
 	serverVars.router.GET("/ping", pong)
-	serverVars.router.GET("/health", health)
+	// serverVars.router.GET("/health", health)
 	serverVars.router.GET("/api/config", vaultstatus)
 	serverVars.router.GET("/ws", func (c *gin.Context){
 		handleWebsocket(c, serverVars)
 	})
 	serverVars.router.POST("/api/auth/player", func (c *gin.Context){
-		handleGuestAuth(c, &serverVars.db)
+		handleGuestAuth(c, serverVars.db)
 	})
 
 
@@ -151,16 +151,26 @@ func main() {
 
 	serverVars.router.GET("/api/auth/42/callback", func(c *gin.Context){
 		fmt.Println("42 CALLBACK URL")
-		FortyTwoCallback(c, &serverVars.db)
+		FortyTwoCallback(c, serverVars.db)
 	})
 
 	serverVars.router.POST("/api/auth/register", func(c *gin.Context){
-		handleRegister(c, &serverVars.db)
+		handleRegister(c, serverVars.db)
 	})
 
 	serverVars.router.POST("/api/auth/login", func(c *gin.Context){
-		handleLogin(c, &serverVars.db)
+		handleLogin(c, serverVars.db)
 	})
+
+	go func() {
+		healthRouter := gin.New()
+		healthRouter.Use(gin.Recovery())
+
+		healthRouter.GET("/health", health)
+		if err := healthRouter.Run(":8081"); err != nil {
+			log.Fatalf("Error: launch server health %v", err)
+		}
+	}()
 
 	port := os.Getenv("PORT")
 	if port == "" {

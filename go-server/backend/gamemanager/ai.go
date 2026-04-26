@@ -4,20 +4,16 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"io"
+	"os"
+	"time"
 	"net/http"
+	"github.com/joho/godotenv"
 )
 
-
-// const grokAPIURL = "https://api.mistral.ai/v1/chat/completions"
-// const grokModel  = "open-mistral-7b"
-// const API_KEY = "0wZeVeQFag9DGevdgPZh1szVbMidYSuw"
 const grokAPIURL = "https://api.x.ai/v1/chat/completions"
 const grokModel  = "grok-4-1-fast"
-
-// const grokAPIURL = "https://api.groq.com/openai/v1/chat/completions"
-// const grokModel = "llama-3.1-8b-instant"
-const API_KEY = "xai-qQnbfo3xYj0Fw28NaAlGTipAHBLdKiVp7AkGEjyyT5qJ78RJxjU2k7rCuDKBnY68NowCMo3do4khFcYP"
 
 type grokMessage struct {
 	Role    string `json:"role"`
@@ -33,6 +29,12 @@ type grokChoice struct {
 	Message grokMessage `json:"message"`
 }
 
+type Config_AIGAME struct {
+	API_KEY string `json:"api_key"`
+}
+
+var config Config_AIGAME
+
 type grokResponse struct {
 	Choices []grokChoice `json:"choices"`
 	Error   *struct {
@@ -40,22 +42,46 @@ type grokResponse struct {
 	} `json:"error,omitempty"`
 }
 
+func loadAPI() (string, error) {
+	secretsFile := "/vault/secrets/app/config"
+
+	maxRetries := 10
+	for i := 0; i < maxRetries; i++ {
+		if _, err := os.Stat(secretsFile); err == nil {
+			break
+		}
+		log.Printf("Waiting for secrets file %s... (%d/%d)", secretsFile, i+1, maxRetries)
+		time.Sleep(2 * time.Second)
+	}
+
+	if err := godotenv.Load(secretsFile); err != nil {
+		return "" , fmt.Errorf("failed to load secrets from %s: %w", secretsFile, err)
+	}
+
+	API	:= os.Getenv("API_KEY")
+
+	log.Println("Secrets loaded from Vault Agent Injector successfully")
+	return API, nil
+
+}
+
+func loadLocalEnv() (string, error) {
+	fmt.Printf("DEBUG: loadLocalEnv start\n")
+	KEY := os.Getenv("API_KEY")
+	if KEY == "" {
+		return "", fmt.Errorf("No env set for grok API key\n")
+	}
+	fmt.Printf("API_KEY = %s\n", KEY)
+	return KEY, nil
+}
+
 func CallAI(prompt string) (string, error) {
-	apiKey := API_KEY
-	if apiKey == "" {
+	apiKey, ok := loadAPI()
+	if apiKey, ok = loadLocalEnv(); ok == nil {
 		return "", fmt.Errorf("API_KEY not set")
 	}
 
-	// reqBody := grokRequest{
-		// Model: grokModel,
-		// Messages: []grokMessage{
-			// {
-				// Role:    "user",
-				// Content: prompt,
-			// },
-		// },
-	// }
-		reqBody := grokRequest{
+	reqBody := grokRequest{
 		Model: grokModel,
 		Messages: []grokMessage{
 			{

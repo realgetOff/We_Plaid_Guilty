@@ -129,7 +129,8 @@ jobs:
       - name: Install Gosec
         run: go install github.com/securego/gosec/v2/cmd/gosec@latest
       - name: Run Gosec
-        run: gosec ./go-server/backend/...
+        working-directory: go-server/backend
+        run: gosec ./...
 
       # - name: Upload Gosec results
         # uses: actions/upload-artifact@v4

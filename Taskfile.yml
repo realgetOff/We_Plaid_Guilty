@@ -15,6 +15,8 @@ vars:
   DOMAIN: play-stupid.games
   DEPLOY_USER:
     sh: echo "${DEPLOY_USER:-manual}"
+  APP_IMAGE_TAG:
+    sh: echo "${APP_IMAGE_TAG:-latest}"
 
 tasks:
 
@@ -235,7 +237,7 @@ tasks:
       - |
         cd {{.ANSIBLE_DIR}} && ansible-playbook {{.PLAYBOOK}} \
           -e "kms_key_id=$(cd ../{{.TF_INFRA_DIR}} && terraform output -raw kms_key_id)" \
-          -e "app_image_tag=${APP_IMAGE_TAG:-latest}" \
+          -e "app_image_tag={{.APP_IMAGE_TAG}}" \
           -e "aws_account_id=$(cd ../{{.TF_INFRA_DIR}} && terraform output -raw aws_account_id)" \
           -e "deploy_user=$DEPLOY_USER" \
           --vault-password-file {{.VAULT_FILE}}

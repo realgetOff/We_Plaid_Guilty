@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http" 
 	"os"
+	"time"
 	// "runtime"
 	
 	"main.go/gamemanager"
@@ -79,20 +80,20 @@ func main() {
 	fmt.Println(" ~~ Starting transcendence backend... ~~")
 
 
-	// to be moved, temporarily here to allow docker-compose testing entirely locally
-
 	redirectUrl := os.Getenv("REDIRECT_URL_42")
 	clientId := os.Getenv("CLIENT_ID")
 	clientSecret := os.Getenv("CLIENT_SECRET")
+	authUrl := os.Getenv("AUTH_URL")
+	tokenUrl := os.Getenv("TOKEN_URL")
 
 	fortyTwoOauthConfig = &oauth2.Config {
 		RedirectURL: redirectUrl,
-		ClientID: clientId, //"u-s4t2ud-66ea3626f19c1907a4eb8c1c02ab89204b4cd2bf9d50d55f75f34464680e95a8",
+		ClientID: clientId,
 		ClientSecret: clientSecret,
 		Scopes: []string{"public"},
 		Endpoint:	oauth2.Endpoint {
-			AuthURL: "https://api.intra.42.fr/oauth/authorize",
-			TokenURL: "https://api.intra.42.fr/oauth/token",
+			AuthURL: authUrl,
+			TokenURL: tokenUrl,
 		},
 	}
 			
@@ -197,6 +198,7 @@ func main() {
 			Addr: ":" + port,
 			Handler: serverVars.router,
 			TLSConfig: tlsConfig,
+			ReadTimeout: 5 * time.Second,
 		}
 
 		fmt.Println(" ~~ Attempting to boot with mTLS on port ", port, " ~~")

@@ -13,7 +13,6 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - LOCAL=true
       - DB_HOST=db
       - DB_PORT=5432
       - DB_USER=admin
@@ -23,6 +22,8 @@ services:
       - CLIENT_ID=${CLIENT_ID}
       - CLIENT_SECRET=${CLIENT_SECRET}
       - REDIRECT_URL_42=${REDIRECT_URL_42}
+      - AUTH_URL=${AUTH_URL}
+      - TOKEN_URL=${TOKEN_URL}
     depends_on:
       - db
       # - prometheus

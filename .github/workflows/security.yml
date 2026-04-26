@@ -130,8 +130,14 @@ jobs:
         run: go install github.com/securego/gosec/v2/cmd/gosec@latest
       - name: Run Gosec
         working-directory: go-server/backend
-        run: gosec ./...
-
+        run: gosec ./... 2>&1 | tee gosec-results.txt || true
+      - name: Publish Gosec Report
+        if: always()
+        run: |
+          echo "Gosec Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat go-server/backend/gosec-results.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
       # - name: Upload Gosec results
         # uses: actions/upload-artifact@v4
         # if: always()

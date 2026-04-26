@@ -150,7 +150,7 @@ func handleGuestAuth(c *gin.Context, dbs *DBSafe) {
 	var userID string
 	db := dbs.GetPool()
 
-	userQuery := "INSERT INTO users (username, is_guest) VALUES ($1, TRUE) RETURNING id;"
+	userQuery := "INSERT INTO users (username, type) VALUES ($1, 'guest') RETURNING id;"
 	err := db.QueryRow(context.Background(), userQuery, guestName).Scan(&userID)
 	if err != nil {
 		fmt.Println("Guest creation failed", err)

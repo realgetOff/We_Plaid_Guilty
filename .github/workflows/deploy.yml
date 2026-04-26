@@ -90,6 +90,9 @@ jobs:
           chmod 600 ~/.ssh/github_actions
           ssh-keyscan -H github.com >> ~/.ssh/known_hosts
 
+      - name: Debug tag
+        run: echo "TAG=$={{ steps.meta.outputs.tag }}"
+
       - name: Deploy
         env:
           ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}

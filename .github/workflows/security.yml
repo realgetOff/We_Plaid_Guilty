@@ -114,3 +114,30 @@ jobs:
             sonar-scan \
             sonar-scanner \
               -Dsonar.token=${{ secrets.SONAR_TOKEN }}
+
+  gosec:
+    name: Gosec Scan
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.head_commit.message, '[skip tests]') }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Gosec
+        uses: securego/gosec@master
+        with:
+          args: -fmt junit-xml -out gosec-results.xml ./go-server/backend/...
+
+      - name: Upload Gosec results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gosec-report
+          path: gosec-results.xml
+
+      - name: Publish Gosec Report
+        uses: mikepenz/action-junit-report@v4
+        if: always()
+        with:
+          report_paths: gosec-results.xml
+          detailed_summary: true
+          check_name: "Gosec Security Report"

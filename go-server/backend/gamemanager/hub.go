@@ -2,8 +2,12 @@ package gamemanager
 
 import (
 	"fmt"
+	"math/big"
 	"strings"
-	"math/rand"
+
+	// "math/rand"
+	// "math/big"
+	"crypto/rand"
 	"sync"
 	"time"
 )
@@ -19,7 +23,6 @@ func (r *Room) GetBase() *BaseRoom { return &r.BaseRoom }
 func (r *AIRoom) GetID() string { return r.ID }
 func (r *AIRoom) GetBase() *BaseRoom { return &r.BaseRoom }
 
-const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 type Hub struct {
 	Rooms map[string]GameRoom
@@ -27,14 +30,19 @@ type Hub struct {
 }
 
 func (h *Hub) generateRandID(lenght int) (roomId string) {
+	const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	result := make([]byte, lenght)
 
-	ran_str := make([]byte, lenght)
 
-	for i:= 0; i < lenght; i++ {
-		ran_str[i] = charset[rand.Intn(len(charset))]
+	for i := range result {
+		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(charset))))
+		if err != nil {
+			return ""
+		}
+		result[i] = charset[num.Int64()]
 	}
 
-	return string(ran_str)
+	return string(result)
 }
 
 func (h *Hub) DeleteRoom(id string) {

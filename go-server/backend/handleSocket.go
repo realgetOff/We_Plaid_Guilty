@@ -41,6 +41,7 @@ type WSContext struct {
 
 const DEFAULT_COLOR = "#000000"
 const NOT_FOUND_DB = "ERROR: Player not found in the DB\n"
+const ERROR_WRITE_WS = "ERROR: WS %v\n"
 
 type HandleFunc func(ctx *WSContext, msg Message)
 type PipeFunc func(ctx	 *WSContext, msg Message) bool
@@ -108,7 +109,10 @@ func (d *Dispatcher) Dispatch(ctx *WSContext, msg Message) {
 	handler, ok := d.handlers[msg.Type]
 	if !ok {
 		fmt.Printf("DEBUG: %s not found\n", msg.Type)
-		ctx.client.Conn.WriteJSON(map[string]string{"type": "error", "message": "Action not recognized by the server",})
+		writeErr := ctx.client.Conn.WriteJSON(map[string]string{"type": "error", "message": "Action not recognized by the server",})
+		if writeErr != nil {
+			fmt.Printf(ERROR_WRITE_WS, writeErr)
+		}
 		return
 	}
 	fmt.Printf("Message, %s", msg.Type)
@@ -660,7 +664,7 @@ func (d* Dispatcher) HandleProfileUpdate(ctx *WSContext, msg Message) {
     response.User.Style.Color = msg.Style.Color
     response.User.Style.Font = msg.Style.Font
 
-    ctx.client.Conn.WriteJSON(map[string]interface{}{
+	writeErr := ctx.client.Conn.WriteJSON(map[string]interface{}{
         "type": "profile_updated",
         "success": true,
         "user": map[string]interface{}{
@@ -672,6 +676,9 @@ func (d* Dispatcher) HandleProfileUpdate(ctx *WSContext, msg Message) {
         },
         "token": newToken,
     })
+	if writeErr != nil {
+		fmt.Printf(ERROR_WRITE_WS, writeErr)
+	}
 }
 
 func NewDispatcher() *Dispatcher {
@@ -900,8 +907,11 @@ func (d *Dispatcher) HandleAuth(ctx *WSContext, msg Message) {
 	claims, err := validateAndGetClaims(msg.Token)
 	if err != nil {
 		fmt.Println("WS Auth Failed:", err)
-		ctx.client.Conn.WriteMessage(websocket.CloseMessage,
+		writeErr := ctx.client.Conn.WriteMessage(websocket.CloseMessage,
 		websocket.FormatCloseMessage(4000, "token expired"))
+		if writeErr != nil {
+			fmt.Printf(ERROR_WRITE_WS, writeErr)
+		}
 		return
 	}
 	
@@ -1036,7 +1046,10 @@ func (d *Dispatcher) HandleJoinGame(ctx *WSContext, msg Message) {
 	if classicRoom, ok := ctx.client.CurrentRoom.(*gamemanager.Room); ok {
 		task = classicRoom.GetPlayerTask(*ctx.client.CurrUsrID)
 	}
-	ctx.client.Conn.WriteJSON(task)
+	writeErr := ctx.client.Conn.WriteJSON(task)
+	if writeErr != nil {
+		fmt.Printf(ERROR_WRITE_WS, writeErr)
+	}
 }
 
 func (d *Dispatcher) HandleLeaveLobby(ctx *WSContext, msg Message) { 
@@ -1144,7 +1157,10 @@ func (d *Dispatcher) HandleStartGame(ctx *WSContext, msg Message) {
 	if classicRoom, ok := ctx.client.CurrentRoom.(*gamemanager.Room); ok {
 		err := classicRoom.StartGame()
 		if err != nil {
-			ctx.client.Conn.WriteJSON(map[string]string{"type": "error", "message": err.Error()})
+			writeErr := ctx.client.Conn.WriteJSON(map[string]string{"type": "error", "message": err.Error()})
+			if writeErr != nil {
+				fmt.Printf(ERROR_WRITE_WS, writeErr)
+			}
 			return
 		}
 	}

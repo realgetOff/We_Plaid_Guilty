@@ -2,18 +2,16 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
-	"math/rand"
+	"math/big"
 	"net/http"
 	"strings"
 	"time"
-
 	"encoding/json"
 
 	"github.com/gin-gonic/gin"
-	// "github.com/jackc/pgx/v5/pgxpool"
 	"github.com/golang-jwt/jwt/v5"
-
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -78,28 +76,6 @@ func health(c *gin.Context) {
 	})
 }
 
-func generateLobbyCode(length int) string {
-	const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" // Removed the numeric arguements as 0123456789
-	seededRand := rand.New(rand.NewSource(time.Now().UnixNano()))
-
-	ret := make([]byte, length)
-	for i := range ret {
-		ret[i] = charset[seededRand.Intn(len(charset))]
-	}
-
-	return string(ret)
-}
-
-func createLobby(c *gin.Context) { // obsolete code
-	lobbyCode := generateLobbyCode(6)
-
-	//fmt.Println("The generated lobby code is: " + lobbyCode) //debug command
-
-	c.JSON(http.StatusOK, CreateLobbyResponse{
-		LobbyCode: lobbyCode,
-	})
-}
-
 var jwtSecret = []byte("replace_with_env_or_equivalent_later")
 
 type MyCustomClaims struct {
@@ -145,7 +121,8 @@ func validateAndGetClaims(tokenString string) (*MyCustomClaims, error) {
 }
 
 func handleGuestAuth(c *gin.Context, dbs *DBSafe) {
-	guestName := fmt.Sprintf("guest_%d%d", rand.Intn(99), time.Now().UnixNano()%1000)
+	n, _ := rand.Int(rand.Reader, big.NewInt(10000))
+	guestName := fmt.Sprintf("guest_%04d", n.Int64())
 	var userID string
 	db := dbs.GetPool()
 

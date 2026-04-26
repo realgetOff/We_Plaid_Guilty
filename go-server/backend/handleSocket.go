@@ -38,6 +38,7 @@ type WSContext struct {
 }
 
 const DEFAULT_COLOR = "#000000"
+const NOT_FOUND_DB = "ERROR: Player not found in the DB\n"
 
 type HandleFunc func(ctx *WSContext, msg Message)
 type PipeFunc func(ctx	 *WSContext, msg Message) bool
@@ -752,7 +753,7 @@ func (d *Dispatcher) HandleJoinAIRoom(ctx *WSContext, msg Message) {
 		err := ctx.chub.Db.QueryRow(context.Background(), query, ctx.client.CurrUsrID).Scan(&color, &font)
 
 		if err != nil {
-			fmt.Printf("ERROR: Player not found in the DB\n")
+			fmt.Printf(NOT_FOUND_DB)
 			return
 		}
 		dbRequestsSucessful.Inc()
@@ -814,7 +815,7 @@ func (d *Dispatcher) HandleCreateAIRoom(ctx *WSContext, msg Message) {
 		err := ctx.chub.Db.QueryRow(context.Background(), query, ctx.client.CurrUsrID).Scan(&color, &font)
 
 		if err != nil {
-			fmt.Printf("ERROR: Player not found in the DB\n")
+			fmt.Printf(NOT_FOUND_DB)
 			return
 		}
 		dbRequestsSucessful.Inc()
@@ -948,7 +949,7 @@ func (d *Dispatcher) HandleCreateRoom(ctx *WSContext, msg Message) {
 		err := ctx.chub.Db.QueryRow(context.Background(), query, ctx.client.CurrUsrID).Scan(&color, &font)
 
 		if err != nil {
-			fmt.Printf("ERROR: Player not found in the DB\n")
+			fmt.Printf(NOT_FOUND_DB)
 			return
 		}
 		dbRequestsSucessful.Inc()
@@ -1001,7 +1002,7 @@ func (d *Dispatcher) HandleJoinRoom(ctx *WSContext, msg Message) {
 		err := ctx.chub.Db.QueryRow(context.Background(), query, ctx.client.CurrUsrID).Scan(&color, &font)
 
 		if err != nil {
-			fmt.Printf("ERROR: Player not found in the DB\n")
+			fmt.Printf(NOT_FOUND_DB)
 			return
 		}
 		dbRequestsSucessful.Inc()

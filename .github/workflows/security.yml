@@ -125,20 +125,20 @@ jobs:
       - name: Run Gosec
         uses: securego/gosec@master
         with:
-          args: -fmt junit-xml -out gosec-results.xml ./go-server/backend/...
+          args: -fmt text ./go-server/backend/...
 
-      - name: Upload Gosec results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: gosec-report
-          path: gosec-results.xml
-
-      - name: Publish Gosec Report
-        uses: mikepenz/action-junit-report@v4
-        if: always()
-        with:
-          report_paths: gosec-results.xml
-          detailed_summary: true
-          check_name: "Gosec Security Report"
-          include_passed: true
+      # - name: Upload Gosec results
+        # uses: actions/upload-artifact@v4
+        # if: always()
+        # with:
+          # name: gosec-report
+          # path: gosec-results.xml
+# 
+      # - name: Publish Gosec Report
+        # uses: mikepenz/action-junit-report@v4
+        # if: always()
+        # with:
+          # report_paths: gosec-results.xml
+          # detailed_summary: true
+          # check_name: "Gosec Security Report"
+          # include_passed: true

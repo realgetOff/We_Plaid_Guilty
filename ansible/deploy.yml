@@ -97,6 +97,7 @@
       shell: |
         /usr/local/bin/helm upgrade --install gartic-app /tmp/gartic-app \
           --namespace app \
+          --set image.tag={{ app_image_tag | default('latest') }} \
           --timeout 120s
       environment:
         KUBECONFIG: /etc/rancher/k3s/k3s.yaml

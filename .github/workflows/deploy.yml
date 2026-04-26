@@ -95,6 +95,7 @@ jobs:
         env:
           ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
           DEPLOY_USER: ${{ github.actor }}
+          APP_IMAGE_TAG: ${{ steps.meta.outputs.tag }}
           CI: "true"
         run: |
           echo "$ANSIBLE_VAULT_PASSWORD" > ~/.vault_pass

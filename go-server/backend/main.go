@@ -30,14 +30,14 @@ type serverVarsStruct struct {
 func NewServerStructure () *serverVarsStruct {
 	var dbs DBSafe
 
-	db, err := connectToDatabase()
+	// db, err := connectToDatabase()
 	
-	dbs.Pool = db
-	go reloadConfig(&dbs)
-	if err != nil {
-		log.Fatalf("Couldn't connect to the PostgreSQL database: %v", err)
-	}
-	defer db.Close()
+	// dbs.Pool = db
+	// go reloadConfig(&dbs)
+	// if err != nil {
+	// 	log.Fatalf("Couldn't connect to the PostgreSQL database: %v", err)
+	// }
+	// defer db.Close()
 
 	dbPool, err := connectToDatabase()
 	dbs.Pool = dbPool
@@ -53,6 +53,8 @@ func NewServerStructure () *serverVarsStruct {
 	gin_prom := ginprometheus.NewPrometheus("app")
 	gin_prom.Use(r)
 	metrics.RegisterMetrics()
+
+	startupUserMetrics(&dbs)
 
 	chub := &ClientHub{
 		Clients:	make(map[string]*Client),

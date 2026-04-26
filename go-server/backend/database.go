@@ -14,6 +14,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	
+	"main.go/metrics"
 	// "github.com/prometheus/client_golang/prometheus"
 )
 
@@ -77,6 +78,34 @@ func reloadConfig(sdb *DBSafe) {
 
 	}
 }
+
+func startupUserMetrics (dbs *DBSafe) {
+	db := dbs.GetPool()
+
+	startupQuery := `SELECT
+						COUNT(*),
+						COUNT(*) FILTER (WHERE type = 'standard'),
+						COUNT(*) FILTER (WHERE type = 'guest'),
+						COUNT(*) FILTER (WHERE type = 'api42')
+ 					FROM users;`
+
+	var total float64
+	var standard float64
+	var guests float64
+	var api float64
+
+	err := db.QueryRow(context.Background(), startupQuery).Scan(&total, &standard, &guests, &api)
+	if (err != nil) {
+		fmt.Printf("Couldn't get the number of users in the database: %v", err)
+		return
+	}
+
+	metrics.UserCountTotal.Add(total)
+	metrics.UserCountStandard.Add(standard)
+	metrics.UserCountGuest.Add(guests)
+	metrics.UserCountAPI.Add(api)
+}
+
 
 func connectToDatabase () (*pgxpool.Pool, error) {
 

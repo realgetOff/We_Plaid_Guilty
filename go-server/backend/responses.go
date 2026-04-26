@@ -154,6 +154,9 @@ func handleGuestAuth(c *gin.Context, dbs *DBSafe) {
 		return
 	}
 
+	metrics.UserCountTotal.Inc()
+	metrics.UserCountGuest.Inc()
+
 	c.JSON(http.StatusOK, AuthResponse{
 		Token: SignedString,
 	})
@@ -227,6 +230,11 @@ func handleRegister(c *gin.Context, dbs *DBSafe) {
 			"error": "Couldn't sign / generate JWT for user."})
 		return
 	}
+
+
+	metrics.UserCountTotal.Inc()
+	metrics.UserCountStandard.Inc()
+
 
 	c.JSON(http.StatusOK, AuthResponse{
 		Token: SignedString,
@@ -312,6 +320,7 @@ func FortyTwoCallback(c *gin.Context, dbs *DBSafe) { // change this to just be a
 	fmt.Println("--------------------------\n")
 
 	var userID string
+	var isInsert bool
 	db := dbs.GetPool()
 
 	userQuery := `INSERT INTO users (username, email, type) 
@@ -320,17 +329,21 @@ func FortyTwoCallback(c *gin.Context, dbs *DBSafe) { // change this to just be a
 					DO UPDATE SET 
 					    email = EXCLUDED.email,
 					    type = 'api42'
-					RETURNING id;`
+					RETURNING id, (xmax = 0);`
 
 	// PROMETHEUS
 	metrics.DbRequests.Inc()
 
-	err = db.QueryRow(context.Background(), userQuery, userProfile.Login, userProfile.Email).Scan(&userID)
+	err = db.QueryRow(context.Background(), userQuery, userProfile.Login, userProfile.Email).Scan(&userID, &isInsert)
 	if err != nil {
 		fmt.Printf("User creation failed %v\n", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Server couldn't insert a user in the database."})
 		return
+	}
+
+	if (isInsert){
+		metrics.UserCountAPI.Inc() 
 	}
 
 	// PROMETHEUS

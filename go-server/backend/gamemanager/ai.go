@@ -12,15 +12,8 @@ import (
 	"github.com/joho/godotenv"
 )
 
-
-// const grokAPIURL = "https://api.mistral.ai/v1/chat/completions"
-// const grokModel  = "open-mistral-7b"
 const grokAPIURL = "https://api.x.ai/v1/chat/completions"
 const grokModel  = "grok-4-1-fast"
-
-// const grokAPIURL = "https://api.groq.com/openai/v1/chat/completions"
-// const grokModel = "llama-3.1-8b-instant"
-// const API_KEY = "xai-qQnbfo3xYj0Fw28NaAlGTipAHBLdKiVp7AkGEjyyT5qJ78RJxjU2k7rCuDKBnY68NowCMo3do4khFcYP"
 
 type grokMessage struct {
 	Role    string `json:"role"`

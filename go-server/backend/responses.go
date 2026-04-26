@@ -15,6 +15,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 
 	"golang.org/x/crypto/bcrypt"
+	"main.go/metrics"
 )
 
 type LobbySettings struct {
@@ -345,7 +346,7 @@ func FortyTwoCallback(c *gin.Context, dbs *DBSafe) { // change this to just be a
 					RETURNING id;`
 
 	// PROMETHEUS
-	dbRequests.Inc()
+	metrics.DbRequests.Inc()
 
 	err = db.QueryRow(context.Background(), userQuery, userProfile.Login, userProfile.Email).Scan(&userID)
 	if err != nil {
@@ -356,13 +357,13 @@ func FortyTwoCallback(c *gin.Context, dbs *DBSafe) { // change this to just be a
 	}
 
 	// PROMETHEUS
-	dbRequestsSucessful.Inc()
+	metrics.DbRequestsSucessful.Inc()
 
 	fmt.Println("Username: " + userProfile.Login + " user ID = " + userID)
 
 	if userID != "" {
 		// PROMETHEUS
-		dbRequests.Inc()
+		metrics.DbRequests.Inc()
 
 		profileQuery := `INSERT INTO profiles (id, display_name)
 						VALUES ($1, $2)
@@ -377,7 +378,7 @@ func FortyTwoCallback(c *gin.Context, dbs *DBSafe) { // change this to just be a
 	}
 
 	// PROMETHEUS
-	dbRequestsSucessful.Inc()
+	metrics.DbRequestsSucessful.Inc()
 
 	var SignedString string
 	SignedString, err = generateJWT(userID, userProfile.Login)

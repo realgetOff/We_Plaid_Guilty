@@ -8,6 +8,7 @@ import (
 	// "runtime"
 	
 	"main.go/gamemanager"
+	"main.go/metrics"
 
 	"github.com/zsais/go-gin-prometheus"
 	"github.com/gin-gonic/gin"
@@ -51,10 +52,11 @@ func NewServerStructure () *serverVarsStruct {
 
 	gin_prom := ginprometheus.NewPrometheus("app")
 	gin_prom.Use(r)
+	metrics.RegisterMetrics()
 
 	chub := &ClientHub{
 		Clients:	make(map[string]*Client),
-		Db:			dbPool,
+		db:			dbPool,
 	}
 
 	return &serverVarsStruct{

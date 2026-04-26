@@ -69,6 +69,7 @@ type BaseRoom struct {
 	FinishedChan chan bool
 	Status       GameStates
 	MessageChan  chan Notification
+	IsAi		 bool	
 	
 	mu           sync.Mutex
 }

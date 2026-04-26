@@ -40,6 +40,7 @@ func (h *Hub) generateRandID(lenght int) (roomId string) {
 func (h *Hub) DeleteRoom(id string) {
     h.mu.Lock()
     defer h.mu.Unlock()
+	// NOTE to acces IsAi bool h.Rooms[id].GetBase().Isi
 	fmt.Printf("DEBUG: DELETE ROOM\n")
     delete(h.Rooms, id)
 }
@@ -121,8 +122,10 @@ func (h *Hub) CreateRoom(isAI bool) (GameRoom){
 
 	if (isAI) {
 		newRoom = NewAIRoom(IdRoom)
+		newRoom.GetBase().IsAi = true
 	} else {
 		newRoom = NewRoom(IdRoom)
+		newRoom.GetBase().IsAi = false
 	}
 
 

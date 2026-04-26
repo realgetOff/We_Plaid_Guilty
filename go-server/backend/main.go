@@ -83,8 +83,8 @@ func main() {
 	if (os.Getenv("LOCAL") != "") {
 		fortyTwoOauthConfig = &oauth2.Config {
 			RedirectURL: "http://localhost:8080/api/auth/42/callback",
-			ClientID: "u-s4t2ud-66ea3626f19c1907a4eb8c1c02ab89204b4cd2bf9d50d55f75f34464680e95a8",
-			ClientSecret: "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",
+			ClientID: os.Getenv("CLIENT_ID"), //"u-s4t2ud-66ea3626f19c1907a4eb8c1c02ab89204b4cd2bf9d50d55f75f34464680e95a8",
+			ClientSecret: os.Getenv("CLIENT_SECRET"), // "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",
 			Scopes: []string{"public"},
 			Endpoint:	oauth2.Endpoint {
 				AuthURL: "https://api.intra.42.fr/oauth/authorize",

@@ -20,6 +20,8 @@ services:
       - DB_PASSWORD=123
       - DB_NAME=transcendence
       - API_KEY=${API_KEY}
+      - CLIENT_ID=${CLIENT_ID}
+      - CLIENT_SECRET=${CLIENT_SECRET}
     depends_on:
       - db
       # - prometheus

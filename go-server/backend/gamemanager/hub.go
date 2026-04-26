@@ -112,7 +112,6 @@ func (h *Hub) LogRoom() {
 
 func (h *Hub) CreateRoom(isAI bool) (GameRoom){
 	var IdRoom string
-	rand.Seed(time.Now().UnixNano())
 
 	for {
 		IdRoom = h.generateRandID(6)

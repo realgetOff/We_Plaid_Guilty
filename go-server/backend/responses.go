@@ -3,12 +3,12 @@ package main
 import (
 	"context"
 	"crypto/rand"
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"net/http"
 	"strings"
 	"time"
-	"encoding/json"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -32,6 +32,9 @@ type CreateLobbyRequest struct {
 type CreateLobbyResponse struct {
 	LobbyCode string `json:"lobbyCode"`
 }
+
+const USR_ID = " user ID = "
+const JWT_ERROR = "Couldn't sign / generate JWT for user."
 
 /*
 The message structure contains the json information to be sent / received by the websocket for room generation
@@ -212,7 +215,7 @@ func handleRegister(c *gin.Context, dbs *DBSafe) {
 		return
 	}
 
-	fmt.Println("Registered username: " + login.Username + " user ID = " + userID)
+	fmt.Println("Registered username: " + login.Username + USR_ID + userID)
 
 	profileQuery := "INSERT INTO profiles (id, display_name) VALUES ($1, $2)"
 	_, err = db.Exec(context.Background(), profileQuery, userID, login.Username)
@@ -227,7 +230,7 @@ func handleRegister(c *gin.Context, dbs *DBSafe) {
 	SignedString, err = generateJWT(userID, login.Username)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Couldn't sign / generate JWT for user."})
+			"error": JWT_ERROR})
 		return
 	}
 
@@ -270,13 +273,13 @@ func handleLogin(c *gin.Context, dbs *DBSafe) {
 		return
 	}
 
-	fmt.Println("Password valid for: " + login.Username + " user ID = " + userID)
+	fmt.Println("Password valid for: " + login.Username + USR_ID + userID)
 
 	var SignedString string
 	SignedString, err = generateJWT(userID, login.Username)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Couldn't sign / generate JWT for user."})
+			"error": JWT_ERROR})
 		return
 	}
 
@@ -349,7 +352,7 @@ func FortyTwoCallback(c *gin.Context, dbs *DBSafe) { // change this to just be a
 	// PROMETHEUS
 	metrics.DbRequestsSucessful.Inc()
 
-	fmt.Println("Username: " + userProfile.Login + " user ID = " + userID)
+	fmt.Println("Username: " + userProfile.Login + USR_ID + userID)
 
 	if userID != "" {
 		// PROMETHEUS
@@ -374,7 +377,7 @@ func FortyTwoCallback(c *gin.Context, dbs *DBSafe) { // change this to just be a
 	SignedString, err = generateJWT(userID, userProfile.Login)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Couldn't sign / generate JWT for user."})
+			"error": JWT_ERROR})
 		return
 	}
 

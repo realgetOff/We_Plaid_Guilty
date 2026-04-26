@@ -13,6 +13,7 @@ import (
 	"net/http"
 
 	"main.go/gamemanager"
+	"main.go/metrics"
 )
 
 func socketLogic(client *Client, serverVars *serverVarsStruct) {
@@ -90,8 +91,8 @@ func handleWebsocket(c *gin.Context, serverVars *serverVarsStruct) {
 	defer conn.Close()
 
 	// increase / decrease the activeWebsockets gauge for metrics
-	activeWebsockets.Inc()
-	defer activeWebsockets.Dec()
+	metrics.ActiveWebsockets.Inc()
+	defer metrics.ActiveWebsockets.Dec()
 
 	socketLogic(client, serverVars)
 }

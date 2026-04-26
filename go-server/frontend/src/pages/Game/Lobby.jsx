@@ -345,12 +345,12 @@ const Lobby = () =>
 						<div className="creategame__card">
 							<div className="creategame__card-header">
 								👥 friends online
-								<button
+								{/* <button
 									className="creategame__friends-close"
 									onClick={() => setShowFriends(false)}
 								>
 									✕
-								</button>
+								</button> */}
 							</div>
 							<div className="creategame__card-body creategame__card-body--list">
 								{friendsLoading ? (

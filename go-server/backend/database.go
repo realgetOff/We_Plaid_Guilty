@@ -131,13 +131,3 @@ func connectToDatabase () (*pgxpool.Pool, error) {
 	fmt.Println("Attempting initial connection to DB...")
 	return pgxpool.NewWithConfig(context.Background(), cfg)
 }
-
-/*
-
-func DbExec() {
-	
-}
-
-func DbQueryRow()
-
-*/

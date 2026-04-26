@@ -10,13 +10,25 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { connect } from '../../api/socket';
 import './Home.css';
 
 const Home = () =>
 {
   const navigate = useNavigate();
+
+
+	useEffect(() => {
+	  const login_check = localStorage.getItem("authToken"); // or whatever your key is
+	 
+	  console.log("TEST LOGIN_CHECK", login_check);
+	 
+	  if (login_check) {
+	    connect();
+	  }
+	}, []);
 
   return (
     <div className="home">
@@ -34,10 +46,10 @@ const Home = () =>
 
       <div className="home__info-box">
         <strong>How to play:</strong><br />
-        ① Buy a gun.<br />
-        ② Call local Domino's Pizza.<br />
-        ③ Ask for 20 giant pizza, 42 Angouleme.<br />
-        ④ Force lviravon to work (and abuse him btw).
+        ① Click [▶ PLAY NOW]<br />
+        ② Select either a normal game or an AI game.<br />
+        ③ Login, register or continue as a guest.<br />
+        ④ Have fun!
       </div>
 
       <button

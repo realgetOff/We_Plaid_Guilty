@@ -10,6 +10,7 @@ import (
 	"crypto/rand"
 	"sync"
 	"time"
+	"main.go/metrics"
 )
 
 type GameRoom interface {
@@ -49,11 +50,21 @@ func (h *Hub) DeleteRoom(id string) {
     h.mu.Lock()
     defer h.mu.Unlock()
 	// NOTE to acces IsAi bool h.Rooms[id].GetBase().Isi
+	
+	metrics.RoomCountTotal.Dec()
+	if (h.Rooms[id].GetBase().IsAi){
+		metrics.RoomCountAI.Dec()
+	} else {
+		metrics.RoomCountStandard.Dec()
+	}
+	
 	fmt.Printf("DEBUG: DELETE ROOM\n")
     delete(h.Rooms, id)
 }
 
 func NewAIRoom(id string) *AIRoom {
+	metrics.RoomCountTotal.Inc()
+	metrics.RoomCountAI.Inc()
 	return &AIRoom{
 		BaseRoom: BaseRoom{
 			ID:          id,
@@ -70,6 +81,9 @@ func NewAIRoom(id string) *AIRoom {
 
 
 func NewRoom(id string) *Room {
+	metrics.RoomCountTotal.Inc()
+	metrics.RoomCountStandard.Inc()
+
 	return &Room{
 		BaseRoom: BaseRoom{
 			ID:           id,

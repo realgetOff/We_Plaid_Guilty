@@ -128,7 +128,7 @@ func main() {
 		findRoom(c, serverVars)
 	})
 	serverVars.router.GET("/ping", pong)
-	serverVars.router.GET("/health", health)
+	// serverVars.router.GET("/health", health)
 	serverVars.router.GET("/api/config", vaultstatus)
 	serverVars.router.GET("/ws", func (c *gin.Context){
 		handleWebsocket(c, serverVars)
@@ -159,6 +159,16 @@ func main() {
 	serverVars.router.POST("/api/auth/login", func(c *gin.Context){
 		handleLogin(c, &serverVars.db)
 	})
+
+	go func() {
+		healthRouter := gin.New()
+		healthRouter.Use(gin.Recovery())
+
+		healthRouter.GET("/health", health)
+		if err := healthRouter.Run(":8081"); err != nil {
+			log.Fatal("Error: launch server health %v", err)
+		}
+	}()
 
 	port := os.Getenv("PORT")
 	if port == "" {

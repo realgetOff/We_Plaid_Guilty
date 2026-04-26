@@ -89,3 +89,13 @@ type Room struct {
 	BaseRoom
 	Books map[string]*Book
 }
+
+type GameRoom interface {
+		GetID() string
+			GetBase() *BaseRoom
+		}
+
+		type Hub struct {
+				Rooms map[string]GameRoom
+					mu sync.RWMutex
+				}

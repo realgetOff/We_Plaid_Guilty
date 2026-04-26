@@ -42,7 +42,7 @@ func socketLogic(client *Client, serverVars *serverVarsStruct) {
 		dispatcher.Dispatch(&ctx, msg)
 	}
 
-	if client.CurrentRoom == nil && client.CurrUsrID == nil && *client.CurrUsrID == "" {
+	if client.CurrentRoom == nil || client.CurrUsrID == nil || *client.CurrUsrID == "" {
 		return
 	}
 
@@ -90,7 +90,7 @@ func handleWebsocket(c *gin.Context, serverVars *serverVarsStruct) {
 
 	defer conn.Close()
 
-	// increase / decrease the activeWebsockets gauge for metrics
+	// increase  decrease the activeWebsockets gauge for metrics
 	metrics.ActiveWebsockets.Inc()
 	defer metrics.ActiveWebsockets.Dec()
 

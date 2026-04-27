@@ -1,16 +1,12 @@
 package main
 
 import (
-	// "strings"
 	"fmt"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	// "github.com/go-playground/locales/wo"
 	"github.com/gorilla/websocket"
 
-	// "github.com/jackc/pgx/v5/pgxpool"
-	// "github.com/golang-jwt/jwt/v5"
 	"net/http"
 
 	"main.go/gamemanager"

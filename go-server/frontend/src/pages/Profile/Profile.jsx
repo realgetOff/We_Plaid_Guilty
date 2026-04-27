@@ -211,7 +211,7 @@ const Profile = () =>
                 type="text"
                 value={editName}
                 onChange={(e) => { setEditName(e.target.value); setNameError(''); }}
-                maxLength={32}
+                maxLength={16}
               />
               {nameError && <span className="profile__field-error">⚠ {nameError}</span>}
             </label>

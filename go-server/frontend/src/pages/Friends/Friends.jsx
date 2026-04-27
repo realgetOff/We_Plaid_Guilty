@@ -298,7 +298,7 @@ const Friends = () =>
               onChange={(e) => { setInput(e.target.value); setAddError(''); }}
               onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
               placeholder="username"
-              maxLength={32}
+              maxLength={16}
             />
             <button
               className="friends__btn friends__btn--primary"

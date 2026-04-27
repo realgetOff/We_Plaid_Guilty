@@ -352,7 +352,7 @@ const AIDrawBoard = ({ prompt, onDone }) =>
 					placeholder="Description (optional)"
 					value={description}
 					onChange={(e) => setDescription(e.target.value)}
-					maxLength={200}
+					maxLength={120}
 					rows={2}
 					className="drawboard__meta-textarea"
 				/>

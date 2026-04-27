@@ -61,7 +61,6 @@
     - name: "Load Vault secrets"
       include_vars:
         file: "{{ playbook_dir }}/secrets.yml"
-      # ignore_errors: true
       when: lookup('fileglob', playbook_dir + '/secrets.yml') != []
 
     - name: "K3s master"
@@ -125,8 +124,8 @@
       wait_for:
         path: /var/lib/rancher/k3s/server/node-token
         state: present
-        timeout: 60 #j'ai eu un crash par manque de temps
-      delegate_to: "{{ groups['MASTER'][0] }}" #il doit pas le chercher de lui-meme
+        timeout: 60
+      delegate_to: "{{ groups['MASTER'][0] }}"
 
     - name: "Get K3s token from master"
       slurp:
@@ -235,18 +234,6 @@
         dest: /tmp/prometheus-values.yaml
         mode: '0644'
 
-    # - name: "Copy prometheus web-config"
-      # copy:
-        # src: "{{ playbook_dir }}/../helm/values/prometheus-web-config.yaml"
-        # dest: /tmp/prometheus-web-config.yaml
-        # mode: '0644'
-# 
-    # - name: "Create prometheus web-config ConfigMap"
-      # shell: |
-        # /usr/local/bin/kubectl apply -f /tmp/prometheus-web-config.yaml
-      # environment:
-        # KUBECONFIG: /etc/rancher/k3s/k3s.yaml
-
     - name: "Copy grafana values"
       copy:
         src: "{{ playbook_dir }}/../helm/values/grafana.yaml"
@@ -306,15 +293,6 @@
       environment:
         KUBECONFIG: /etc/rancher/k3s/k3s.yaml
 
-    # - name: "Wait for ingress-nginx"
-      # shell: |
-        # /usr/local/bin/kubectl wait --for=condition=ready pod \
-          # -l app.kubernetes.io/name=ingress-nginx \
-          # -n ingress-nginx --timeout=120s
-      # environment:
-        # KUBECONFIG: /etc/rancher/k3s/k3s.yaml
-
-
 - name: "Logging"
   hosts: MASTER
   become: true
@@ -362,7 +340,6 @@
         src: "{{ playbook_dir }}/../helm/values/kibana.yaml"
         dest: /tmp/kibana-values.yaml
         mode: '0644'
-          #TODO: template -> copy
 
     - name: "Copy filebeat values"
       copy:

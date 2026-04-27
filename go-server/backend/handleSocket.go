@@ -1,9 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/gorilla/websocket"
@@ -11,63 +11,42 @@ import (
 
 	"main.go/gamemanager"
 	"main.go/metrics"
+
 )
 
-// NEW STRUCT FOR CLIENT / WEBSOCKET MANAGEMENT
-
-func RunPipeLine(ctx *WSContext, msg Message, pipes ...PipeFunc) bool {
-	for _, pipe := range pipes {
-		if !pipe(ctx, msg) {
-			return false
-		}
+func NewDispatcher() *Dispatcher {
+	d:= &Dispatcher{
+		handlers: make(map[string]HandleFunc),
 	}
-	return true
-}
+	d.handlers["get_profile"] = d.HandleGetProfile
+	d.handlers["update_profile"] = d.HandleProfileUpdate
+	d.handlers["add_friend"] = d.HandleAddFriend
+	d.handlers["get_friends"] = d.HandleGetFriend
+	d.handlers["remove_friend"] = d.HandleRemoveFriend
+	d.handlers["accept_friend"] = d.HandleAcceptFriend
+	d.handlers["invite_friend"] = d.HandleInviteFriend
+	d.handlers["authenticate"] = d.HandleAuth
+	d.handlers["create_room"] = d.HandleCreateRoom
+	d.handlers["join_room"] = d.HandleJoinRoom
+	d.handlers["join_game"] = d.HandleJoinGame
+	d.handlers["leave_lobby"] = d.HandleLeaveLobby
+	d.handlers["leave_game"] = d.HandleLeaveGame
+	d.handlers["prompt_submitted"] = d.HandlePrompt
+	d.handlers["drawing_submitted"] = d.HandleDraw
+	d.handlers["guess_submitted"] = d.HandleGuess
+	d.handlers["chat_message"] = d.HandleChat
+	d.handlers["start_game"] = d.HandleStartGame
+	d.handlers["create_ai_room"] = d.HandleCreateAIRoom
+	d.handlers["join_ai_room"] = d.HandleJoinAIRoom
+	d.handlers["join_ai_game"] = d.HandleJoinAIGame
+	d.handlers["leave_ai_room"] = d.HandleLeaveAILobby
+	d.handlers["leave_ai_game"] = d.HandleLeaveAIGame
+	d.handlers["ai_chat_message"] = d.HandleChatAI
+	d.handlers["start_ai_game"] = d.HandleStartAIGame
+	d.handlers["ai_drawing_submitted"] = d.HandleAIDraw
+	d.handlers["ai_votes_submitted"] = d.HandleAIVote
 
-func (d *Dispatcher) PipeIsValidChat(ctx *WSContext, msg Message) bool {
-	if len(strings.TrimSpace(msg.Text)) == -1 { return false }
-	return true
-}
-
-func (d *Dispatcher) PipeIsGuest(ctx *WSContext, msg Message) bool {
-	if ctx.client.IsGuest {
-		_ = ctx.client.Conn.WriteJSON(map[string]interface{}{
-			"type": "friend_add_failed", "success": false, "error": "Guests cannot add friends.",
-		})
-		return false
-	}
-	return true
-}
-
-func (d *Dispatcher) PipeIsAuth(ctx *WSContext, msg Message) bool {
-
-	if ctx.client.CurrUsrID == nil || *ctx.client.CurrUsrID == "" {
-		return false
-	}
-
-	if ctx.client.CurrUsrName == nil || *ctx.client.CurrUsrName == "" {
-		return false
-	}
-
-	fmt.Printf("DEBUG: %s is Auth\n", *ctx.client.CurrUsrName)
-	return true
-}
-
-func (d *Dispatcher) PipeHasRoomCode(ctx *WSContext, msg Message) bool {
-	if msg.Code == "" {
-		return false
-	}
-	return true
-}
-
-func (d *Dispatcher) PipeRoomExist(ctx *WSContext, msg Message) bool {
-	tmpRoom, err := ctx.client.Hub.GetRoom(msg.Code)
-	if err != nil || tmpRoom == nil {
-		return false
-	}
-	ctx.client.CurrentRoom = tmpRoom
-	fmt.Printf("DEBUG: Room Exist\n")
-	return true
+	return d
 }
 
 func (d *Dispatcher) Dispatch(ctx *WSContext, msg Message) {
@@ -80,49 +59,16 @@ func (d *Dispatcher) Dispatch(ctx *WSContext, msg Message) {
 		}
 		return
 	}
-	fmt.Printf("Message, %s", msg.Type)
+	fmt.Printf("MESSAGE: %s\n", msg.Type)
 	handler(ctx, msg)
 }
 
-func scanFriendRows(ctx *WSContext, rows pgx.Rows) []Friend {
-	defer rows.Close()
-	out := make([]Friend, 0)
-	for rows.Next() {
-		var f Friend
-		if err := rows.Scan(&f.ID, &f.Username); err != nil {
-			fmt.Printf("Error scanning friends row :: %v\n", err)
-			continue
-		}
-		f.Online = ctx.chub.Clients[f.ID] != nil
-		out = append(out, f)
-	}
-	return out
-}
-
-func (d *Dispatcher) broadcastFriendAdded(ctx *WSContext, aID, aName, bID, bName string) {
-	onA := ctx.chub.Clients[aID] != nil
-	onB := ctx.chub.Clients[bID] != nil
-	if c := ctx.chub.Clients[aID]; c != nil {
-		_ = c.Conn.WriteJSON(FriendsListResponse{
-			Type:    "friend_added",
-			Success: true,
-			Friend:  Friend{ID: bID, Username: bName, Online: onB},
-		})
-	}
-	if c := ctx.chub.Clients[bID]; c != nil {
-		_ = c.Conn.WriteJSON(FriendsListResponse{
-			Type:    "friend_added",
-			Success: true,
-			Friend:  Friend{ID: aID, Username: aName, Online: onA},
-		})
-	}
-}
 
 func (d *Dispatcher) HandleGetFriend(ctx *WSContext, msg Message) {
-	fmt.Println("DEBUG: HandleGetFriend triggered!")
 	if (!RunPipeLine(ctx, msg, d.PipeIsAuth)) { 
 		return
 	}
+	fmt.Println("DEBUG: HandleGetFriend triggered!")
 
 	userID := msg.ID
 	if userID == "" {
@@ -356,10 +302,10 @@ func (d *Dispatcher) HandleAcceptFriend(ctx *WSContext, msg Message) {
 }
 
 func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
-	fmt.Println("DEBUG: HandleAddFriend triggered!")
 	if !RunPipeLine(ctx, msg, d.PipeIsAuth, d.PipeIsGuest){
 		return
 	}
+	fmt.Println("DEBUG: HandleAddFriend triggered!")
 
 	me := *ctx.client.CurrUsrID
 	myName := *ctx.client.CurrUsrName
@@ -482,10 +428,10 @@ func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 }
 
 func (d* Dispatcher) HandleGetProfile(ctx *WSContext, msg Message) {
-	fmt.Println("DEBUG: HandleGetProfile triggered!")
 	if (!RunPipeLine(ctx, msg, d.PipeIsAuth)) {
 		return
 	}
+	fmt.Println("DEBUG: HandleGetProfile triggered!")
 
 	var user ProfileUser
 	var profileID string
@@ -516,9 +462,6 @@ func (d* Dispatcher) HandleGetProfile(ctx *WSContext, msg Message) {
 		response.User = user
 		response.IsCaller = (profileID == *ctx.client.CurrUsrID)
 	}
-
-	// fmt.Printf("REQUESTED USERNAME: %v\n", msg.Username)
-	// fmt.Printf("USER USERNAME %v ONLINE %v COLOR %v FONT %v\n", user.Username, user.Online, user.Style.Color, user.Style.Font)
 
 	err = ctx.client.Conn.WriteJSON(response)
 	if err != nil {
@@ -606,41 +549,6 @@ func (d* Dispatcher) HandleProfileUpdate(ctx *WSContext, msg Message) {
 	if writeErr != nil {
 		fmt.Printf(ERROR_WRITE_WS, writeErr)
 	}
-}
-
-func NewDispatcher() *Dispatcher {
-	d:= &Dispatcher{
-		handlers: make(map[string]HandleFunc),
-	}
-	d.handlers["get_profile"] = d.HandleGetProfile
-	d.handlers["update_profile"] = d.HandleProfileUpdate
-	d.handlers["add_friend"] = d.HandleAddFriend
-	d.handlers["get_friends"] = d.HandleGetFriend
-	d.handlers["remove_friend"] = d.HandleRemoveFriend
-	d.handlers["accept_friend"] = d.HandleAcceptFriend
-	d.handlers["invite_friend"] = d.HandleInviteFriend
-	d.handlers["authenticate"] = d.HandleAuth
-	d.handlers["create_room"] = d.HandleCreateRoom
-	d.handlers["join_room"] = d.HandleJoinRoom
-	d.handlers["join_game"] = d.HandleJoinGame
-	d.handlers["leave_lobby"] = d.HandleLeaveLobby
-	d.handlers["leave_game"] = d.HandleLeaveGame
-	d.handlers["prompt_submitted"] = d.HandlePrompt
-	d.handlers["drawing_submitted"] = d.HandleDraw
-	d.handlers["guess_submitted"] = d.HandleGuess
-	d.handlers["chat_message"] = d.HandleChat
-	d.handlers["start_game"] = d.HandleStartGame
-	d.handlers["create_ai_room"] = d.HandleCreateAIRoom
-	d.handlers["join_ai_room"] = d.HandleJoinAIRoom
-	d.handlers["join_ai_game"] = d.HandleJoinAIGame
-	d.handlers["leave_ai_room"] = d.HandleLeaveAILobby
-	d.handlers["leave_ai_game"] = d.HandleLeaveAIGame
-	d.handlers["ai_chat_message"] = d.HandleChatAI
-	d.handlers["start_ai_game"] = d.HandleStartAIGame
-	d.handlers["ai_drawing_submitted"] = d.HandleAIDraw
-	d.handlers["ai_votes_submitted"] = d.HandleAIVote
-
-	return d
 }
 
 func (d *Dispatcher) HandleLeaveAIGame(ctx *WSContext, msg Message) {
@@ -798,7 +706,6 @@ func (d *Dispatcher) HandleStartAIGame(ctx *WSContext, msg Message) {
 		"type": "start_ai_game",
 		"code": base.ID,
 	})
-	fmt.Printf("DEBUG: %s\n", msg.Type)
 	if RoomIA, ok := ctx.client.CurrentRoom.(*gamemanager.AIRoom); ok {
 		fmt.Printf("DEBUG: RunLoopAI\n")
 		go RoomIA.RunAIGameLoop(prompt)
@@ -921,9 +828,6 @@ func (d *Dispatcher) HandleCreateRoom(ctx *WSContext, msg Message) {
 	
 	base.BroadcastLobbyState()
 	
-	// go func(roomID string) {
-	// 	ctx.Db.Exec(context.Background(), "INSERT INTO rooms (room_code, created_at) VALUES ($1, NOW())", roomID)
-	// }(base.ID)
 }
 
 func (d *Dispatcher) HandleJoinRoom(ctx *WSContext, msg Message) {
@@ -969,7 +873,6 @@ func (d *Dispatcher) HandleJoinGame(ctx *WSContext, msg Message) {
 	fmt.Printf("DEBUG join_game: code='%s' user='%s'\n", msg.Code, *ctx.client.CurrUsrName)
 	
 	var task gamemanager.GameStateRecord
-	// task := base.GetPlayerTask(*WSContext.CurrUsrID)
 	if classicRoom, ok := ctx.client.CurrentRoom.(*gamemanager.Room); ok {
 		task = classicRoom.GetPlayerTask(*ctx.client.CurrUsrID)
 	}
@@ -1018,16 +921,13 @@ func (d *Dispatcher) HandleLeaveGame(ctx *WSContext, msg Message) {
 	if (!RunPipeLine(ctx, msg, d.PipeIsAuth, d.PipeRoomExist)) { return }
 
 	if classicRoom, ok := ctx.client.CurrentRoom.(*gamemanager.Room); ok {
-		// classicRoom.SendSystemMsg(fmt.Sprintf("%s leave the lobby !", *ctx.client.CurrUsrName))
 		del := classicRoom.LeaveGame(*ctx.client.CurrUsrID)
 		if del {
 			ctx.client.Hub.DeleteRoom(msg.Code)
-			fmt.Printf("DEBUG: DELETE ROOM nobody is in\n") // TODO Fix le isReady et set Prompt a "..."
+			fmt.Printf("DEBUG: DELETE ROOM nobody is in\n")
 		}
 	}
 }
-
-
 
 func (d *Dispatcher) HandlePrompt(ctx *WSContext, msg Message) {
 	if (!RunPipeLine(ctx, msg, d.PipeIsAuth, d.PipeRoomExist)) { return }
@@ -1036,7 +936,6 @@ func (d *Dispatcher) HandlePrompt(ctx *WSContext, msg Message) {
 		"type": "prompt",
 		"prompt": msg.Prompt,
 	}
-	fmt.Printf("DEGUB: %s\n", msg.Type)
 	if classicRoom, ok := ctx.client.CurrentRoom.(*gamemanager.Room); ok {
 		err := classicRoom.SubmiteAction(*ctx.client.CurrUsrID, data, true)
 		if (err != nil) {
@@ -1056,7 +955,7 @@ func (d *Dispatcher) HandleDraw(ctx *WSContext, msg Message) {
 		fmt.Printf("DEBUG: draw_submitted code = %s\n", msg.Code)
 		err := classicRoom.SubmiteAction(*ctx.client.CurrUsrID, data, true)
 		if (err != nil) {
-			fmt.Printf("Error: Submited draw: %v\n", err)
+			fmt.Printf("ERROR: Submited draw: %v\n", err)
 		}
 	}
 }
@@ -1072,7 +971,7 @@ func (d *Dispatcher) HandleGuess(ctx *WSContext, msg Message) {
 	if classicRoom, ok := ctx.client.CurrentRoom.(*gamemanager.Room); ok {
 		err := classicRoom.SubmiteAction(*ctx.client.CurrUsrID, data, true)
 		if (err != nil) {
-			fmt.Printf("Error: Submited guess: %v\n", err)
+			fmt.Printf("ERROR: Submited guess: %v\n", err)
 		}
 	}
 }

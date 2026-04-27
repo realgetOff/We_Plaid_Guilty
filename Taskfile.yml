@@ -199,6 +199,7 @@ tasks:
       - echo "--- Step 2/3 Ansible (K3s + Vault init) ---"
       - |
         cd {{.ANSIBLE_DIR}} && ansible-playbook {{.PLAYBOOK}} \
+          -e "master_private_ip=$(cd ../{{.TF_INFRA_DIR}} && terraform output -raw master_private_ip)" \
           -e "kms_key_id=$(cd ../{{.TF_INFRA_DIR}} && terraform output -raw kms_key_id)" \
           -e "aws_account_id=$(cd ../{{.TF_INFRA_DIR}} && terraform output -raw aws_account_id)" \
           -e "deploy_user={{.DEPLOY_USER}}" \
@@ -237,6 +238,7 @@ tasks:
       - echo "--- Step 2/3 Ansible (K3s + Vault init) ---"
       - |
         cd {{.ANSIBLE_DIR}} && ansible-playbook {{.PLAYBOOK}} \
+          -e "master_private_ip=$(cd ../{{.TF_INFRA_DIR}} && terraform output -raw master_private_ip)" \
           -e "kms_key_id=$(cd ../{{.TF_INFRA_DIR}} && terraform output -raw kms_key_id)" \
           -e "app_image_tag={{.APP_IMAGE_TAG}}" \
           -e "aws_account_id=$(cd ../{{.TF_INFRA_DIR}} && terraform output -raw aws_account_id)" \

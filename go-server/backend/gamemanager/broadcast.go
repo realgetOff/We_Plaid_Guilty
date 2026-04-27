@@ -129,13 +129,31 @@ func (r *Room) broadcastGallery() {
 			Prompt: book.Entries[0].Content,
 		}
 
-		for i := 1; i < len(book.Entries); i++{
+		// for i := 1; i < len(book.Entries); i++{
+			// entryType := "drawing"
+			// if book.Entries[i].Type == "TEXT" {
+				// entryType = "guess"
+			// }
+			// chain.Steps = append(chain.Steps, Step{
+				// Type: entryType,
+				// Content: book.Entries[i].Content,
+			// })
+		// }
+		startIndex := 0
+		if book.Entries[0].Type == "TEXT" {
+			chain.Prompt = book.Entries[0].Content
+			startIndex = 1
+		} else {
+			chain.Prompt = "(Prompt missing)"
+		}
+
+		for i := startIndex; i < len(book.Entries); i++ {
 			entryType := "drawing"
 			if book.Entries[i].Type == "TEXT" {
 				entryType = "guess"
 			}
 			chain.Steps = append(chain.Steps, Step{
-				Type: entryType,
+				Type:    entryType,
 				Content: book.Entries[i].Content,
 			})
 		}
@@ -159,23 +177,23 @@ func (r *Room) broadcastGallery() {
 
 func (b *BaseRoom) BroadcastToAll(data map[string]interface{}) {
 	b.mu.Lock()
-    ids := make([]string, 0, len(b.Players))
-    for id, _ := range b.Players {
+	ids := make([]string, 0, len(b.Players))
+	for id, _ := range b.Players {
 		ids = append(ids, id)
-    }
-    roomID := b.ID
-    b.mu.Unlock()
+	}
+	roomID := b.ID
+	b.mu.Unlock()
 
-    for _, id := range ids {
-        payload := make(map[string]interface{}, len(data)+2)
-        for k, v := range data {
-            payload[k] = v
-        }
-        payload["room"] = roomID
+	for _, id := range ids {
+		payload := make(map[string]interface{}, len(data)+2)
+		for k, v := range data {
+			payload[k] = v
+		}
+		payload["room"] = roomID
 		payload["code"] = roomID
-        b.MessageChan <- Notification{
-            PlayerID: id,
-            Data:     payload,
-        }
-    }
+		b.MessageChan <- Notification{
+			PlayerID: id,
+			Data:     payload,
+		}
+	}
 }

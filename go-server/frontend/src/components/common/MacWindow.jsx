@@ -41,7 +41,7 @@ const MacWindow = ({ children }) =>
 {
 	const location = useLocation();
 	const meta     = getRouteMeta(location.pathname);
-	const version = import.meta.env.VERSION || 'v1.0';
+	const version = import.meta.env.VITE_VERSION || 'v1.0';
 
 	return (
 		<div className="hc-window" role="main">

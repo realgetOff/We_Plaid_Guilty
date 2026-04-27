@@ -76,6 +76,8 @@ spec:
               value: "{{ .Values.db.host }}"
             - name: DB_PORT
               value: "{{ .Values.db.port }}"
+            - name: VERSION
+              value: "{{ .Values.image.tag }}"
           livenessProbe:
             httpGet:
               path: /health

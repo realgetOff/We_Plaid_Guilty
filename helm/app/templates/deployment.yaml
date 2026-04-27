@@ -43,6 +43,10 @@ spec:
           {{`{{ .Key }}`}}
           {{`{{ end }}`}}
     spec:
+      hostAliases:
+        - ip: "{{ .Values.db.host }}"
+          hostnames:
+            - "postgres.transcendance.local"
       serviceAccountName: gartic-app
       automountServiceAccountToken: true
       securityContext:

@@ -144,7 +144,7 @@
     body_format: json
     body:
       data:
-        db_host: "{{ master_private_ip }}"
+        db_host: "postgres.transcendance.local"
         db_port: "5432"
         db_password: "{{ db_password }}"
         db_user: "{{ db_user }}"

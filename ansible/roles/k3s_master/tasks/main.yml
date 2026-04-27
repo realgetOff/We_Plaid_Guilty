@@ -40,6 +40,13 @@
   args:
     creates: /usr/local/bin/k3s
 
+- name: "Allow K3s pods to reach PostgreSQL"
+  firewalld:
+    rich_rule: "rule family=ipv4 source address=10.42.0.0/16 port port=5432 protocol=tcp accept"
+    permanent: yes
+    immediate: yes
+    state: enabled
+
 - name: "Waiting k3s"
   wait_for:
     path: "{{ token_file }}"

@@ -37,7 +37,7 @@ Perfect for maintenance or adding code: you only need to create a new function a
 
 Code readability: the code is clear and precise. All functions have a cognitive complexity of less than 15 points according to Sonarqube; the human brain struggles with functions exceeding a cognitive complexity of 15.
 
-### Reminber :
+### Remember :
 
                  for or if               | + 1
              for or if in if             | + 2

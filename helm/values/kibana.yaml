@@ -70,3 +70,10 @@ updateStrategy:
   type: "Recreate"
 
 dnsPolicy: ClusterFirstWithHostNet
+
+savedObjects:
+  - type: index-pattern
+    id: filebeat-*
+    attributes:
+      title: filebeat-*
+      timeFieldName: "@timestamp"

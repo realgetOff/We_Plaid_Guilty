@@ -12,7 +12,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { connect, send, addListener, removeListener } from '../../api/socket';
+import { connect, send, addListener, removeListener, getIDFromToken } from '../../api/socket';
 import '../Game/CreateGame.css';
 
 const AILobby = () =>
@@ -89,13 +89,14 @@ const AILobby = () =>
 			if (msg.type === 'invite_sent')
 			{
 				if (msg.success)
-					setTimeout(() => setInviting(null), 2000);
+					setTimeout(() => setInviting(null), 15000);
 				else
 					setInviting(null);
 			}
 		};
 
 		addListener(handler);
+		send({ type: 'get_friends', id: getIDFromToken() });
 		if (normalized && /^[A-Z]{6}$/.test(normalized))
 			send({ type: 'join_ai_room', code: normalized });
 		return () =>
@@ -126,17 +127,13 @@ const AILobby = () =>
 
 	const toggleFriends = () =>
 	{
-		if (!showFriends && friends.length === 0)
-		{
-			setFriendsLoading(true);
-			send({ type: 'get_friends' });
-		}
 		setShowFriends(!showFriends);
 	};
 
 	const handleInviteFriend = (friend) =>
 	{
-		if (!normalized) return;
+		if (!normalized)
+			return;
 		setInviting(friend.id);
 		send({
 			type:  'invite_friend',

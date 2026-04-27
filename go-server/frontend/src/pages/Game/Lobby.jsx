@@ -141,7 +141,7 @@ const Lobby = () =>
 			if (msg.type === 'invite_sent')
 			{
 				if (msg.success)
-					setTimeout(() => setInviting(null), 2000);
+					setTimeout(() => setInviting(null), 15000);
 				else
 					setInviting(null);
 			}
@@ -149,6 +149,7 @@ const Lobby = () =>
 
 		addListener(handler);
 		send({ type: 'join_room', code: normalized });
+		send({ type: 'get_friends', id: getIDFromToken() });
 
 		return () =>
 		{
@@ -184,20 +185,13 @@ const Lobby = () =>
 
 	const toggleFriends = () =>
 	{
-		if (!showFriends && friends.length === 0)
-		{
-			setFriendsLoading(true);
-			send({
-					type: 'get_friends',
-					id: getIDFromToken()
-				});
-		}
 		setShowFriends(!showFriends);
 	};
 
 	const handleInviteFriend = (friend) =>
 	{
-		if (!normalized) return;
+		if (!normalized)
+			return;
 		setInviting(friend.id);
 		send({
 			type: 'invite_friend',

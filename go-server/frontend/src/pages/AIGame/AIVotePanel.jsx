@@ -39,7 +39,9 @@ const AIVotePanel = ({ drawings, myId, onDone }) =>
 	return (
 		<div className="writeprompt">
 			<div className="writeprompt__card">
-				<div className="writeprompt__card-header">⭐ Rate each drawing</div>
+				<div className="writeprompt__card-header">
+					⭐ Rate each drawing
+				</div>
 				<div className="writeprompt__card-body">
 					<p className="writeprompt__hint">
 						Vote from 1 to 5 for each drawing to validate ({votedCount}/{totalToVote})
@@ -48,54 +50,31 @@ const AIVotePanel = ({ drawings, myId, onDone }) =>
 			</div>
 
 			{votableDrawings.map((d) => (
-				<div key={d.uniqueId} className="writeprompt__card" style={{marginTop: '10px'}}>
+				<div key={d.uniqueId} className="writeprompt__card">
 					<div className="writeprompt__card-header">
 						👤 {d.name || d.PlayerName || "Anonymous"}
 						{d.title && ` - ${d.title}`}
 					</div>
 					<div className="writeprompt__card-body">
 						{d.description && (
-							<p className="writeprompt__hint" style={{marginBottom: '8px'}}>
+							<p className="writeprompt__hint">
 								{d.description}
 							</p>
 						)}
-						<div style={{
-							display: 'flex',
-							justifyContent: 'center',
-							marginBottom: '10px',
-							background: '#f8f8f8',
-							padding: '8px',
-							border: '1px solid #cccccc'
-						}}>
+						<div className="writeprompt__drawing-container">
 							<img
 								src={d.drawing}
 								alt="drawing"
-								style={{
-									maxWidth: '100%',
-									maxHeight: '200px',
-									border: '1px solid #000000',
-									imageRendering: 'pixelated'
-								}}
+								className="writeprompt__image"
 							/>
 						</div>
-						<div style={{
-							display: 'flex',
-							gap: '6px',
-							justifyContent: 'center'
-						}}>
+						<div className="writeprompt__vote-group">
 							{[1, 2, 3, 4, 5].map((num) => (
 								<button
 									key={num}
 									type="button"
 									className={`writeprompt__btn${votes[d.uniqueId] === num ? ' writeprompt__btn--active' : ''}`}
 									onClick={() => handleScoreClick(d.uniqueId, num)}
-									style={{
-										width: '40px',
-										padding: '6px',
-										fontSize: '12px',
-										background: votes[d.uniqueId] === num ? '#000000' : '#ffffff',
-										color: votes[d.uniqueId] === num ? '#ffffff' : '#000000'
-									}}
 								>
 									{num}
 								</button>
@@ -109,12 +88,6 @@ const AIVotePanel = ({ drawings, myId, onDone }) =>
 				className="writeprompt__btn"
 				disabled={!isComplete}
 				onClick={() => onDone(votes)}
-				style={{
-					marginTop: '16px',
-					width: '100%',
-					opacity: isComplete ? 1 : 0.4,
-					cursor: isComplete ? 'pointer' : 'not-allowed'
-				}}
 			>
 				{isComplete ? "✓ Confirm my votes!" : "Rate all drawings first"}
 			</button>

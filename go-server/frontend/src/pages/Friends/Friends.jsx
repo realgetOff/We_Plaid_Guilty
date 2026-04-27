@@ -210,9 +210,9 @@ const Friends = () =>
     const code = inviteCode.trim();
     const now = Date.now();
 
-    if (now - lastInviteTime < 5000) 
+    if (now - lastInviteTime < 15000) 
     {
-      const remaining = Math.ceil((5000 - (now - lastInviteTime)) / 1000);
+      const remaining = Math.ceil((15000 - (now - lastInviteTime)) / 1000);
       setInviteError(`Please wait ${remaining}s before sending another invite.`);
       return;
     }

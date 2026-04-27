@@ -3,9 +3,7 @@ package handler
 import (
 	"fmt"
 	"strings"
-	"time"
 
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/jackc/pgx/v5"
 
 )

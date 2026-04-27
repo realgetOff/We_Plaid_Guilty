@@ -15,6 +15,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { connect, send, addListener, removeListener } from '../../api/socket';
 import '../Game/CreateGame.css';
 
+const DENY_REASONS =
+{
+	invalid:   'invalid room code format.',
+	not_found: 'room not found.',
+	started:   'this game has already started.',
+	finished:  'this game is already finished.',
+	unknown:   'cannot access this room.',
+};
+
 const AILobby = () =>
 {
 	const { code } = useParams();
@@ -37,9 +46,45 @@ const AILobby = () =>
 
 	useEffect(() =>
 	{
+		console.error("FUCK JAVASCRIPT SO HARD");
+		const checkRoom = async () =>
+		{
+			if (!normalized || !/^[A-Z]{6}$/.test(normalized))
+			{
+				setDeny(DENY_REASONS.invalid);
+				setStatus('denied');
+				return;
+			}
+			try
+			{
+				const room = await roomsApi.getRoom(normalized);
+				if (!room || room.status === 'started')
+				{
+					setDeny(room?.status === 'started' ? DENY_REASONS.started : DENY_REASONS.not_found);
+					setStatus('denied');
+					return;
+				}
+				setStatus('ready');
+			}
+			catch (err)
+			{
+				setDeny(DENY_REASONS.not_found);
+				setStatus('denied');
+			}
+		};
+		checkRoom();
+	}, [normalized]);
+
+	useEffect(() =>
+	{
+		if (status !== 'ready')
+			return;
+
 		connect();
 		const handler = (msg) =>
 		{
+			if (!msg)
+				return;
 			const roomMatch = msg.room === normalized || msg.code === normalized;
 
 			if (msg.type === 'lobby_state' && roomMatch)
@@ -69,8 +114,9 @@ const AILobby = () =>
 				navigate(`/aigame/play/${normalized}`);
 			if (msg.type === 'join_denied')
 			{
-				setDeny(msg.reason);
-				setIsStarting(false);
+				setDeny(msg.reason || DENY_REASONS.unknown);
+				// setIsStarting(false);
+				setStatus('denied');
 			}
 
 			if (msg.type === 'friends_list')

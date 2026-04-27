@@ -15,7 +15,6 @@ import (
 	"crypto/x509"
 	
 	"main.go/metrics"
-	// "github.com/prometheus/client_golang/prometheus"
 )
 
 
@@ -43,6 +42,14 @@ func reloadConfig(sdb *DBSafe) {
 		db_user := myMap["DB_USER"]
 		db_password := myMap["DB_PASSWORD"]
 		db_name := myMap["DB_NAME"]
+
+		// var connection_url string
+
+		// if (os.Getenv("LOCAL") != "") {
+		// 	connection_url = fmt.Sprintf("postgres://%s:%s@%s:%s/%s", db_user, db_password, db_host, db_port, db_name)
+		// } else {
+		// 	connection_url = fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=verify-full", db_user, db_password, db_host, db_port, db_name)
+		// }
 
 		connection_url := "postgres://" + db_user + ":" + db_password + "@" + db_host + ":" + db_port + "/" + db_name
 		content, err := os.ReadFile("/vault/secrets/tls")
@@ -80,21 +87,21 @@ func reloadConfig(sdb *DBSafe) {
 }
 
 func startupUserMetrics (dbs *DBSafe) {
-	db := dbs.GetPool()
-
-	startupQuery := `SELECT
-						COUNT(*),
-						COUNT(*) FILTER (WHERE type = 'standard'),
-						COUNT(*) FILTER (WHERE type = 'guest'),
-						COUNT(*) FILTER (WHERE type = 'api42')
- 					FROM users;`
-
 	var total float64
 	var standard float64
 	var guests float64
 	var api float64
+	
+	startupQuery :=	`
+					SELECT
+					COUNT(*),
+					COUNT(*) FILTER (WHERE type = 'standard'),
+					COUNT(*) FILTER (WHERE type = 'guest'),
+					COUNT(*) FILTER (WHERE type = 'api42')
+					FROM users;
+					`
 
-	err := db.QueryRow(context.Background(), startupQuery).Scan(&total, &standard, &guests, &api)
+	err := DBQuery(dbs, startupQuery, nil, &total, &standard, &guests, &api)
 	if (err != nil) {
 		fmt.Printf("Couldn't get the number of users in the database: %v", err)
 		return
@@ -160,3 +167,34 @@ func connectToDatabase () (*pgxpool.Pool, error) {
 	fmt.Println("Attempting initial connection to DB...")
 	return pgxpool.NewWithConfig(context.Background(), cfg)
 }
+
+func DBQuery(dbs *DBSafe, query string, args []any, dest ...any) error {
+	db := dbs.GetPool()
+
+	metrics.DbRequests.Inc()
+	var err error
+	if len(dest) == 0 {
+		_, err = db.Exec(context.Background(), query, args...)
+	} else {
+		err = db.QueryRow(context.Background(), query, args...).Scan(dest...)
+	}
+
+	if (err != nil) {
+		return err
+	}
+
+	metrics.DbRequestsSucessful.Inc()
+	return nil
+}
+
+/*
+
+// Exec (no dest)
+err := DBQuery(db, insertQuery, []any{userProfile.Login, userProfile.Email})
+
+// QueryRow (with dest)
+var userID int
+var isInsert bool
+err := DBQuery(db, userQuery, []any{userProfile.Login, userProfile.Email}, &userID, &isInsert)
+
+*/

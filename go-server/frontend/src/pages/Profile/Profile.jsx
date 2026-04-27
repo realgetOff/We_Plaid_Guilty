@@ -97,14 +97,14 @@ const Profile = () =>
       setNameError('Username cannot be empty.');
       return;
     }
-    if (name.length < 2)
+    if (name.length < 3)
     {
-      setNameError('Username must be at least 2 characters.');
+      setNameError('Username must be at least 3 characters.');
       return;
     }
-    if (name.length > 32)
+    if (name.length > 16)
     {
-      setNameError('Username must be under 32 characters.');
+      setNameError('Username must be under 16 characters.');
       return;
     }
 
@@ -211,7 +211,7 @@ const Profile = () =>
                 type="text"
                 value={editName}
                 onChange={(e) => { setEditName(e.target.value); setNameError(''); }}
-                maxLength={32}
+                maxLength={16}
               />
               {nameError && <span className="profile__field-error">⚠ {nameError}</span>}
             </label>

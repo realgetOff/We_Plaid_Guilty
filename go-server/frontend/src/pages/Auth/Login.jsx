@@ -126,6 +126,8 @@ const Login = () =>
 
 	const safeFetch = async (url, options) =>
 	{
+		if (localStorage.getItem('authToken') && url.includes('/auth/'))
+			throw new Error('already authenticated (blocked)');
 		const res = await fetch(url, options);
 		const contentType = res.headers.get("content-type");
 		if (contentType && contentType.includes("application/json"))
@@ -164,6 +166,11 @@ const Login = () =>
 
 	const handleRegister = async (formData) =>
 	{
+		if (hasToken)
+		{
+			setError('already authenticated, logout first');
+			return;
+		}
 		setLoading(true);
 		setError('');
 		try
@@ -189,6 +196,11 @@ const Login = () =>
 
 	const handleLogin = async (formData) =>
 	{
+		if (hasToken)
+		{
+			setError('already authenticated, logout first');
+			return;
+		}
 		setLoading(true);
 		setError('');
 		try
@@ -219,13 +231,9 @@ const Login = () =>
 		try
 		{
 			const url = await authApi.oauth42Url();
-			// window.location.href = url;
-
-			console.log("URL =", url);
 
 			if (url.startsWith("https://api.intra.42.fr/"))
 			{
- 			//    document.location = url;
 				window.location.href = url;
 			}
 		}

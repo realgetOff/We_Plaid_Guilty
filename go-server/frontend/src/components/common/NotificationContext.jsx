@@ -49,7 +49,7 @@ export const NotificationProvider = ({ children }) =>
         const now = Date.now();
         const last = cooldowns.current[from] || 0;
 
-        if (now - last < 10000)
+        if (now - last < 15000)
           return;
         cooldowns.current[from] = now;
         push({

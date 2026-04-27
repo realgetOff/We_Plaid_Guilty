@@ -57,15 +57,18 @@ func socketLogic(client *Client, serverVars *serverVarsStruct) {
 		classicRoom.SendSystemMsg(fmt.Sprintf("%s leave the lobby !", *client.CurrUsrName))
 	}
 
-	time.Sleep(15 * time.Second)
 	if len(base.Players) == 0 {
-		serverVars.globalHub.DeleteRoom(base.ID)
-		return
+		time.Sleep(15 * time.Second)
+		if len(base.Players) == 0 {
+			serverVars.globalHub.DeleteRoom(base.ID)
+			return
+		}
 	}
 
-	if isHost {
+	if isHost && len(base.Players) != 0 {
 		base.TransferHost()
 	}
+
 	base.BroadcastLobbyState()
 }
 

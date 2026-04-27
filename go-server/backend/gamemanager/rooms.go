@@ -2,19 +2,8 @@ package gamemanager
 
 import (
 	"fmt"
-	// "time"
-
 	"github.com/gorilla/websocket"
 )
-
-func (r *Room) SetPlayerOnline(playerID string, isOnline bool) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	if p, ok := r.Players[playerID]; ok {
-		p.IsConnected = isOnline
-	}
-}
 
 func (r *Room) updateStatus(status GameStates) {
 	r.mu.Lock()
@@ -103,7 +92,6 @@ func (b *BaseRoom) AddPlayer(playerID string, name string, conn *websocket.Conn,
 			IsReady:     false,
 			Color: color,
 			Font: font,
-			Score:       0,
 		}
 	} else {
 		newPlayer = &Player{
@@ -115,7 +103,6 @@ func (b *BaseRoom) AddPlayer(playerID string, name string, conn *websocket.Conn,
 			IsReady:     false,
 			Color: color,
 			Font: font,
-			Score:       0,
 		}
 	}
 
@@ -131,8 +118,9 @@ func (r *Room) LeaveGame(playerID string) (bool){
 		oldPlayer.IsReady = true
 		oldPlayer.IsConnected = false
 	}
+
 	var isAllDisconnect bool
-	// time.Sleep(15 * time.Second)
+	
 	for _, p := range r.Players {
 		if !p.IsConnected {
 			isAllDisconnect = true
@@ -141,6 +129,7 @@ func (r *Room) LeaveGame(playerID string) (bool){
 			break
 		}
 	}
+
 	var isReadyCount int
 	for _, p := range r.Players {
 		if p.IsReady {
@@ -158,6 +147,9 @@ func (r *Room) LeaveGame(playerID string) (bool){
 	return isAllDisconnect
 }
 
+/*
+* Update the Conn with a new conn to join the game
+*/
 func (b *BaseRoom) JoinGame(playerID string, newConn *websocket.Conn) {
 	b.mu.Lock()
 	defer b.mu.Unlock()

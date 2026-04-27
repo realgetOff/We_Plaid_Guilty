@@ -34,9 +34,15 @@ func (h *Hub) generateRandID(lenght int) (roomId string) {
 func (h *Hub) DeleteRoom(id string) {
     h.mu.Lock()
     defer h.mu.Unlock()
-	
+
+	room, exist := h.Rooms[id]
+
+	if (!exist || room == nil) {
+		return
+	}
+
 	metrics.RoomCountTotal.Dec()
-	if (h.Rooms[id].GetBase().IsAi){
+	if (room.GetBase().IsAi){
 		metrics.RoomCountAI.Dec()
 	} else {
 		metrics.RoomCountStandard.Dec()

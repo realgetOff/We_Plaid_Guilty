@@ -19,11 +19,9 @@ func (r *Room) waitForPhase(timeout time.Duration) {
 
 func (b *BaseRoom) listenForNotifaction() {
 
-	fmt.Printf("DEBUG: Entrer de la go routine listenNotification\n")
 	for notification := range b.MessageChan {
 
 		if (notification.End == true) {
-			fmt.Printf("Enter in the end\n")
 			break
 		}
 		b.mu.Lock()

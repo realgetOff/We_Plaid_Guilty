@@ -1068,7 +1068,9 @@ func (d *Dispatcher) HandleLeaveLobby(ctx *WSContext, msg Message) {
 
 	base.RemovePlayer(*ctx.client.CurrUsrID)
 	if classicRoom, ok := ctx.client.CurrentRoom.(*gamemanager.Room); ok {
+
 		classicRoom.SendSystemMsg(fmt.Sprintf("%s leave the room !", *ctx.client.CurrUsrName))
+
 		if len(base.Players) == 0 {
 			classicRoom.MessageChan <- gamemanager.Notification{
 				End: true,
@@ -1082,7 +1084,6 @@ func (d *Dispatcher) HandleLeaveLobby(ctx *WSContext, msg Message) {
 		base.TransferHost()
 	}
 	base.BroadcastLobbyState()
-	// TODO <- Notification End true
 }
 
 func (d *Dispatcher) HandleLeaveGame(ctx *WSContext, msg Message) { 

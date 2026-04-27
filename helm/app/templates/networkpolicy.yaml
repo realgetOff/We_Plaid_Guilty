@@ -38,7 +38,7 @@ spec:
           protocol: TCP
     - to:
         - ipBlock:
-            cidr: 172.17.0.1/32
+            cidr: 172.18.0.1/32
       ports:
         - port: 5432
           protocol: TCP

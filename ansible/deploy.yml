@@ -380,13 +380,19 @@
       environment:
         KUBECONFIG: /etc/rancher/k3s/k3s.yaml
 
+    - name: "Delete Kibana pre-install artifacts fo redeploy"
+      shell: |
+        /usr/local/bin/kubectl delete job pre-install-kibana-kibana -n logging --ignore-not-found
+        /usr/local/bin/kubectl delete secret kibana-kibana-es-token -n logging --ignore-not-found
+      environment:
+        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
     - name: "Deploy Kibana"
       shell: |
         /usr/local/bin/helm upgrade --install kibana \
           elastic/kibana \
           --namespace logging \
           --values /tmp/kibana-values.yaml \
-          --no-hooks \
           --timeout 300s
       environment:
         KUBECONFIG: /etc/rancher/k3s/k3s.yaml

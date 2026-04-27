@@ -26,7 +26,10 @@ The application is **desktop-only** (mobile is blocked at the App level by user-
 | Styling | Custom CSS (https://alticreation.com/blog/bem-pour-le-css/), no CSS framework |
 | Auth | JWT (localStorage) + 42 OAuth callback |
 | Build tool | Vite |
-[Stack](!readme_img/stack_explanation.png)
+
+<p align="center">
+  <img src="./readme_img/stack_explanation.png">
+</p>
 
 ---
 
@@ -93,7 +96,10 @@ src/
 - **42 OAuth**: redirects to `/login/42`, backend returns JWT via query param at `/callback`
 - **Persistent session**: token presence checked on every route/navbar render
 - **Sign out**: clears all localStorage keys and reloads
-[Auth](!readme_img/auth_explanation.png)
+
+<p align="center">
+  <img src="./readme_img/auth_explanation.png">
+</p>
 
 ### Navigation & Layout
 - **MacWindow**: wraps every page in a simulated HyperCard window; title and card header update per route
@@ -110,14 +116,20 @@ src/
   - `guess` phase → `GuessPrompt`: timed guess with drawing display
   - `gallery` phase → `Gallery`: scrollable chain viewer showing the full prompt → drawing → guess sequence
 - All phases auto-submit on timer expiry
-[AIGame](!readme_img/aigame_explanation.png)
+
+<p align="center">
+  <img src="./readme_img/aigame_explanation.png">
+</p>
 
 ### AI Game Mode
 - Same lobby flow as classic, but triggers an AI-generated prompt server-side
 - `AIDrawBoard` adds optional **title** and **description** fields to drawings
 - `AIVotePanel`: 1–5 star voting on every other player's drawing; submits only when all drawings are rated
 - `AIGallery`: sorted leaderboard with medal rankings and star display
-[Game](!readme_img/game_explanation.png)
+
+<p align="center">
+  <img src="./readme_img/game_explanation.png">
+</p>
 
 ### Profile
 - View any user's profile by username (`/profile/:username`)
@@ -131,7 +143,10 @@ src/
 - Online/offline status updates in real time via WebSocket
 - Send a game invite to an online friend by entering a room code
 - Guest accounts see a blocked state
-[F&P](!readme_img/friends&profile_explanation.png)
+
+<p align="center">
+  <img src="./readme_img/friendsprofile.png">
+</p>
 
 ### Legal
 - `/privacy` — Privacy Policy (data collection, usage, user rights)
@@ -152,7 +167,10 @@ All real-time communication goes through a **singleton WebSocket client** (`src/
 - **`addListener(fn)` / `removeListener(fn)`** — pub/sub pattern used by every page component
 - Handles `profile_updated` messages to refresh the JWT and username in localStorage automatically
 - Closes with code `4000` → forces logout redirect
-[WS](!readme_img/socket_explanation.png)
+
+<p align="center">
+  <img src="./readme_img/socket_explanation.png">
+</p>
 
 ---
 

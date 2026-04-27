@@ -124,11 +124,14 @@ func (r *AIRoom) BroadcastChat(playerID string, content string) {
 func (r *AIRoom) LeaveGame(playerID string) (bool){
 	r.mu.Lock()
 	defer r.mu.Unlock()
+
 	if oldPlayer, ok := r.Players[playerID]; ok {
 		oldPlayer.IsReady = true
 		oldPlayer.IsConnected = false
 	}
+
 	var isAllDisconnect bool
+
 	for _, p := range r.Players {
 		if !p.IsConnected {
 			isAllDisconnect = true
@@ -145,6 +148,7 @@ func (r *AIRoom) LeaveGame(playerID string) (bool){
 			isReadyCount++
 		}
 	}
+
 	if isReadyCount == len(r.Players) {
 		if r.Status == StateAIVoting {
 			select {
@@ -174,6 +178,7 @@ func (r *AIRoom) RunAIGameLoop(prompt string) {
 	r.DrawingsDone = 0
 	r.VotesDone = 0
 	r.mu.Unlock()
+	roomID := r.ID
 
 	r.BroadcastToAll(map[string]interface{}{
 		"type":   "ai_game_state",
@@ -185,8 +190,9 @@ func (r *AIRoom) RunAIGameLoop(prompt string) {
 
 	r.mu.Lock()
 	r.Status = StateAIVoting
-	roomID := r.ID
+
 	allDrawings := make([]*AIDrawing, 0, len(r.Drawings))
+
 	for _, d := range r.Drawings {
 		allDrawings = append(allDrawings, d)
 	}
@@ -228,7 +234,7 @@ func (r *AIRoom) RunAIGameLoop(prompt string) {
 	r.Status = StateAIFinished
 	r.mu.Unlock()
 
-	fmt.Printf("DEBUG: gallery\n")
+	fmt.Printf("DEBUG: gallery_ia\n")
 	r.BroadcastToAll(map[string]interface{}{
 		"type":    "ai_results",
 		"phase":   "gallery",

@@ -65,6 +65,7 @@ func (b *BaseRoom) BroadcastLobbyState() {
 		name string
 		host bool
 	}
+
 	targets := make([]toNotify, 0)
 
 	for _, p := range b.Players {
@@ -74,7 +75,7 @@ func (b *BaseRoom) BroadcastLobbyState() {
 			"host":   p.IsHost,
 			"online": p.IsConnected,
 			"color": p.Color,
-			"font": p.Font, // NOTE EXEMPLE
+			"font": p.Font,
 		})
 		targets = append(targets, toNotify{id: p.ID, name: p.Name, host: p.IsHost})
 	}
@@ -94,8 +95,6 @@ func (b *BaseRoom) BroadcastLobbyState() {
 					"id":   target.id,
 					"name": target.name,
 					"host": target.host,
-					"color": "#0000aa",
-					"font": "italic", // NOTE EXEMPLE
 				},
 			},
 		}
@@ -110,6 +109,7 @@ func (r *Room) broadcastGallery() {
 		Type string `json:"type"`
 		Content string `json:"content"`
 	}
+
 	type Chain struct {
 		ID string `json:"id"`
 		Prompt string `json:"prompt"`

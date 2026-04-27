@@ -63,12 +63,6 @@
 - name: "Save iptables rules"
   shell: iptables-save > /etc/sysconfig/iptables
 
-- name: "Enable iptables service"
-  service:
-    name: iptables
-    enabled: yes
-    state: started
-
 - name: "Waiting k3s"
   wait_for:
     path: "{{ token_file }}"

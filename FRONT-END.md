@@ -23,7 +23,7 @@ The application is **desktop-only** (mobile is blocked at the App level by user-
 | Real-time | WebSocket (custom singleton client) |
 | Notifications | React Context API |
 | Toasts | react-hot-toast + custom ToastContainer |
-| Styling | Custom CSS (BEM), no CSS framework |
+| Styling | Custom CSS (https://alticreation.com/blog/bem-pour-le-css/), no CSS framework |
 | Auth | JWT (localStorage) + 42 OAuth callback |
 | Build tool | Vite |
 
@@ -210,15 +210,12 @@ AI was used during frontend development for:
 - Debugging edge cases in the WebSocket authentication flow
 - Generating initial CSS for the HyperCard design system
 
-All generated code was reviewed, understood, tested, and often significantly modified before being committed.
-
 ---
 
 ## Known Limitations
 
 - Mobile devices are blocked intentionally (the canvas drawing board is not touch-optimized)
-- The flood-fill algorithm is synchronous and may be slow on very large canvas areas
-- No offline support (no PWA)
+- No offline support
 
 ---
 

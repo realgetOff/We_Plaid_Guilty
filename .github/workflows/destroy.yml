@@ -1,5 +1,5 @@
 name: Destroy
-
+# checkov:skip=CKV_GHA_7:workflow_dispatch inputs required to choose destruction type
 on:
   workflow_dispatch:
     inputs:

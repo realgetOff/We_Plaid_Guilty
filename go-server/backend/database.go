@@ -43,6 +43,14 @@ func reloadConfig(sdb *DBSafe) {
 		db_password := myMap["DB_PASSWORD"]
 		db_name := myMap["DB_NAME"]
 
+		// var connection_url string
+
+		// if (os.Getenv("LOCAL") != "") {
+		// 	connection_url = fmt.Sprintf("postgres://%s:%s@%s:%s/%s", db_user, db_password, db_host, db_port, db_name)
+		// } else {
+		// 	connection_url = fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=verify-full", db_user, db_password, db_host, db_port, db_name)
+		// }
+
 		connection_url := "postgres://" + db_user + ":" + db_password + "@" + db_host + ":" + db_port + "/" + db_name
 		content, err := os.ReadFile("/vault/secrets/tls")
 		if err != nil { continue }

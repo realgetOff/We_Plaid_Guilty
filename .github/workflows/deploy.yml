@@ -52,6 +52,7 @@ jobs:
           build-args: |
             GO_ARCH=arm64
             FINAL_PLATFORM=linux/arm64
+            VERSION=${{ steps.meta.outputs.tag }}
           tags: |
             437836833311.dkr.ecr.eu-north-1.amazonaws.com/gartic-trans-app:${{ steps.meta.outputs.tag }}
 

@@ -259,10 +259,17 @@
         dest: /tmp/DASHBOARD_GRAFANA.json
         mode: '0644'
 
+    - name: "Copy Grafana dashboard JSON for APP"
+      copy:
+        src: "{{ playbook_dir }}/../helm/values/dashboard/APP.json"
+        dest: /tmp/APP.json
+        mode: '0644'
+
     - name: "Create Grafana dashboard ConfigMap"
       shell: |
         /usr/local/bin/kubectl create configmap grafana-custom-dashboard \
           --from-file=DASHBOARD_GRAFANA.json=/tmp/DASHBOARD_GRAFANA.json \
+          --from-file=APP.json=/tmp/APP.json \
           -n monitoring --dry-run=client -o yaml | \
         /usr/local/bin/kubectl apply -f -
       environment:

@@ -213,8 +213,9 @@ resource "aws_security_group" "worker_sg" {
 }
 
 resource "aws_route53_zone" "main" {
+  #checkov:skip=CKV2_AWS_38:DNSSEC maybe too much for academic project
+  #checkov:skip=CKV2_AWS_39:DNS  academic project
   name = "play-stupid.games"
-
   lifecycle {
     prevent_destroy = true
   }

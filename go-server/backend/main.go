@@ -32,15 +32,6 @@ type serverVarsStruct struct {
 func NewServerStructure () *serverVarsStruct {
 	var dbs DBSafe
 
-	// db, err := connectToDatabase()
-	
-	// dbs.Pool = db
-	// go reloadConfig(&dbs)
-	// if err != nil {
-	// 	log.Fatalf("Couldn't connect to the PostgreSQL database: %v", err)
-	// }
-	// defer db.Close()
-
 	dbPool, err := connectToDatabase()
 	dbs.Pool = dbPool
 	go reloadConfig(&dbs)
@@ -74,21 +65,11 @@ func NewServerStructure () *serverVarsStruct {
 // https://pkg.go.dev/golang.org/x/oauth2#Endpoint
 
 var (
-	fortyTwoOauthConfig *oauth2.Config
-	// this should be turned into a randomly generated string
-	oauthStateString = "pseudo-random-state"
-)
-
-func main() {
-	fmt.Println("~o~ This project was brought to you with hate by pmilner- mforest- namichel & lviravon! ~o~")
-	fmt.Println(" ~~ Starting transcendence backend... ~~")
-
-
-	redirectUrl := os.Getenv("REDIRECT_URL_42")
-	clientId := os.Getenv("CLIENT_ID")
-	clientSecret := os.Getenv("CLIENT_SECRET")
-	authUrl := os.Getenv("AUTH_URL")
-	tokenUrl := os.Getenv("TOKEN_URL")
+	redirectUrl = os.Getenv("REDIRECT_URL_42")
+	clientId = os.Getenv("CLIENT_ID")
+	clientSecret = os.Getenv("CLIENT_SECRET")
+	authUrl = os.Getenv("AUTH_URL")
+	tokenUrl = os.Getenv("TOKEN_URL")
 
 	fortyTwoOauthConfig = &oauth2.Config {
 		RedirectURL: redirectUrl,
@@ -100,6 +81,14 @@ func main() {
 			TokenURL: tokenUrl,
 		},
 	}
+
+	// this should be turned into a randomly generated string
+	oauthStateString = "pseudo-random-state"
+)
+
+func main() {
+	fmt.Println("~o~ This project was brought to you with hate by pmilner- mforest- namichel & lviravon! ~o~")
+	fmt.Println(" ~~ Starting transcendence backend... ~~")
 			
 	//runtime.NumGoroutine()
 
@@ -125,7 +114,6 @@ func main() {
 		findRoom(c, serverVars)
 	})
 	serverVars.router.GET("/ping", pong)
-	// serverVars.router.GET("/health", health)
 	serverVars.router.GET("/api/config", vaultstatus)
 	serverVars.router.GET("/ws", func (c *gin.Context){
 		handleWebsocket(c, serverVars)

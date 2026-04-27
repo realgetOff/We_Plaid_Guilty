@@ -57,10 +57,21 @@ func handleGuestAuth(c *gin.Context, dbs *DBSafe) {
 	n, _ := rand.Int(rand.Reader, big.NewInt(10000))
 	guestName := fmt.Sprintf("guest_%04d", n.Int64())
 	var userID string
-	db := dbs.GetPool()
+	var err error
 
-	userQuery := "INSERT INTO users (username, type) VALUES ($1, 'guest') RETURNING id;"
-	err := db.QueryRow(context.Background(), userQuery, guestName).Scan(&userID)
+	// SQL QUERIES
+	userQuery :=	`
+					INSERT INTO users (username, type)
+					VALUES ($1, 'guest')
+					RETURNING id;
+					`
+	
+	profileQuery := `
+					INSERT INTO profiles (id, display_name)
+					VALUES ($1, $2)
+					`
+
+	err = DBQuery(dbs, userQuery, []any{guestName}, &userID)
 	if err != nil {
 		fmt.Println("Guest creation failed", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -68,9 +79,8 @@ func handleGuestAuth(c *gin.Context, dbs *DBSafe) {
 		return
 	}
 	fmt.Println("Guest name: " + guestName + " guest ID = " + userID)
-
-	profileQuery := "INSERT INTO profiles (id, display_name) VALUES ($1, $2)"
-	_, err = db.Exec(context.Background(), profileQuery, userID, guestName)
+	
+	err = DBQuery(dbs, profileQuery, []any{userID, guestName})
 	if err != nil {
 		fmt.Println("Guest profile creation failed", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -121,7 +131,6 @@ type loginInfo struct {
 func handleRegister(c *gin.Context, dbs *DBSafe) {
 	var login loginInfo
 	var userID string
-	db := dbs.GetPool()
 
 	if err := c.ShouldBindJSON(&login); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload: " + err.Error()})
@@ -134,9 +143,19 @@ func handleRegister(c *gin.Context, dbs *DBSafe) {
 		return
 	}
 
-	userQuery := "INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id;"
+	// SQL QUERIES
+	userQuery :=	`
+					INSERT INTO users (username, email, password_hash)
+					VALUES ($1, $2, $3)
+					RETURNING id;
+					`
 
-	err = db.QueryRow(context.Background(), userQuery, login.Username, login.Email, bytes).Scan(&userID)
+	profileQuery :=	`
+					INSERT INTO profiles (id, display_name)
+					VALUES ($1, $2)
+					`
+	
+	err = DBQuery(dbs, userQuery, []any{login.Username, login.Email, bytes}, &userID)
 	if err != nil {
 		fmt.Println("User registration failed", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -146,8 +165,7 @@ func handleRegister(c *gin.Context, dbs *DBSafe) {
 
 	fmt.Println("Registered username: " + login.Username + USR_ID + userID)
 
-	profileQuery := "INSERT INTO profiles (id, display_name) VALUES ($1, $2)"
-	_, err = db.Exec(context.Background(), profileQuery, userID, login.Username)
+	err = DBQuery(dbs, profileQuery, []any{userID, login.Username})
 	if err != nil {
 		fmt.Println("User profile creation failed", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -163,10 +181,8 @@ func handleRegister(c *gin.Context, dbs *DBSafe) {
 		return
 	}
 
-
 	metrics.UserCountTotal.Inc()
 	metrics.UserCountStandard.Inc()
-
 
 	c.JSON(http.StatusOK, AuthResponse{
 		Token: SignedString,
@@ -177,17 +193,21 @@ func handleLogin(c *gin.Context, dbs *DBSafe) {
 	var login loginInfo
 	var userID string
 	var passHash string
+	var err error
 
-	db := dbs.GetPool()
-
-	if err := c.ShouldBindJSON(&login); err != nil {
+	if err = c.ShouldBindJSON(&login); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload: " + err.Error()})
 		return
 	}
 
-	userQuery := "SELECT id, password_hash FROM users WHERE username = $1 AND type = 'standard';"
+	userQuery :=	`
+					SELECT id, password_hash
+					FROM users
+					WHERE username = $1 AND type = 'standard';
+					`
 
-	err := db.QueryRow(context.Background(), userQuery, login.Username).Scan(&userID, &passHash)
+	err = DBQuery(dbs, userQuery, []any{login.Username}, &userID, &passHash)
+
 	if err != nil {
 		fmt.Println("Coulnd't get password hash for user: "+login.Username, err)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -217,7 +237,7 @@ func handleLogin(c *gin.Context, dbs *DBSafe) {
 	})
 }
 
-func FortyTwoCallback(c *gin.Context, dbs *DBSafe) { // change this to just be a pgxpool, dbsafe is useless
+func FortyTwoCallback(c *gin.Context, dbs *DBSafe) {
 	code := c.Query("code")
 
 	token, err := fortyTwoOauthConfig.Exchange(context.Background(), code)
@@ -245,28 +265,31 @@ func FortyTwoCallback(c *gin.Context, dbs *DBSafe) { // change this to just be a
 		return
 	}
 
-	fmt.Println("\n--- NEW LOGIN DETECTED ---")
+	fmt.Println("\n--- NEW 42API LOGIN DETECTED ---")
 	fmt.Printf("Username: %s\n", userProfile.Login)
 	fmt.Printf("Email:    %s\n", userProfile.Email)
-	// fmt.Printf("42 ID:    %d\n", userProfile.ID)
 	fmt.Println("--------------------------\n")
 
 	var userID string
 	var isInsert bool
-	db := dbs.GetPool()
 
-	userQuery := `INSERT INTO users (username, email, type) 
+	userQuery :=	`
+					INSERT INTO users (username, email, type) 
 					VALUES ($1, $2, 'api42') 
 					ON CONFLICT (username) 
 					DO UPDATE SET 
 						email = EXCLUDED.email,
 						type = 'api42'
-					RETURNING id, (xmax = 0);`
+					RETURNING id, (xmax = 0);
+					`
 
-	// PROMETHEUS
-	metrics.DbRequests.Inc()
+	profileQuery :=	`
+					INSERT INTO profiles (id, display_name)
+					VALUES ($1, $2)
+					ON CONFLICT (id) DO NOTHING;
+					`
 
-	err = db.QueryRow(context.Background(), userQuery, userProfile.Login, userProfile.Email).Scan(&userID, &isInsert)
+	err = DBQuery(dbs, userQuery, []any{userProfile.Login, userProfile.Email}, &userID, &isInsert)
 	if err != nil {
 		fmt.Printf("User creation failed %v\n", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -275,22 +298,14 @@ func FortyTwoCallback(c *gin.Context, dbs *DBSafe) { // change this to just be a
 	}
 
 	if (isInsert){
+		metrics.UserCountTotal.Inc()
 		metrics.UserCountAPI.Inc() 
 	}
-
-	// PROMETHEUS
-	metrics.DbRequestsSucessful.Inc()
 
 	fmt.Println("Username: " + userProfile.Login + USR_ID + userID)
 
 	if userID != "" {
-		// PROMETHEUS
-		metrics.DbRequests.Inc()
-
-		profileQuery := `INSERT INTO profiles (id, display_name)
-						VALUES ($1, $2)
-						ON CONFLICT (id) DO NOTHING;`
-		_, err = db.Exec(context.Background(), profileQuery, userID, userProfile.Login)
+		err = DBQuery(dbs, profileQuery, []any{userID, userProfile.Login})
 		if err != nil {
 			fmt.Printf("User profile creation failed %v\n", err)
 			c.JSON(http.StatusInternalServerError, gin.H{
@@ -298,9 +313,6 @@ func FortyTwoCallback(c *gin.Context, dbs *DBSafe) { // change this to just be a
 			return
 		}
 	}
-
-	// PROMETHEUS
-	metrics.DbRequestsSucessful.Inc()
 
 	var SignedString string
 	SignedString, err = handler.GenerateJWT(userID, userProfile.Login)

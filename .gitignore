@@ -32,3 +32,5 @@ out
 .gitignore
 
 terraform/vault/ansible/
+
+go-server/.env

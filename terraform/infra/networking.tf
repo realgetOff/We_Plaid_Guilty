@@ -81,6 +81,13 @@ resource "aws_security_group" "master_sg" {
     to_port     = 51820
     protocol    = "udp"
   }
+  ingress {
+    description = "PostgreSQL from K3s pods"
+    cidr_blocks = ["10.42.0.0/16"]
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+  }
 
   egress {
     description = "HTTPS outbound"
@@ -174,6 +181,7 @@ resource "aws_security_group" "worker_sg" {
     to_port     = 51820
     protocol    = "udp"
   }
+
 
   egress {
     description = "HTTPS outbound"

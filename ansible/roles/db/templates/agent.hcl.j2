@@ -37,7 +37,7 @@ template {
 template {
   contents    = <<EOT
 {% raw %}
-{{ with pkiCert "pki/issue/db-pki" "common_name=postgres.transcendance.local" "ttl=24h" }}
+{{ with pkiCert "pki/issue/db-pki" "common_name=postgres.transcendance.local" "ip_sans=10.42.0.1" "ttl=24h" }}
 {{ .Cert }}{{ .CA }}{{ .Key }}
 {{ end }}
 {% endraw %}

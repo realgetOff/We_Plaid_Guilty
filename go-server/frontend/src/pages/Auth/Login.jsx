@@ -219,13 +219,9 @@ const Login = () =>
 		try
 		{
 			const url = await authApi.oauth42Url();
-			// window.location.href = url;
-
-			console.log("URL =", url);
 
 			if (url.startsWith("https://api.intra.42.fr/"))
 			{
- 			//    document.location = url;
 				window.location.href = url;
 			}
 		}

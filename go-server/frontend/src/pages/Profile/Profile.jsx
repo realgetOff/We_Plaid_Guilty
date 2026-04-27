@@ -97,14 +97,14 @@ const Profile = () =>
       setNameError('Username cannot be empty.');
       return;
     }
-    if (name.length < 2)
+    if (name.length < 3)
     {
-      setNameError('Username must be at least 2 characters.');
+      setNameError('Username must be at least 3 characters.');
       return;
     }
-    if (name.length > 32)
+    if (name.length > 16)
     {
-      setNameError('Username must be under 32 characters.');
+      setNameError('Username must be under 16 characters.');
       return;
     }
 

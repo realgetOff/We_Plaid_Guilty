@@ -30,6 +30,7 @@ const Friends = () =>
   const [inviteCode,  setInviteCode]  = useState('');
   const [inviteError, setInviteError] = useState('');
   const [inviting,    setInviting]    = useState(null);
+  const [lastInviteTime, setLastInviteTime] = useState(0);
 
   useEffect(() =>
   {
@@ -140,9 +141,9 @@ const Friends = () =>
       setAddError('Please enter a username.');
       return;
     }
-    if (username.length < 2)
+    if (username.length < 3)
     {
-      setAddError('Username must be at least 2 characters.');
+      setAddError('Username must be at least 3 characters.');
       return;
     }
     if (friends.find((f) => f.username === username))
@@ -207,6 +208,14 @@ const Friends = () =>
   const handleInvite = async (friend) =>
   {
     const code = inviteCode.trim();
+    const now = Date.now();
+
+    if (now - lastInviteTime < 5000) 
+    {
+      const remaining = Math.ceil((5000 - (now - lastInviteTime)) / 1000);
+      setInviteError(`Please wait ${remaining}s before sending another invite.`);
+      return;
+    }
 
     if (!code)
     {
@@ -219,7 +228,9 @@ const Friends = () =>
       return;
     }
 
+    setLastInviteTime(now);
     setInviting(friend.id);
+    setInviteError('');
 
     send({
       type: 'invite_friend',

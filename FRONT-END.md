@@ -145,7 +145,7 @@ src/
 - Guest accounts see a blocked state
 
 <p align="center">
-  <img src="./readme_img/friendsprofile_explanation.png">
+  <img src="./readme_img/friendsprofile.png">
 </p>
 
 ### Legal

@@ -1,5 +1,0 @@
----
-- name: "Restart APP"
-  shell: "docker compose up -d --force-recreate"
-  args:
-    chdir: "{{ app_path }}"

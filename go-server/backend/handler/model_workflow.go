@@ -1,11 +1,20 @@
-package main
+package handler
 
 import (
 	"main.go/gamemanager"
 	"sync"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/websocket"
 )
+
+var JwtSecret = []byte("replace_with_env_or_equivalent_later")
+
+type MyCustomClaims struct {
+	Username string `json:"username"`
+	UserID   string `json:"id"`
+	jwt.RegisteredClaims
+}
 
 type Client struct {
 	CurrUsrID		*string				// UserID, to identify the
@@ -19,14 +28,43 @@ type Client struct {
 type ClientHub struct {
 	Clients map[string]*Client
 
-	db		*pgxpool.Pool
-	mu		sync.RWMutex
+	Db		*pgxpool.Pool
+	Mu		sync.RWMutex
 }
 
 type WSContext struct {
-	client *Client
-	chub *ClientHub
+	Client *Client
+	Chub *ClientHub
 }
+
+
+/*
+The message structure contains the json information to be sent / received by the websocket for room generation
+type: state before / after generation of the room code
+code: room code
+omitempty: omits empty strings, lowering network traffic
+*/
+
+type Message struct {
+	Type        string         `json:"type"`
+	Text        string         `json:"text,omitempty"`
+	Token       string         `json:"token,omitempty"`
+	Code        string         `json:"code,omitempty"`
+	Reason      string         `json:"reason,omitempty"`
+	Prompt      string         `json:"prompt,omitempty"`
+	Drawing     string         `json:"drawing,omitempty"`
+	Guess       string         `json:"guess,omitempty"`
+	Votes       map[string]int `json:"votes,omitempty"`
+	Title       string         `json:"title,omitempty"`
+	Description string         `json:"description,omitempty"`
+	Username    string         `json:"username,omitempty"`
+	To          string         `json:"to,omitempty"`
+	ID          string         `json:"id,omitempty"`
+	IsAI        bool           `json:"is_ai,omitempty"`
+	Style       ProfileStyle   `json:"style,omitempty"`
+}
+
+
 
 const DEFAULT_COLOR = "#000000"
 const NOT_FOUND_DB = "ERROR: Player not found in the DB\n"

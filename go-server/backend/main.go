@@ -3,15 +3,17 @@ package main
 import (
 	"fmt"
 	"log"
-	"net/http" 
+	"net/http"
 	"os"
 	"time"
-	// "runtime"
-	
-	"main.go/gamemanager"
 
-	"github.com/zsais/go-gin-prometheus"
+	// "runtime"
+
+	"main.go/gamemanager"
+	"main.go/handler"
+
 	"github.com/gin-gonic/gin"
+	"github.com/zsais/go-gin-prometheus"
 
 	"crypto/tls"
 	"crypto/x509"
@@ -22,7 +24,7 @@ import (
 
 type serverVarsStruct struct {
 	globalHub *gamemanager.Hub
-	ClientHub *ClientHub
+	ClientHub *handler.ClientHub
 	router *gin.Engine
 	db *DBSafe
 }
@@ -55,9 +57,9 @@ func NewServerStructure () *serverVarsStruct {
 
 	startupUserMetrics(&dbs)
 
-	chub := &ClientHub{
-		Clients:	make(map[string]*Client),
-		db:			dbPool,
+	chub := &handler.ClientHub{
+		Clients:	make(map[string]*handler.Client),
+		Db:			dbPool,
 	}
 
 	return &serverVarsStruct{

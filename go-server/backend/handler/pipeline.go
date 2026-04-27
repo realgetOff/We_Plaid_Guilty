@@ -1,9 +1,11 @@
-package main
+package handler
 
 import (
 	"fmt"
 	"strings"
+	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/jackc/pgx/v5"
 
 )
@@ -23,8 +25,8 @@ func (d *Dispatcher) PipeIsValidChat(ctx *WSContext, msg Message) bool {
 }
 
 func (d *Dispatcher) PipeIsGuest(ctx *WSContext, msg Message) bool {
-	if ctx.client.IsGuest {
-		_ = ctx.client.Conn.WriteJSON(map[string]interface{}{
+	if ctx.Client.IsGuest {
+		_ = ctx.Client.Conn.WriteJSON(map[string]interface{}{
 			"type": "friend_add_failed", "success": false, "error": "Guests cannot add friends.",
 		})
 		return false
@@ -34,15 +36,15 @@ func (d *Dispatcher) PipeIsGuest(ctx *WSContext, msg Message) bool {
 
 func (d *Dispatcher) PipeIsAuth(ctx *WSContext, msg Message) bool {
 
-	if ctx.client.CurrUsrID == nil || *ctx.client.CurrUsrID == "" {
+	if ctx.Client.CurrUsrID == nil || *ctx.Client.CurrUsrID == "" {
 		return false
 	}
 
-	if ctx.client.CurrUsrName == nil || *ctx.client.CurrUsrName == "" {
+	if ctx.Client.CurrUsrName == nil || *ctx.Client.CurrUsrName == "" {
 		return false
 	}
 
-	fmt.Printf("DEBUG: %s is Auth\n", *ctx.client.CurrUsrName)
+	fmt.Printf("DEBUG: %s is Auth\n", *ctx.Client.CurrUsrName)
 	return true
 }
 
@@ -54,11 +56,11 @@ func (d *Dispatcher) PipeHasRoomCode(ctx *WSContext, msg Message) bool {
 }
 
 func (d *Dispatcher) PipeRoomExist(ctx *WSContext, msg Message) bool {
-	tmpRoom, err := ctx.client.Hub.GetRoom(msg.Code)
+	tmpRoom, err := ctx.Client.Hub.GetRoom(msg.Code)
 	if err != nil || tmpRoom == nil {
 		return false
 	}
-	ctx.client.CurrentRoom = tmpRoom
+	ctx.Client.CurrentRoom = tmpRoom
 	fmt.Printf("DEBUG: Room Exist\n")
 	return true
 }
@@ -72,7 +74,7 @@ func scanFriendRows(ctx *WSContext, rows pgx.Rows) []Friend {
 			fmt.Printf("Error scanning friends row :: %v\n", err)
 			continue
 		}
-		f.Online = ctx.chub.Clients[f.ID] != nil
+		f.Online = ctx.Chub.Clients[f.ID] != nil
 		out = append(out, f)
 	}
 	return out
@@ -81,16 +83,16 @@ func scanFriendRows(ctx *WSContext, rows pgx.Rows) []Friend {
 
 // NOTE move in a folder utils.go if new package
 func (d *Dispatcher) broadcastFriendAdded(ctx *WSContext, aID, aName, bID, bName string) {
-	onA := ctx.chub.Clients[aID] != nil
-	onB := ctx.chub.Clients[bID] != nil
-	if c := ctx.chub.Clients[aID]; c != nil {
+	onA := ctx.Chub.Clients[aID] != nil
+	onB := ctx.Chub.Clients[bID] != nil
+	if c := ctx.Chub.Clients[aID]; c != nil {
 		_ = c.Conn.WriteJSON(FriendsListResponse{
 			Type:    "friend_added",
 			Success: true,
 			Friend:  Friend{ID: bID, Username: bName, Online: onB},
 		})
 	}
-	if c := ctx.chub.Clients[bID]; c != nil {
+	if c := ctx.Chub.Clients[bID]; c != nil {
 		_ = c.Conn.WriteJSON(FriendsListResponse{
 			Type:    "friend_added",
 			Success: true,
@@ -98,3 +100,41 @@ func (d *Dispatcher) broadcastFriendAdded(ctx *WSContext, aID, aName, bID, bName
 		})
 	}
 }
+
+func GenerateJWT(userID string, guestName string) (string, error) {
+	claims := MyCustomClaims{
+		Username: guestName,
+		UserID:   userID,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)), // change later, temporarily 24h
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	signedToken, err := token.SignedString(JwtSecret)
+	if err != nil {
+		fmt.Println("Couldn't sign / generate JWT for guest " + guestName + " where id = " + userID)
+		return "", err
+	}
+	return signedToken, nil
+}
+
+func validateAndGetClaims(tokenString string) (*MyCustomClaims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &MyCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return JwtSecret, nil
+	})
+
+	if err != nil || token == nil {
+		return nil, fmt.Errorf("invalid token: %v", err)
+	}
+
+	if claims, ok := token.Claims.(*MyCustomClaims); ok && token.Valid {
+		return claims, nil
+	}
+
+	return nil, fmt.Errorf("token is invalid or claims are corrupted")
+}
+
+

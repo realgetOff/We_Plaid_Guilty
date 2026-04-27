@@ -1,3 +1,0 @@
----
-extra_ports:
-  - "8200/tcp"

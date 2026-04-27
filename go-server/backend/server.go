@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	// "github.com/go-playground/locales/wo"
 	"github.com/gorilla/websocket"
 
 	// "github.com/jackc/pgx/v5/pgxpool"
@@ -14,26 +15,27 @@ import (
 
 	"main.go/gamemanager"
 	"main.go/metrics"
+	"main.go/handler"
 )
 
-func socketLogic(client *Client, serverVars *serverVarsStruct) {
-	dispatcher := NewDispatcher()
+func socketLogic(client *handler.Client, serverVars *serverVarsStruct) {
+	dispatcher := handler.NewDispatcher()
 
-	ctx := WSContext{
-		client: client,
-		chub:   serverVars.ClientHub,
+	ctx := handler.WSContext{
+		Client: client,
+		Chub:   serverVars.ClientHub,
 	}
 
 	defer func() {
 		if client.CurrUsrID == nil || *client.CurrUsrID == "" {
 			return
 		}
-		serverVars.ClientHub.mu.Lock()
+		serverVars.ClientHub.Mu.Lock()
 		delete(serverVars.ClientHub.Clients, *client.CurrUsrID)
-		serverVars.ClientHub.mu.Unlock()
+		serverVars.ClientHub.Mu.Unlock()
 	}()
 	for {
-		var msg Message
+		var msg handler.Message
 		err := client.Conn.ReadJSON(&msg)
 		if err != nil {
 			break
@@ -57,15 +59,18 @@ func socketLogic(client *Client, serverVars *serverVarsStruct) {
 		classicRoom.SendSystemMsg(fmt.Sprintf("%s leave the lobby !", *client.CurrUsrName))
 	}
 
-	time.Sleep(15 * time.Second)
 	if len(base.Players) == 0 {
-		serverVars.globalHub.DeleteRoom(base.ID)
-		return
+		time.Sleep(15 * time.Second)
+		if len(base.Players) == 0 {
+			serverVars.globalHub.DeleteRoom(base.ID)
+			return
+		}
 	}
 
-	if isHost {
+	if isHost && len(base.Players) != 0 {
 		base.TransferHost()
 	}
+
 	base.BroadcastLobbyState()
 }
 
@@ -83,7 +88,7 @@ func handleWebsocket(c *gin.Context, serverVars *serverVarsStruct) {
 		return
 	}
 
-	client := &Client{
+	client := &handler.Client{
 		Conn: conn,
 		Hub:  serverVars.globalHub,
 	}

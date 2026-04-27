@@ -4,19 +4,9 @@ import (
 	"fmt"
 	"math/big"
 	"strings"
-
-	// "math/rand"
-	// "math/big"
 	"crypto/rand"
-	"sync"
-	"time"
 	"main.go/metrics"
 )
-
-type GameRoom interface {
-	GetID() string
-	GetBase() *BaseRoom
-}
 
 func (r *Room) GetID() string   { return r.ID }
 func (r *Room) GetBase() *BaseRoom { return &r.BaseRoom }
@@ -24,11 +14,6 @@ func (r *Room) GetBase() *BaseRoom { return &r.BaseRoom }
 func (r *AIRoom) GetID() string { return r.ID }
 func (r *AIRoom) GetBase() *BaseRoom { return &r.BaseRoom }
 
-
-type Hub struct {
-	Rooms map[string]GameRoom
-	mu sync.RWMutex
-}
 
 func (h *Hub) generateRandID(lenght int) (roomId string) {
 	const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -49,10 +34,15 @@ func (h *Hub) generateRandID(lenght int) (roomId string) {
 func (h *Hub) DeleteRoom(id string) {
     h.mu.Lock()
     defer h.mu.Unlock()
-	// NOTE to acces IsAi bool h.Rooms[id].GetBase().Isi
-	
+
+	room, exist := h.Rooms[id]
+
+	if (!exist || room == nil) {
+		return
+	}
+
 	metrics.RoomCountTotal.Dec()
-	if (h.Rooms[id].GetBase().IsAi){
+	if (room.GetBase().IsAi){
 		metrics.RoomCountAI.Dec()
 	} else {
 		metrics.RoomCountStandard.Dec()
@@ -111,19 +101,6 @@ func (h *Hub) GetRoom(id string) (GameRoom, error) {
 	return ptr, nil
 }
 
-func (h *Hub) LogRoom() {
-	for {
-		fmt.Printf("__________{NUMBER_OF_ROOM}_________\n")
-		fmt.Printf("nb_rooms = %d\n", len(h.Rooms))
-		for _, r := range h.Rooms {
-			base := r.GetID()
-			fmt.Printf("ROOM_%s\n", base)
-			fmt.Printf("______________")
-		}
-		time.Sleep(15 * time.Second)
-	}
-}
-
 func (h *Hub) CreateRoom(isAI bool) (GameRoom){
 	var IdRoom string
 
@@ -151,11 +128,7 @@ func (h *Hub) CreateRoom(isAI bool) (GameRoom){
 
 
 
-	fmt.Println("HUB: Tentative de lancement de la Goroutine...")
-
 	go newRoom.GetBase().listenForNotifaction()
-
-	fmt.Println("HUB: Goroutine lancée, sortie de boucle.")
 
 	h.mu.Lock()
 	h.Rooms[IdRoom] = newRoom

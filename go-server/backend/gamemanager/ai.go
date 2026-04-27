@@ -106,7 +106,7 @@ func CallAI(prompt string) (string, error) {
 	}
 
 	req.Header.Set("Content-Type",  "application/json")
-	req.Header.Set("Authorization", "Bearer "+apiKey)
+	req.Header.Set("Authorization", "Bearer " + apiKey)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -125,7 +125,7 @@ func CallAI(prompt string) (string, error) {
 	}
 
 	var grokResp grokResponse
-	if err := json.Unmarshal(respBytes, &grokResp); err != nil {
+		if err := json.Unmarshal(respBytes, &grokResp); err != nil {
 		return "", fmt.Errorf("failed to unmarshal response: %v", err)
 	}
 

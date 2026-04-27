@@ -19,11 +19,9 @@ func (r *Room) waitForPhase(timeout time.Duration) {
 
 func (b *BaseRoom) listenForNotifaction() {
 
-	fmt.Printf("DEBUG: Entrer de la go routine listenNotification\n")
 	for notification := range b.MessageChan {
 
 		if (notification.End == true) {
-			fmt.Printf("Enter in the end\n")
 			break
 		}
 		b.mu.Lock()
@@ -40,14 +38,13 @@ func (b *BaseRoom) listenForNotifaction() {
 		player.WriteMu.Unlock()
 
 		if err != nil {
-			fmt.Printf("DEBUG: Erreur WriteJSON: %v\n", err)
+			fmt.Printf("DEBUG: Error WriteJSON: %v\n", err)
 		}
 	}
-	fmt.Printf("DEBUG: Sortie de la go routine listenNotification\n")
 }
 
 func (r *Room) RunGameLoop() {
-	fmt.Printf("DEBUG: Entrer go_routine runGameLoop\n")
+	fmt.Printf("DEBUG: Start the go_routine RunGameLoop: Room %s\n", r.ID)
 	TotalRound := len(r.Players)
 
 	if TotalRound % 2 == 0 {
@@ -97,8 +94,7 @@ func (r *Room) RunGameLoop() {
 	r.updateStatus(StateFinished)
 	r.broadcastGallery()
 
-	fmt.Printf("GG everyone game end !")
-	fmt.Printf("DEBUG: Sortie go_routine RunGameLoop\n")
+	fmt.Printf("DEBUG: End of go_routine RunGameLoop: Room %s\n", r.ID)
 }
 
 func (r *Room) SubmiteAction(playerID string, data map[string]interface{}, isFinal bool) error {
@@ -109,7 +105,7 @@ func (r *Room) SubmiteAction(playerID string, data map[string]interface{}, isFin
 	if !ok {
 		return fmt.Errorf("Player not found!")
 	}
-	fmt.Printf("action_submited for player = %s\n", player.Name)
+	fmt.Printf("DEBUG: action_submited for player = %s\n", player.Name)
 
 	content := ""
 	if val, ok := data["prompt"].(string); ok {
@@ -153,7 +149,6 @@ func (r *Room) SubmiteAction(playerID string, data map[string]interface{}, isFin
 	if readyCount == len(r.Players) {
 		select {
 		case r.FinishedChan <- true:
-			fmt.Printf("Signa to chan good\n")
 		default:
 		}
 	}
@@ -167,8 +162,11 @@ func (r *Room) rotateBook() {
 	nextBook := make(map[string]*Book)
 
 	for i, donorPlayerID := range r.PlayerOrder {
+
 		nextIndex := (i + 1) % len(r.PlayerOrder)
+
 		catcherPlayerID := r.PlayerOrder[nextIndex]
+
 		nextBook[catcherPlayerID] = r.Books[donorPlayerID]
 	}
 
@@ -189,6 +187,7 @@ func (r *Room) GetPlayerTask(playerID string) GameStateRecord {
 	if !ok {
 		return res
 	}
+
 	lenEntries := len(val.Entries)
 
 	if lenEntries == 0 {
@@ -201,6 +200,7 @@ func (r *Room) GetPlayerTask(playerID string) GameStateRecord {
 			res.Drawing = last.Content
 		}
 	}
+
 	return res
 }
 
@@ -209,11 +209,11 @@ func (r *Room) StartGame() error {
 	defer r.mu.Unlock()
 
 	if len(r.Players) < 3 {
-		return fmt.Errorf("pas assez de joueur pour commencer")
+		return fmt.Errorf("Number of players under 3 games can’t start")
 	}
 
 	if r.Status != StateWaiting {
-		return fmt.Errorf("la partie a deja commencer")
+		return fmt.Errorf("Game already start")
 	}
 
 	r.Status = "started"
@@ -234,7 +234,6 @@ func (r *Room) StartGame() error {
 		r.PlayerOrder[i], r.PlayerOrder[j] = r.PlayerOrder[j], r.PlayerOrder[i]
 	})
 
-	fmt.Printf("Start Game, RoomID = %s\n", r.ID)
 	go r.RunGameLoop()
 
 	return nil

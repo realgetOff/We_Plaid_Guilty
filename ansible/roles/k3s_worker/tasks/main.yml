@@ -11,13 +11,6 @@
     dest: "{{ config_dir }}/config.yaml"
     mode: '0644'
 
-- name: "Add k3s to PATH"
-  file:
-    src: /usr/local/bin/k3s
-    dest: /usr/bin/k3s
-    state: link
-    force: yes
-
 - name: "Install worker"
   shell: |
     curl -sfL https://get.k3s.io | \

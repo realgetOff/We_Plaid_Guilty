@@ -43,7 +43,6 @@ type Book struct {
 */
 type Player struct {
 	ID          string          `json:"id"`
-	Score       int             `json:"score"`
 	Name        string          `json:"name"`
 	Conn        *websocket.Conn `json:"-"`
 	Color		string			`json:"color"`
@@ -88,4 +87,14 @@ type AIRoom struct {
 type Room struct {
 	BaseRoom
 	Books map[string]*Book
+}
+
+type GameRoom interface {
+	GetID() string
+	GetBase() *BaseRoom
+}
+
+type Hub struct {
+	Rooms map[string]GameRoom
+	mu sync.RWMutex
 }

@@ -1,7 +1,5 @@
 package gamemanager
 
-// import "sync"
-
 const (
 	StateAIWaiting  GameStates = "ai_waiting"
 	StateAIDrawing  GameStates = "ai_draw"

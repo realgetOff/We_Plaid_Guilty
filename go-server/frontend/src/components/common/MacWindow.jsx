@@ -41,6 +41,7 @@ const MacWindow = ({ children }) =>
 {
 	const location = useLocation();
 	const meta     = getRouteMeta(location.pathname);
+	const version = import.meta.env.VITE_VERSION || 'v1.0';
 
 	return (
 		<div className="hc-window" role="main">
@@ -59,7 +60,7 @@ const MacWindow = ({ children }) =>
 			</div>
 			<footer className="hc-footer">
 				<span className="hc-footer__left">
-					ft_transcendence v1.0 · We Plaid Guilty
+					ft_transcendence {version} · We Plaid Guilty
 				</span>
 				<div className="hc-footer__links">
 					<Link to="/credits" className="hc-footer__link">Credits</Link>

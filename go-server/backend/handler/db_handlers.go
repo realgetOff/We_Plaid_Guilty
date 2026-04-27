@@ -25,8 +25,8 @@ func (d *Dispatcher) HandleGetFriend(ctx *WSContext, msg Message) {
 
 	if ctx.Client.IsGuest {
 		_ = ctx.Client.Conn.WriteJSON(FriendsListResponse{
-			Type:           "friends_list",
-			GuestNoFriends: true,
+			Type:			"friends_list",
+			GuestNoFriends:	true,
 		})
 		return
 	}
@@ -224,8 +224,8 @@ func (d *Dispatcher) HandleAcceptFriend(ctx *WSContext, msg Message) {
 	
 	err := ctx.Chub.Db.QueryRow(context.Background(),
 		`UPDATE friends SET status = 'accepted', updated_at = NOW()
-		 WHERE addressee_id = $1 AND requester_id = (SELECT id FROM users WHERE username = $2) AND status = 'pending'
-		 RETURNING requester_id`,
+		WHERE addressee_id = $1 AND requester_id = (SELECT id FROM users WHERE username = $2) AND status = 'pending'
+		RETURNING requester_id`,
 		me, otherUsername).Scan(&requesterID)
 	if err != nil {
 		_ = ctx.Client.Conn.WriteJSON(map[string]interface{}{
@@ -291,8 +291,8 @@ func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 
 	err = ctx.Chub.Db.QueryRow(context.Background(),
 		`SELECT f.status::text, f.requester_id::text FROM friends f WHERE
-		 (f.requester_id = $1::uuid AND f.addressee_id = $2::uuid)
-		 OR (f.requester_id = $2::uuid AND f.addressee_id = $1::uuid)`,
+		(f.requester_id = $1::uuid AND f.addressee_id = $2::uuid)
+		OR (f.requester_id = $2::uuid AND f.addressee_id = $1::uuid)`,
 		me, targetID).Scan(&st, &reqID)
 
 		if errors.Is(err, pgx.ErrNoRows){
@@ -353,7 +353,7 @@ func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 
 			_, err = ctx.Chub.Db.Exec(context.Background(),
 				`UPDATE friends SET status = 'accepted', updated_at = NOW()
-				 WHERE requester_id = $1::uuid AND addressee_id = $2::uuid AND status = 'pending'`,
+				WHERE requester_id = $1::uuid AND addressee_id = $2::uuid AND status = 'pending'`,
 				targetID, me)
 
 			if err != nil {
@@ -418,85 +418,88 @@ func (d* Dispatcher) HandleGetProfile(ctx *WSContext, msg Message) {
 }
 
 func (d* Dispatcher) HandleProfileUpdate(ctx *WSContext, msg Message) {
-    fmt.Println("DEBUG: HandleProfileUpdate triggered!")
-    if (!RunPipeLine(ctx, msg, d.PipeIsAuth)) {
-        return
-    }
-    if ctx.Client.IsGuest {
-        _ = ctx.Client.Conn.WriteJSON(map[string]interface{}{
-            "type": "profile_updated", "success": false,
-            "error":  "Guest accounts cannot edit their profile.",
-        })
-        return
-    }
-
-	// PROMETHEUS
-	metrics.DbRequests.Inc()
-
-    query := `UPDATE profiles
-                SET color = $2, font = $3, display_name = $4
-                WHERE id = $1`
-    _, err := ctx.Chub.Db.Exec(context.Background(), query, ctx.Client.CurrUsrID, msg.Style.Color, msg.Style.Font, msg.Username)
-
-    if (err != nil ) { 
-        fmt.Printf("FAILED TO UPDATE THE PROFILE TABLE FOR USER %v : %v\n", *ctx.Client.CurrUsrName, err)
-        return
-    }
-
-	// PROMETHEUS
-	metrics.DbRequestsSucessful.Inc()
-
-	metrics.DbRequests.Inc()
-
-    usrnmQuery := ` UPDATE users
-                    SET username = $2
-                    WHERE id = $1;
-    `
-
-    _, err = ctx.Chub.Db.Exec(context.Background(), usrnmQuery, ctx.Client.CurrUsrID, msg.Username)
-
-    if (err != nil ) { 
-        fmt.Printf("FAILED TO UPDATE THE USERNAME FOR USER %v : %v\n", *ctx.Client.CurrUsrName, err)
-        return
-    }
-
-	// PROMETHEUS
-	metrics.DbRequestsSucessful.Inc()
-
-    oldUsername := *ctx.Client.CurrUsrName
-    *ctx.Client.CurrUsrName = msg.Username
-    
-    fmt.Printf("Session username updated from %s to %s (ID: %s)\n", oldUsername, *ctx.Client.CurrUsrName, *ctx.Client.CurrUsrID)
-
-    newToken, err := GenerateJWT(*ctx.Client.CurrUsrID, *ctx.Client.CurrUsrName)
-    if err != nil {
-        fmt.Printf("Failed to generate new JWT: %v\n", err)
-        return
-    }
-
-    var response ProfileResponse
-
-    response.Type = "profile_updated"
-    response.Success = true
-    response.User.Username = *ctx.Client.CurrUsrName
-    response.User.Style.Color = msg.Style.Color
-    response.User.Style.Font = msg.Style.Font
-
-	writeErr := ctx.Client.Conn.WriteJSON(map[string]interface{}{
-        "type": "profile_updated",
-        "success": true,
-        "user": map[string]interface{}{
-            "username": *ctx.Client.CurrUsrName,
-            "style": map[string]interface{}{
-                "color": msg.Style.Color,
-                "font": msg.Style.Font,
-            },
-        },
-        "token": newToken,
-    })
-	if writeErr != nil {
-		fmt.Printf(ERROR_WRITE_WS, writeErr)
+	fmt.Println("DEBUG: HandleProfileUpdate triggered!")
+	if (!RunPipeLine(ctx, msg, d.PipeIsAuth)) {
+		return
 	}
+	if ctx.Client.IsGuest {
+		_ = ctx.Client.Conn.WriteJSON(map[string]interface{}{
+			"type": "profile_updated", "success": false,
+			"error":  "Guest accounts cannot edit their profile.",
+		})
+		return
+	}
+
+	// PROMETHEUS
+	metrics.DbRequests.Inc()
+
+	query :=	`
+				UPDATE profiles
+				SET color = $2, font = $3, display_name = $4
+				WHERE id = $1
+				`
+	_, err := ctx.Chub.Db.Exec(context.Background(), query, ctx.Client.CurrUsrID, msg.Style.Color, msg.Style.Font, msg.Username)
+
+	if (err != nil ) { 
+		fmt.Printf("FAILED TO UPDATE THE PROFILE TABLE FOR USER %v : %v\n", *ctx.Client.CurrUsrName, err)
+		return
+	}
+
+	// PROMETHEUS
+	metrics.DbRequestsSucessful.Inc()
+
+	metrics.DbRequests.Inc()
+
+	usrnmQuery :=	`
+					UPDATE users
+					SET username = $2
+					WHERE id = $1;
+					`
+
+	_, err = ctx.Chub.Db.Exec(context.Background(), usrnmQuery, ctx.Client.CurrUsrID, msg.Username)
+
+	if (err != nil ) { 
+		fmt.Printf("FAILED TO UPDATE THE USERNAME FOR USER %v : %v\n", *ctx.Client.CurrUsrName, err)
+		return
+	}
+
+	// PROMETHEUS
+	metrics.DbRequestsSucessful.Inc()
+
+	oldUsername := *ctx.Client.CurrUsrName
+	*ctx.Client.CurrUsrName = msg.Username
+
+	fmt.Printf("Session username updated from %s to %s (ID: %s)\n", oldUsername, *ctx.Client.CurrUsrName, *ctx.Client.CurrUsrID)
+
+	newToken, err := GenerateJWT(*ctx.Client.CurrUsrID, *ctx.Client.CurrUsrName)
+	if err != nil {
+		fmt.Printf("Failed to generate new JWT: %v\n", err)
+		return
+	}
+
+var response ProfileResponse
+
+response.Type = "profile_updated"
+response.Success = true
+response.User.Username = *ctx.Client.CurrUsrName
+response.User.Style.Color = msg.Style.Color
+response.User.Style.Font = msg.Style.Font
+
+writeErr := ctx.Client.Conn.WriteJSON(map[string]interface{}{
+	"type": "profile_updated",
+	"success": true,
+	"user": map[string]interface{}{
+		"username": *ctx.Client.CurrUsrName,
+		"style": map[string]interface{}{
+			"color": msg.Style.Color,
+			"font": msg.Style.Font,
+		},
+	},
+	"token": newToken,
+})
+if writeErr != nil {
+	fmt.Printf(ERROR_WRITE_WS, writeErr)
+}
 }
 
 

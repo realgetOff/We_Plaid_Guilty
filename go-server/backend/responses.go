@@ -259,8 +259,8 @@ func FortyTwoCallback(c *gin.Context, dbs *DBSafe) { // change this to just be a
 					VALUES ($1, $2, 'api42') 
 					ON CONFLICT (username) 
 					DO UPDATE SET 
-					    email = EXCLUDED.email,
-					    type = 'api42'
+						email = EXCLUDED.email,
+						type = 'api42'
 					RETURNING id, (xmax = 0);`
 
 	// PROMETHEUS

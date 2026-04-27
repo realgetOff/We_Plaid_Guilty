@@ -32,8 +32,8 @@ func (h *Hub) generateRandID(lenght int) (roomId string) {
 }
 
 func (h *Hub) DeleteRoom(id string) {
-    h.mu.Lock()
-    defer h.mu.Unlock()
+	h.mu.Lock()
+	defer h.mu.Unlock()
 
 	room, exist := h.Rooms[id]
 
@@ -49,7 +49,7 @@ func (h *Hub) DeleteRoom(id string) {
 	}
 	
 	fmt.Printf("DEBUG: DELETE ROOM\n")
-    delete(h.Rooms, id)
+	delete(h.Rooms, id)
 }
 
 func NewAIRoom(id string) *AIRoom {

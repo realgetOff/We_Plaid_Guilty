@@ -87,7 +87,7 @@ func startupUserMetrics (dbs *DBSafe) {
 						COUNT(*) FILTER (WHERE type = 'standard'),
 						COUNT(*) FILTER (WHERE type = 'guest'),
 						COUNT(*) FILTER (WHERE type = 'api42')
- 					FROM users;`
+					FROM users;`
 
 	var total float64
 	var standard float64

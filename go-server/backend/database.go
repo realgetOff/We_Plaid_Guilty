@@ -169,10 +169,10 @@ func connectToDatabase () (*pgxpool.Pool, error) {
 }
 
 func DBQuery(dbs *DBSafe, query string, args []any, dest ...any) error {
+	var err error
 	db := dbs.GetPool()
 
 	metrics.DbRequests.Inc()
-	var err error
 	if len(dest) == 0 {
 		_, err = db.Exec(context.Background(), query, args...)
 	} else {
@@ -186,15 +186,3 @@ func DBQuery(dbs *DBSafe, query string, args []any, dest ...any) error {
 	metrics.DbRequestsSucessful.Inc()
 	return nil
 }
-
-/*
-
-// Exec (no dest)
-err := DBQuery(db, insertQuery, []any{userProfile.Login, userProfile.Email})
-
-// QueryRow (with dest)
-var userID int
-var isInsert bool
-err := DBQuery(db, userQuery, []any{userProfile.Login, userProfile.Email}, &userID, &isInsert)
-
-*/

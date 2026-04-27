@@ -118,10 +118,6 @@ func findRoom(c *gin.Context, serverVars *serverVarsStruct) {
 	})
 }
 
-/*
-	the .json is an email / username / password
-*/
-
 type loginInfo struct {
 	Username string `json:"username" binding:"required"`
 	Password string `json:"password" binding:"required"`

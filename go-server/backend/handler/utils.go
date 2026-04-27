@@ -60,7 +60,7 @@ func validateAndGetClaims(tokenString string) (*MyCustomClaims, error) {
 		return claims, nil
 	}
 
-	return nil, fmt.Errorf("token is invalid or claims are corrupted")
+	return nil, fmt.Errorf("Token is invalid or claims are corrupted")
 }
 
 

@@ -79,9 +79,10 @@
 - name: "Install helm"
   shell: |
     curl -sfL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+  environment:
+    PATH: "/usr/local/bin:/usr/bin:/bin"
   args:
     creates: /usr/local/bin/helm
-  ignore_errors: true
 
 - name: "symlink helm"
   file:

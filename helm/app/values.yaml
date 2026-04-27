@@ -21,7 +21,7 @@ vault:
     ttl: "24h"
 
 db:
-  host: "172.17.0.1"
+  host: "10.42.0.1"
   port: "5432"
 
 nodeSelector:

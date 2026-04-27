@@ -41,11 +41,33 @@
     creates: /usr/local/bin/k3s
 
 - name: "Allow K3s pods to reach PostgreSQL"
-  firewalld:
-    rich_rule: "rule family=ipv4 source address=10.42.0.0/16 port port=5432 protocol=tcp accept"
-    permanent: yes
-    immediate: yes
-    state: enabled
+  iptables:
+    chain: INPUT
+    protocol: tcp
+    source: "10.42.0.0/16"
+    destination_port: "5432"
+    jump: ACCEPT
+    action: insert
+
+- name: "DNAT PostgreSQL for K3s pods"
+  iptables:
+    table: nat
+    chain: PREROUTING
+    protocol: tcp
+    destination: "10.42.0.1"
+    destination_port: "5432"
+    jump: DNAT
+    to_destination: "{{ master_private_ip }}:5432"
+    action: insert
+
+- name: "Save iptables rules"
+  shell: iptables-save > /etc/sysconfig/iptables
+
+- name: "Enable iptables service"
+  service:
+    name: iptables
+    enabled: yes
+    state: started
 
 - name: "Waiting k3s"
   wait_for:

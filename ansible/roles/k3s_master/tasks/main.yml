@@ -61,8 +61,6 @@
     dest: /usr/bin/k3s
     state: link
 
-#WARN ADD REGEX for sudo path
-
 - name: "Wait node"
   shell: k3s kubectl get nodes
   register: nodes

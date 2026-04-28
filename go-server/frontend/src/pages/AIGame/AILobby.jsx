@@ -13,6 +13,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { connect, send, addListener, removeListener, getIDFromToken } from '../../api/socket';
+import { roomsApi } from '../../api/rooms';
 import '../Game/CreateGame.css';
 
 const DENY_REASONS =
@@ -38,7 +39,7 @@ const AILobby = () =>
 	const [isStarting,     setIsStarting]     = useState(false);
 	const [myName,         setMyName]         = useState('');
 	const [deny,           setDeny]           = useState('');
-
+	const [status,         setStatus]         = useState('checking');
 	const [showFriends,    setShowFriends]    = useState(false);
 	const [friends,        setFriends]        = useState([]);
 	const [friendsLoading, setFriendsLoading] = useState(false);
@@ -46,7 +47,6 @@ const AILobby = () =>
 
 	useEffect(() =>
 	{
-		console.error("FUCK JAVASCRIPT SO HARD");
 		const checkRoom = async () =>
 		{
 			if (!normalized || !/^[A-Z]{6}$/.test(normalized))
@@ -150,7 +150,7 @@ const AILobby = () =>
 			removeListener(handler);
 			send({ type: 'leave_ai_room', code: normalized });
 		};
-	}, [normalized, navigate]);
+	}, [normalized, navigate, status]);
 
 	useEffect(() => { msgEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 

@@ -34,22 +34,26 @@ admin:
 env:
   GF_SECURITY_ADMIN_USER: admin
 
+# grafana.ini:
+  # server:
+    # protocol: https
+    # cert_file: /vault/secrets/tls-cert
+    # cert_key: /vault/secrets/tls-key
+  # feature_toggles:
+    # enable: ""
+  # analytics:
+    # check_for_updates: false
+  # plugin_admin:
+    # enabled: false
+
 grafana.ini:
   server:
-    protocol: https
-    cert_file: /vault/secrets/tls-cert
-    cert_key: /vault/secrets/tls-key
-  feature_toggles:
-    enable: ""
-  analytics:
-    check_for_updates: false
-  plugin_admin:
-    enabled: false
+    protocol: http
 
 service:
   type: NodePort
   nodePort: 30300
-  port: 443
+  port: 80
   targetPort: 3000
 
 datasources:
@@ -84,13 +88,13 @@ persistence:
 
 dnsPolicy: ClusterFirstWithHostNet
 
-livenessProbe:
-  httpGet:
-    path: /api/health
-    port: 3000
-    scheme: HTTPS
-readinessProbe:
-  httpGet:
-    path: /api/health
-    port: 3000
-    scheme: HTTPS
+# livenessProbe:
+  # httpGet:
+    # path: /api/health
+    # port: 3000
+    # scheme: HTTPS
+# readinessProbe:
+  # httpGet:
+    # path: /api/health
+    # port: 3000
+    # scheme: HTTPS

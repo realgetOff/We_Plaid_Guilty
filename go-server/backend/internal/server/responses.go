@@ -65,7 +65,10 @@ func Routing(serverVars *ServerVarsStruct) {
 	// NEW LOGIN CODE
 	serverVars.router.GET("/api/auth/42/url", func (c *gin.Context){
 		fmt.Println("ATTEMPTING TO GET LOGIN/42/URL FROM ROUTER")
-		url := config.FortyTwoOauthConfig.AuthCodeURL(config.OauthStateString)
+
+		config.DEBUGgetalloauthvars()
+		
+		url := config.FortyTwoOauth.AuthCodeURL(config.OauthStateString)
 		c.JSON(http.StatusOK, gin.H{"url": url})
 	})
 

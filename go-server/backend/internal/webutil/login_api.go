@@ -16,13 +16,15 @@ import (
 func FortyTwoCallback(c *gin.Context, dbs *db.DBSafe) {
 	code := c.Query("code")
 
-	token, err := config.FortyTwoOauthConfig.Exchange(context.Background(), code)
+	config.DEBUGgetalloauthvars()
+
+	token, err := config.FortyTwoOauth.Exchange(context.Background(), code)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Exchange failed"})
 		return
 	}
 
-	client := config.FortyTwoOauthConfig.Client(context.Background(), token)
+	client := config.FortyTwoOauth.Client(context.Background(), token)
 
 	resp, err := client.Get("https://api.intra.42.fr/v2/me")
 	if err != nil {

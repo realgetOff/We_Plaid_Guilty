@@ -239,6 +239,7 @@ AI was used during frontend development for:
 ## Known Limitations
 
 - Mobile devices are blocked intentionally (the canvas drawing board is not touch-optimized)
+- CSS not working correct on Firefox
 - No offline support
 
 ---

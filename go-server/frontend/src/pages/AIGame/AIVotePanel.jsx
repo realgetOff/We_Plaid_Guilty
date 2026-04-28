@@ -11,85 +11,90 @@
 /* ************************************************************************** */
 
 import React, { useState } from 'react';
-import '../Game/WritePrompt.css';
+import './AIVotePanel.css';
 
 const AIVotePanel = ({ drawings, myId, onDone }) =>
 {
 	const [votes, setVotes] = useState({});
 
 	const votableDrawings = (drawings || [])
-		.map((d, index) => ({
-			...d,
-			uniqueId: d.player_id || d.playerId || d.PlayerID || `draw-${index}`
-		}))
+		.map((d, index) =>
+		{
+			const uniqueId = d.player_id ?? `draw-${index}`;
+			const name = d.player_name ?? 'Player';
+			const drawing = d.drawing ?? '';
+			const title = d.title ?? '';
+			const description = d.description ?? '';
+
+			return { ...d, uniqueId, name, drawing, title, description };
+		})
 		.filter(d => d.uniqueId !== myId);
 
 	const handleScoreClick = (targetId, score) =>
 	{
-		setVotes(prev => ({
-			...prev,
-			[targetId]: score
-		}));
+		setVotes(prev => ({ ...prev, [targetId]: score }));
 	};
 
-	const votedCount = Object.keys(votes).length;
+	const votedCount  = Object.keys(votes).length;
 	const totalToVote = votableDrawings.length;
-	const isComplete = totalToVote > 0 && votedCount === totalToVote;
+	const isComplete  = totalToVote > 0 && votedCount === totalToVote;
 
 	return (
-		<div className="writeprompt">
-			<div className="writeprompt__card">
-				<div className="writeprompt__card-header">
-					⭐ Rate each drawing
-				</div>
-				<div className="writeprompt__card-body">
-					<p className="writeprompt__hint">
-						Vote from 1 to 5 for each drawing to validate ({votedCount}/{totalToVote})
-					</p>
-				</div>
+		<div className="aivote">
+			<div className="aivote__header">
+				<h2 className="aivote__title">⭐ Rate each drawing</h2>
+				<span className="aivote__hint">{votedCount} / {totalToVote} rated</span>
 			</div>
 
-			{votableDrawings.map((d) => (
-				<div key={d.uniqueId} className="writeprompt__card">
-					<div className="writeprompt__card-header">
-						👤 {d.name || d.PlayerName || "Anonymous"}
-						{d.title && ` - ${d.title}`}
-					</div>
-					<div className="writeprompt__card-body">
-						{d.description && (
-							<p className="writeprompt__hint">
-								{d.description}
-							</p>
-						)}
-						<div className="writeprompt__drawing-container">
-							<img
-								src={d.drawing}
-								alt="drawing"
-								className="writeprompt__image"
-							/>
+			<div className="aivote__grid">
+				{votableDrawings.map((d) => (
+					<div
+						key={d.uniqueId}
+						className={`aivote__card${votes[d.uniqueId] ? ' aivote__card--voted' : ''}`}
+					>
+						<div className="aivote__card-label">
+							👤 {d.name}
+							{d.title && <span className="aivote__drawing-title"> — {d.title}</span>}
 						</div>
-						<div className="writeprompt__vote-group">
+
+						{d.description && (
+							<p className="aivote__description">{d.description}</p>
+						)}
+
+						<img
+							src={d.drawing}
+							alt={`Drawing by ${d.name}`}
+							className="aivote__img"
+						/>
+
+						<div className="aivote__score-row">
 							{[1, 2, 3, 4, 5].map((num) => (
 								<button
 									key={num}
 									type="button"
-									className={`writeprompt__btn${votes[d.uniqueId] === num ? ' writeprompt__btn--active' : ''}`}
+									className={`aivote__score-btn${votes[d.uniqueId] === num ? ' aivote__score-btn--active' : ''}`}
 									onClick={() => handleScoreClick(d.uniqueId, num)}
 								>
 									{num}
 								</button>
 							))}
 						</div>
+
+						{votes[d.uniqueId] && (
+							<div className="aivote__selected-score">
+								{'★'.repeat(votes[d.uniqueId])}{'☆'.repeat(5 - votes[d.uniqueId])}
+							</div>
+						)}
 					</div>
-				</div>
-			))}
+				))}
+			</div>
 
 			<button
-				className="writeprompt__btn"
+				className={`aivote__submit${isComplete ? '' : ' aivote__submit--disabled'}`}
 				disabled={!isComplete}
 				onClick={() => onDone(votes)}
 			>
-				{isComplete ? "✓ Confirm my votes!" : "Rate all drawings first"}
+				{isComplete ? '✓ Confirm my votes!' : `Rate all drawings first (${votedCount}/${totalToVote})`}
 			</button>
 		</div>
 	);

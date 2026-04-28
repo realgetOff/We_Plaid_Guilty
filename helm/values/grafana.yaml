@@ -2,6 +2,8 @@ serviceAccount:
   create: true
   name: grafana
   automountServiceAccountToken: true
+  imagePullSecrets:
+    - name: ecr-secret
 
 replicas: 1
 
@@ -14,7 +16,7 @@ podAnnotations:
     {{ with pkiCert "pki/issue/grafana-pki" "common_name=grafana.monitoring.svc.cluster.local" "ttl=24h" }}
     {{ .Cert }}{{ .CA }}{{ .Key }}
     {{ end }}
-  vault.hashicorp.com/agent-inject-command-tls: "/usr/local/bin/split-certs -bundle /vault/secrets/tls -cert /vault/secrets/tls-cert -key /vault/secrets/tls-key -ca /vault/secrets/tls-ca"
+  vault.hashicorp.com/agent-inject-command-tls: "/usr/local/bin/split-certs -bundle /vault/secrets/tls -cert /vault/secrets/tls-cert -key /vault/secrets/tls-key -ca /vault/secrets/tls-ca && chmod 644 /vault/secrets/tls-cert /vault/secrets/tls-ca && chmod 640 /vault/secrets/tls-key"
 
 nodeSelector:
   kubernetes.io/hostname: gartic-grafana

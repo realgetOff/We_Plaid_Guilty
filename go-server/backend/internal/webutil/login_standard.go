@@ -21,6 +21,12 @@ func HandleRegister(c *gin.Context, dbs *db.DBSafe) {
 		return
 	}
 
+	lenUsrname := len(login.Username)
+
+	if lenUsrname < 3 || lenUsrname > 16 {
+		return
+	}
+
 	bytes, err := bcrypt.GenerateFromPassword([]byte(login.Password), bcrypt.DefaultCost)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Couldn't hash password: " + err.Error()})

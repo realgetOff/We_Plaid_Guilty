@@ -22,6 +22,24 @@ func (d *Dispatcher) PipeIsValidChat(ctx *WSContext, msg Message) bool {
 	return true
 }
 
+func (d *Dispatcher) PipeIsValidUsrname(ctx *WSContext, msg Message) bool {
+	UsrnameLen := len(msg.Username)
+	if UsrnameLen < 3{
+		_ = ctx.Client.Conn.WriteJSON(map[string]interface{}{
+			"type": "profile_updated", "success": false,
+			"error":  "Invalid format 3 characteres minimum.",
+		})
+		return false
+	} else if UsrnameLen > 16 {
+		_ = ctx.Client.Conn.WriteJSON(map[string]interface{}{
+			"type": "profile_updated", "success": false,
+			"error":  "Invalid format 16 characteres maximum.",
+		})
+		return false
+	}
+	return true
+}
+
 func (d *Dispatcher) PipeIsGuest(ctx *WSContext, msg Message) bool {
 	if ctx.Client.IsGuest {
 		_ = ctx.Client.Conn.WriteJSON(map[string]interface{}{

@@ -167,6 +167,11 @@
         - flannel-wg
       ignore_errors: true
 
+    - name: "Copy split-certs binary"
+      copy:
+        src: "{{ playbook_dir }}/../tools/split-certs-arm64"
+        dest: /usr/local/bin/split-certs
+        mode: '0755'
 
 - name: "Monitoring"
   hosts: MASTER

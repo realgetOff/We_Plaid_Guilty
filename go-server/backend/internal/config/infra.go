@@ -46,8 +46,8 @@ func LoadSecretsIntoOauth() {
 
 func DEBUGgetalloauthvars () {
 	fmt.Println(" -- DEBUG -- ")
-	fmt.Printf(`REDIRURL : %v | ID : %v | SECRET : %v | AUTH : %v | TOKEN : %v\n`,
-	FortyTwoOauth.RedirectURL, FortyTwoOauth.ClientID, FortyTwoOauth.ClientSecret)
+	fmt.Printf("REDIRURL : %v | ID : %v | SECRET : %v | AUTH : %v | TOKEN : %v \n",
+	FortyTwoOauth.RedirectURL, FortyTwoOauth.ClientID, FortyTwoOauth.ClientSecret, FortyTwoOauth.Endpoint.AuthURL, FortyTwoOauth.Endpoint.TokenURL)
 }
 
 func Addnewlinestotls() []byte {

@@ -2,14 +2,19 @@ package server
 
 import (
 	"fmt"
+	// "log"
 	"net/http"
+	// "os"
 	"strings"
+	// "time"
 
 	"github.com/gin-gonic/gin"
+	// "golang.org/x/oauth2"
 
-	"github.com/realgetOff/We_Plaid_Guilty/internal/webutil"
+	// "github.com/joho/godotenv"
 	"github.com/realgetOff/We_Plaid_Guilty/internal/config"
-
+	"github.com/realgetOff/We_Plaid_Guilty/internal/webutil"
+	// "github.com/realgetOff/We_Plaid_Guilty/internal/config"
 )
 
 func ping(c *gin.Context) {
@@ -50,7 +55,7 @@ func Routing(serverVars *ServerVarsStruct) {
 	serverVars.router.GET("/api/rooms/:code", func(c *gin.Context) {
 		findRoom(c, serverVars)
 	})
-		serverVars.router.GET("/api/ai-rooms/:code", func(c *gin.Context) {
+	serverVars.router.GET("/api/ai-rooms/:code", func(c *gin.Context) {
 		findRoom(c, serverVars)
 	})
 	serverVars.router.GET("/ping", ping)
@@ -61,8 +66,6 @@ func Routing(serverVars *ServerVarsStruct) {
 		webutil.HandleGuestAuth(c, serverVars.db)
 	})
 
-
-	// NEW LOGIN CODE
 	serverVars.router.GET("/api/auth/42/url", func (c *gin.Context){
 		fmt.Println("ATTEMPTING TO GET LOGIN/42/URL FROM ROUTER")
 
@@ -71,9 +74,6 @@ func Routing(serverVars *ServerVarsStruct) {
 		url := config.FortyTwoOauth.AuthCodeURL(config.OauthStateString)
 		c.JSON(http.StatusOK, gin.H{"url": url})
 	})
-
-	// CALLBACK FOR OAUTH2 WITH 42API
-
 	serverVars.router.GET("/api/auth/42/callback", func(c *gin.Context){
 		fmt.Println("42 CALLBACK URL")
 		webutil.FortyTwoCallback(c, serverVars.db)
@@ -82,7 +82,6 @@ func Routing(serverVars *ServerVarsStruct) {
 	serverVars.router.POST("/api/auth/register", func(c *gin.Context){
 		webutil.HandleRegister(c, serverVars.db)
 	})
-
 	serverVars.router.POST("/api/auth/login", func(c *gin.Context){
 		webutil.HandleLogin(c, serverVars.db)
 	})

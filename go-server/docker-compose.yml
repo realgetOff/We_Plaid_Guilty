@@ -39,6 +39,7 @@ services:
     container_name: sonar-scanner
     volumes:
       - .:/usr/src
+      - ../.git:/usr/src/.git
     environment:
       - SONAR_HOST_URL=https://sonarcloud.io
       - SONAR_TOKEN=${SONAR_TOKEN}

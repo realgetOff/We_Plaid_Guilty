@@ -360,14 +360,7 @@ func (d* Dispatcher) HandleGetProfile(ctx *WSContext, msg Message) {
 
 func (d* Dispatcher) HandleProfileUpdate(ctx *WSContext, msg Message) {
 	fmt.Println("DEBUG: HandleProfileUpdate triggered!")
-	if (!RunPipeLine(ctx, msg, d.PipeIsAuth)) {
-		return
-	}
-	if ctx.Client.IsGuest {
-		_ = ctx.Client.Conn.WriteJSON(map[string]interface{}{
-			"type": "profile_updated", "success": false,
-			"error":  "Guest accounts cannot edit their profile.",
-		})
+	if (!RunPipeLine(ctx, msg, d.PipeIsAuth, d.PipeIsGuest, d.PipeIsValidUsrname)) {
 		return
 	}
 

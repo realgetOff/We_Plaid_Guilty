@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"context"
 	
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 
@@ -185,4 +186,17 @@ func DBQuery(dbs *DBSafe, query string, args []any, dest ...any) error {
 
 	metrics.DbRequestsSucessful.Inc()
 	return nil
+}
+
+func DBQueryRows(dbs *DBSafe, query string, args ...any) (pgx.Rows, error) {
+	db := dbs.GetPool()
+
+	metrics.DbRequests.Inc()
+	rows, err := db.Query(context.Background(), query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	metrics.DbRequestsSucessful.Inc()
+	return rows, nil
 }

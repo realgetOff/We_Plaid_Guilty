@@ -129,16 +129,6 @@ func (r *Room) broadcastGallery() {
 			Prompt: book.Entries[0].Content,
 		}
 
-		// for i := 1; i < len(book.Entries); i++{
-			// entryType := "drawing"
-			// if book.Entries[i].Type == "TEXT" {
-				// entryType = "guess"
-			// }
-			// chain.Steps = append(chain.Steps, Step{
-				// Type: entryType,
-				// Content: book.Entries[i].Content,
-			// })
-		// }
 		startIndex := 0
 		if book.Entries[0].Type == "TEXT" {
 			chain.Prompt = book.Entries[0].Content

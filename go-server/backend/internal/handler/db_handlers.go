@@ -2,14 +2,13 @@ package handler
 
 import (
 	"fmt"
-	"context"
 	"errors"
 	"strings"
 
 	"github.com/gorilla/websocket"
 	"github.com/jackc/pgx/v5"
 
-	"github.com/realgetOff/We_Plaid_Guilty/internal/metrics"
+	"github.com/realgetOff/We_Plaid_Guilty/internal/db"
 	"github.com/realgetOff/We_Plaid_Guilty/internal/webutil"
 )
 
@@ -32,55 +31,45 @@ func (d *Dispatcher) HandleGetFriend(ctx *WSContext, msg Message) {
 		return
 	}
 
-	// PROMETHEUS
-	metrics.DbRequests.Inc()
-
+	// SQL QUERIES
 	qAccepted := `SELECT u.id, u.username FROM users u
 		JOIN friends f ON (u.id = f.requester_id OR u.id = f.addressee_id)
 		WHERE (f.requester_id = $1 OR f.addressee_id = $1) AND u.id != $1 AND f.status = 'accepted'`
+	
+	qIn := `SELECT u.id, u.username FROM users u
+			JOIN friends f ON u.id = f.requester_id
+			WHERE f.addressee_id = $1 AND f.status = 'pending'`
+			
+	qOut := `SELECT u.id, u.username FROM users u
+			JOIN friends f ON u.id = f.addressee_id
+			WHERE f.requester_id = $1 AND f.status = 'pending'`
+	
 
-	rows, err := ctx.Chub.Db.Query(context.Background(), qAccepted, userID)
+	rows, err := db.DBQueryRows(ctx.Chub.Db, qAccepted, userID)
+
 	if err != nil {
 		fmt.Printf("Failed to open accepted friends :: %v\n", err)
 		return
 	}
-
-	// PROMETHEUS
-	metrics.DbRequestsSucessful.Inc()
+	defer rows.Close()
 
 	friends := scanFriendRows(ctx, rows)
 
-	// PROMETHEUS
-	metrics.DbRequests.Inc()
-
-	qIn := `SELECT u.id, u.username FROM users u
-		JOIN friends f ON u.id = f.requester_id
-		WHERE f.addressee_id = $1 AND f.status = 'pending'`
-	rowsIn, err := ctx.Chub.Db.Query(context.Background(), qIn, userID)
+	rowsIn, err := db.DBQueryRows(ctx.Chub.Db, qIn, userID)
 	if err != nil {
 		fmt.Printf("Failed pending_in :: %v\n", err)
 		return
 	}
-
-	// PROMETHEUS
-	metrics.DbRequestsSucessful.Inc()
+	defer rowsIn.Close()
 
 	pendingIn := scanFriendRows(ctx, rowsIn)
-
-	// PROMETHEUS
-	metrics.DbRequests.Inc()
-
-	qOut := `SELECT u.id, u.username FROM users u
-		JOIN friends f ON u.id = f.addressee_id
-		WHERE f.requester_id = $1 AND f.status = 'pending'`
-	rowsOut, err := ctx.Chub.Db.Query(context.Background(), qOut, userID)
+	
+	rowsOut, err := db.DBQueryRows(ctx.Chub.Db, qOut, userID)
 	if err != nil {
 		fmt.Printf("Failed pending_out :: %v\n", err)
 		return
 	}
-
-	// PROMETHEUS
-	metrics.DbRequestsSucessful.Inc()
+	defer rowsOut.Close()
 
 	pendingOut := scanFriendRows(ctx, rowsOut)
 
@@ -101,9 +90,6 @@ func (d* Dispatcher) HandleRemoveFriend(ctx *WSContext, msg Message) {
 		return
 	}
 
-	// PROMETHEUS
-	metrics.DbRequests.Inc()
-
 	query := `
 	DELETE FROM friends 
 	WHERE (requester_id = $1 AND addressee_id = (SELECT id FROM users WHERE username = $2))
@@ -112,14 +98,11 @@ func (d* Dispatcher) HandleRemoveFriend(ctx *WSContext, msg Message) {
 	`
 
 	var friend_id string
-	err := ctx.Chub.Db.QueryRow(context.Background(), query, ctx.Client.CurrUsrID, msg.Username).Scan(&friend_id)
+	err := db.DBQuery(ctx.Chub.Db, query, []any{ctx.Client.CurrUsrID, msg.Username}, &friend_id)
 	if (err != nil) {
 		fmt.Printf("Friend remove failed :: %v\n", err)
 		return
 	}
-
-	// PROMETHEUS
-	metrics.DbRequestsSucessful.Inc()
 
 	response := FriendsListResponse {
 		Type: "friend_removed",
@@ -165,20 +148,13 @@ func (d *Dispatcher) HandleInviteFriend(ctx *WSContext, msg Message) {
 	}
 	var targetID string
 
-	// PROMETHEUS
-	metrics.DbRequests.Inc()
-
-	err := ctx.Chub.Db.QueryRow(context.Background(),
-		`SELECT id FROM users WHERE username = $1`, to).Scan(&targetID)
+	err := db.DBQuery(ctx.Chub.Db,  `SELECT id FROM users WHERE username = $1`, []any{to}, &targetID)
 	if err != nil {
 		_ = ctx.Client.Conn.WriteJSON(map[string]interface{}{
 			"type": "invite_sent", "success": false, "error": "User not found.",
 		})
 		return
 	}
-
-	// PROMETHEUS
-	metrics.DbRequestsSucessful.Inc()
 
 	target := ctx.Chub.Clients[targetID]
 	if target == nil {
@@ -219,15 +195,11 @@ func (d *Dispatcher) HandleAcceptFriend(ctx *WSContext, msg Message) {
 		return
 	}
 	var requesterID string
-	
-	// PROMETHEUS
-	metrics.DbRequests.Inc()
-	
-	err := ctx.Chub.Db.QueryRow(context.Background(),
-		`UPDATE friends SET status = 'accepted', updated_at = NOW()
+
+	err := db.DBQuery(ctx.Chub.Db,  `UPDATE friends SET status = 'accepted', updated_at = NOW()
 		WHERE addressee_id = $1 AND requester_id = (SELECT id FROM users WHERE username = $2) AND status = 'pending'
-		RETURNING requester_id`,
-		me, otherUsername).Scan(&requesterID)
+		RETURNING requester_id`, []any{me, otherUsername}, &requesterID)
+
 	if err != nil {
 		_ = ctx.Client.Conn.WriteJSON(map[string]interface{}{
 			"type": "friend_accept_failed", "success": false, "error": "No pending request from that user.",
@@ -235,18 +207,9 @@ func (d *Dispatcher) HandleAcceptFriend(ctx *WSContext, msg Message) {
 		return
 	}
 
-	// PROMETHEUS
-	metrics.DbRequestsSucessful.Inc()
-
-	metrics.DbRequests.Inc()
-
 	var requesterName string
-	_ = ctx.Chub.Db.QueryRow(context.Background(),
-		`SELECT username FROM users WHERE id = $1`, requesterID).Scan(&requesterName)
+	_ = db.DBQuery(ctx.Chub.Db, `SELECT username FROM users WHERE id = $1`, []any{requesterID}, &requesterName)
 
-	// PROMETHEUS
-	metrics.DbRequestsSucessful.Inc()
-	
 	d.broadcastFriendAdded(ctx, requesterID, requesterName, me, myName)
 }
 
@@ -265,11 +228,7 @@ func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 	var targetID string
 	var targetType string
 
-	// PROMETHEUS
-	metrics.DbRequests.Inc()
-
-	err := ctx.Chub.Db.QueryRow(context.Background(),
-		`SELECT id, type FROM users WHERE username = $1`, targetName).Scan(&targetID, &targetType)
+	err := db.DBQuery(ctx.Chub.Db,`SELECT id, type FROM users WHERE username = $1`, []any{targetName}, &targetID, &targetType)
 	if err != nil {
 		fmt.Printf("Friend add: user not found :: %v\n", err)
 		_ = ctx.Client.Conn.WriteJSON(map[string]interface{}{
@@ -277,9 +236,6 @@ func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 		})
 		return
 	}
-
-	// PROMETHEUS
-	metrics.DbRequestsSucessful.Inc()
 
 	if targetType == "guest" {
 		_ = ctx.Client.Conn.WriteJSON(map[string]interface{}{
@@ -290,24 +246,16 @@ func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 	var st string
 	var reqID string
 
-	// PROMETHEUS
-	metrics.DbRequests.Inc()
-
-	err = ctx.Chub.Db.QueryRow(context.Background(),
+	err = db.DBQuery(ctx.Chub.Db,
 		`SELECT f.status::text, f.requester_id::text FROM friends f WHERE
-		(f.requester_id = $1::uuid AND f.addressee_id = $2::uuid)
-		OR (f.requester_id = $2::uuid AND f.addressee_id = $1::uuid)`,
-		me, targetID).Scan(&st, &reqID)
+	 	(f.requester_id = $1::uuid AND f.addressee_id = $2::uuid)
+	 	OR (f.requester_id = $2::uuid AND f.addressee_id = $1::uuid)`,
+		[]any{me, targetID}, &st, &reqID)
 
 		if errors.Is(err, pgx.ErrNoRows){
-
-			metrics.DbRequestsSucessful.Inc()
-
-			// PROMETHEUS
-			metrics.DbRequests.Inc()
-			_, err = ctx.Chub.Db.Exec(context.Background(),
+			err = db.DBQuery(ctx.Chub.Db,
 			`INSERT INTO friends (requester_id, addressee_id, status) VALUES ($1::uuid, $2::uuid, 'pending')`,
-			me, targetID)
+			[]any{me, targetID})
 
 			if err != nil {
 				fmt.Printf("Friend invite insert failed :: %v\n", err)
@@ -316,8 +264,6 @@ func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 				})
 				return
 			}
-
-			metrics.DbRequestsSucessful.Inc()
 
 			addresseeOnline := ctx.Chub.Clients[targetID] != nil
 			if c := ctx.Chub.Clients[targetID]; c != nil {
@@ -354,14 +300,10 @@ func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 				})
 				return
 			}
-
-			// PROMETHEUS
-			metrics.DbRequests.Inc()
-
-			_, err = ctx.Chub.Db.Exec(context.Background(),
-				`UPDATE friends SET status = 'accepted', updated_at = NOW()
-				WHERE requester_id = $1::uuid AND addressee_id = $2::uuid AND status = 'pending'`,
-				targetID, me)
+			err = db.DBQuery(ctx.Chub.Db,
+			`UPDATE friends SET status = 'accepted', updated_at = NOW()
+			WHERE requester_id = $1::uuid AND addressee_id = $2::uuid AND status = 'pending'`,
+			[]any{targetID, me})
 
 			if err != nil {
 				fmt.Printf("mutual accept failed: %v\n", err)
@@ -371,17 +313,10 @@ func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 				return
 			}
 
-			// PROMETHEUS
-			metrics.DbRequestsSucessful.Inc()
-			metrics.DbRequests.Inc()
-
 			var requesterName string
-			_ = ctx.Chub.Db.QueryRow(context.Background(),
-				`SELECT username FROM users WHERE id = $1`, targetID).Scan(&requesterName)
 
-			// PROMETHEUS
-			metrics.DbRequestsSucessful.Inc()
-			
+			_ = db.DBQuery(ctx.Chub.Db, `SELECT username FROM users WHERE id = $1`, []any{targetID}, &requesterName)
+
 			d.broadcastFriendAdded(ctx, targetID, requesterName, me, myName)
 }
 
@@ -394,15 +329,13 @@ func (d* Dispatcher) HandleGetProfile(ctx *WSContext, msg Message) {
 	var user ProfileUser
 	var profileID string
 
-	// PROMETHEUS
-	metrics.DbRequests.Inc()
-
 	query := `SELECT p.id, p.display_name, p.color, p.font
 				FROM profiles p
 				INNER JOIN users u ON p.id = u.id
 				WHERE u.username = $1;`
-	err := ctx.Chub.Db.QueryRow(context.Background(), query, msg.Username).Scan(
-		&profileID, &user.Username, &user.Style.Color, &user.Style.Font)
+
+	err := db.DBQuery(ctx.Chub.Db, query, []any{msg.Username}, &profileID,
+		&user.Username, &user.Style.Color, &user.Style.Font)
 
 	var response ProfileResponse
 	
@@ -414,8 +347,6 @@ func (d* Dispatcher) HandleGetProfile(ctx *WSContext, msg Message) {
 	if (err != nil) {
 		response.Success = false
 	} else {
-		// PROMETHEUS
-		metrics.DbRequestsSucessful.Inc()
 		response.Success = true
 		response.User = user
 		response.IsCaller = (profileID == *ctx.Client.CurrUsrID)
@@ -440,25 +371,17 @@ func (d* Dispatcher) HandleProfileUpdate(ctx *WSContext, msg Message) {
 		return
 	}
 
-	// PROMETHEUS
-	metrics.DbRequests.Inc()
-
 	query :=	`
 				UPDATE profiles
 				SET color = $2, font = $3, display_name = $4
 				WHERE id = $1
 				`
-	_, err := ctx.Chub.Db.Exec(context.Background(), query, ctx.Client.CurrUsrID, msg.Style.Color, msg.Style.Font, msg.Username)
+	err := db.DBQuery(ctx.Chub.Db, query, []any{ ctx.Client.CurrUsrID, msg.Style.Color, msg.Style.Font, msg.Username })
 
 	if (err != nil ) { 
 		fmt.Printf("FAILED TO UPDATE THE PROFILE TABLE FOR USER %v : %v\n", *ctx.Client.CurrUsrName, err)
 		return
 	}
-
-	// PROMETHEUS
-	metrics.DbRequestsSucessful.Inc()
-
-	metrics.DbRequests.Inc()
 
 	usrnmQuery :=	`
 					UPDATE users
@@ -466,15 +389,12 @@ func (d* Dispatcher) HandleProfileUpdate(ctx *WSContext, msg Message) {
 					WHERE id = $1;
 					`
 
-	_, err = ctx.Chub.Db.Exec(context.Background(), usrnmQuery, ctx.Client.CurrUsrID, msg.Username)
+	err = db.DBQuery(ctx.Chub.Db, query, []any{ usrnmQuery, ctx.Client.CurrUsrID, msg.Username })
 
 	if (err != nil ) { 
 		fmt.Printf("FAILED TO UPDATE THE USERNAME FOR USER %v : %v\n", *ctx.Client.CurrUsrName, err)
 		return
 	}
-
-	// PROMETHEUS
-	metrics.DbRequestsSucessful.Inc()
 
 	oldUsername := *ctx.Client.CurrUsrName
 	*ctx.Client.CurrUsrName = msg.Username
@@ -531,15 +451,9 @@ func (d *Dispatcher) HandleAuth(ctx *WSContext, msg Message) {
 
 	var clientType string
 
-	// PROMETHEUS
-	metrics.DbRequests.Inc()
+	_ = db.DBQuery(ctx.Chub.Db, `SELECT type FROM users WHERE id = $1`,
+		[]any{ claims.UserID }, &clientType)
 
-	_ = ctx.Chub.Db.QueryRow(context.Background(),
-		`SELECT type FROM users WHERE id = $1`, claims.UserID).Scan(&clientType)
-	
-	
-	// PROMETHEUS
-	metrics.DbRequestsSucessful.Inc()
 	
 	ctx.Client.IsGuest = (clientType == "guest")
 

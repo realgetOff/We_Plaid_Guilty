@@ -31,10 +31,19 @@ func (d *Dispatcher) HandleGetFriend(ctx *WSContext, msg Message) {
 		return
 	}
 
-
+	// SQL QUERIES
 	qAccepted := `SELECT u.id, u.username FROM users u
 		JOIN friends f ON (u.id = f.requester_id OR u.id = f.addressee_id)
 		WHERE (f.requester_id = $1 OR f.addressee_id = $1) AND u.id != $1 AND f.status = 'accepted'`
+	
+	qIn := `SELECT u.id, u.username FROM users u
+			JOIN friends f ON u.id = f.requester_id
+			WHERE f.addressee_id = $1 AND f.status = 'pending'`
+			
+	qOut := `SELECT u.id, u.username FROM users u
+			JOIN friends f ON u.id = f.addressee_id
+			WHERE f.requester_id = $1 AND f.status = 'pending'`
+	
 
 	rows, err := db.DBQueryRows(ctx.Chub.Db, qAccepted, userID)
 
@@ -42,30 +51,25 @@ func (d *Dispatcher) HandleGetFriend(ctx *WSContext, msg Message) {
 		fmt.Printf("Failed to open accepted friends :: %v\n", err)
 		return
 	}
+	defer rows.Close()
 
 	friends := scanFriendRows(ctx, rows)
 
-	qIn := `SELECT u.id, u.username FROM users u
-		JOIN friends f ON u.id = f.requester_id
-		WHERE f.addressee_id = $1 AND f.status = 'pending'`
 	rowsIn, err := db.DBQueryRows(ctx.Chub.Db, qIn, userID)
-
 	if err != nil {
 		fmt.Printf("Failed pending_in :: %v\n", err)
 		return
 	}
+	defer rowsIn.Close()
 
 	pendingIn := scanFriendRows(ctx, rowsIn)
-
-
-	qOut := `SELECT u.id, u.username FROM users u
-		JOIN friends f ON u.id = f.addressee_id
-		WHERE f.requester_id = $1 AND f.status = 'pending'`
+	
 	rowsOut, err := db.DBQueryRows(ctx.Chub.Db, qOut, userID)
 	if err != nil {
 		fmt.Printf("Failed pending_out :: %v\n", err)
 		return
 	}
+	defer rowsOut.Close()
 
 	pendingOut := scanFriendRows(ctx, rowsOut)
 

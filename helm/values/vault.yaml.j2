@@ -1,5 +1,7 @@
 global:
   enabled: true
+  imagePullSecrets:
+    - name: ecr-secret
 
 injector:
   enabled: true
@@ -9,14 +11,11 @@ injector:
   env:
     - name: AGENT_INJECT_VAULT_ADDR
       value: "http://vault.vault.svc.cluster.local:8200"
-  imagePullSecrets:
-    - name: ecr-secret
 
 server:
   image:
     repository: hashicorp/vault
     tag: "1.21.2"
-
   standalone:
     enabled: true
     config: |

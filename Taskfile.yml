@@ -186,6 +186,15 @@ tasks:
 
   # ─── Deployment ────────────────────────────────────────────────────────────
 
+  release:
+    desc: "Release a new version (task release -- v1.2.3)"
+    cmds:
+      - git add .
+      - git commit -m "release {{.CLI_ARGS}}" --allow-empty
+      - git tag {{.CLI_ARGS}}
+      - git push origin main
+      - git push origin {{.CLI_ARGS}}
+
   deploy:
     desc: "Use CI/CD pipeline — push a tag to deploy"
     cmds:

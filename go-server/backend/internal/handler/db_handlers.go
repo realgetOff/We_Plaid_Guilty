@@ -272,6 +272,9 @@ func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 		`SELECT id, type FROM users WHERE username = $1`, targetName).Scan(&targetID, &targetType)
 	if err != nil {
 		fmt.Printf("Friend add: user not found :: %v\n", err)
+		_ = ctx.Client.Conn.WriteJSON(map[string]interface{}{
+			"type": "friend_add_failed", "success": false, "error": "User not found.",
+		})
 		return
 	}
 
@@ -332,6 +335,9 @@ func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 		}
 		if err != nil {
 			fmt.Printf("Friend lookup failed :: %v\n", err)
+			_ = ctx.Client.Conn.WriteJSON(map[string]interface{}{
+				"type": "friend_add_failed", "success": false, "error": "Database error while looking up friend.",
+			})
 			return
 		}
 
@@ -359,6 +365,9 @@ func (d *Dispatcher) HandleAddFriend(ctx *WSContext, msg Message) {
 
 			if err != nil {
 				fmt.Printf("mutual accept failed: %v\n", err)
+				_ = ctx.Client.Conn.WriteJSON(map[string]interface{}{
+					"type": "friend_add_failed", "success": false, "error": "Could not accept friend request.",
+				})
 				return
 			}
 

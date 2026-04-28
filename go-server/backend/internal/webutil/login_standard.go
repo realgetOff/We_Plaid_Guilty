@@ -22,8 +22,9 @@ func HandleRegister(c *gin.Context, dbs *db.DBSafe) {
 	}
 
 	lenUsrname := len(login.Username)
-
-	if lenUsrname < 3 || lenUsrname > 16 {
+	lenUsrEmail := len(login.Email)
+	lenUsrPassWord := len(login.Password)
+	if lenUsrname < 3 || lenUsrname > 16 || lenUsrEmail > 255 || lenUsrPassWord > 64 {
 		return
 	}
 

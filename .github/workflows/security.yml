@@ -113,7 +113,8 @@ jobs:
             -e SONAR_TOKEN=${{ secrets.SONAR_TOKEN }} \
             sonar-scan \
             sonar-scanner \
-              -Dsonar.token=${{ secrets.SONAR_TOKEN }}
+              -Dsonar.token=${{ secrets.SONAR_TOKEN }} \
+              -Dsonar.scm.disable=true
 
   gosec:
     name: Gosec Scan

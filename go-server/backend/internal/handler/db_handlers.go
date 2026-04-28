@@ -9,7 +9,8 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/jackc/pgx/v5"
 
-	"main.go/metrics"
+	"github.com/realgetOff/We_Plaid_Guilty/internal/metrics"
+	"github.com/realgetOff/We_Plaid_Guilty/internal/webutil"
 )
 
 func (d *Dispatcher) HandleGetFriend(ctx *WSContext, msg Message) {
@@ -471,7 +472,7 @@ func (d* Dispatcher) HandleProfileUpdate(ctx *WSContext, msg Message) {
 
 	fmt.Printf("Session username updated from %s to %s (ID: %s)\n", oldUsername, *ctx.Client.CurrUsrName, *ctx.Client.CurrUsrID)
 
-	newToken, err := GenerateJWT(*ctx.Client.CurrUsrID, *ctx.Client.CurrUsrName)
+	newToken, err := webutil.GenerateJWT(*ctx.Client.CurrUsrID, *ctx.Client.CurrUsrName)
 	if err != nil {
 		fmt.Printf("Failed to generate new JWT: %v\n", err)
 		return
@@ -505,7 +506,7 @@ if writeErr != nil {
 
 
 func (d *Dispatcher) HandleAuth(ctx *WSContext, msg Message) {
-	claims, err := validateAndGetClaims(msg.Token)
+	claims, err := webutil.ValidateAndGetClaims(msg.Token)
 	if err != nil {
 		fmt.Println("WS Auth Failed:", err)
 		writeErr := ctx.Client.Conn.WriteMessage(websocket.CloseMessage,

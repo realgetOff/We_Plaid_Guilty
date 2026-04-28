@@ -1,30 +1,21 @@
-package handler
+package webutil
 
 import (
 	"fmt"
 	"time"
-
 	"github.com/golang-jwt/jwt/v5"
-
 )
 
-func (d *Dispatcher) broadcastFriendAdded(ctx *WSContext, aID, aName, bID, bName string) {
-	onA := ctx.Chub.Clients[aID] != nil
-	onB := ctx.Chub.Clients[bID] != nil
-	if c := ctx.Chub.Clients[aID]; c != nil {
-		_ = c.Conn.WriteJSON(FriendsListResponse{
-			Type:    "friend_added",
-			Success: true,
-			Friend:  Friend{ID: bID, Username: bName, Online: onB},
-		})
-	}
-	if c := ctx.Chub.Clients[bID]; c != nil {
-		_ = c.Conn.WriteJSON(FriendsListResponse{
-			Type:    "friend_added",
-			Success: true,
-			Friend:  Friend{ID: aID, Username: aName, Online: onA},
-		})
-	}
+var JwtSecret = []byte("replace_with_env_or_equivalent_later")
+
+type MyCustomClaims struct {
+	Username string `json:"username"`
+	UserID   string `json:"id"`
+	jwt.RegisteredClaims
+}
+
+type AuthResponse struct {
+	Token string `json:"token"`
 }
 
 func GenerateJWT(userID string, guestName string) (string, error) {
@@ -47,7 +38,7 @@ func GenerateJWT(userID string, guestName string) (string, error) {
 	return signedToken, nil
 }
 
-func validateAndGetClaims(tokenString string) (*MyCustomClaims, error) {
+func ValidateAndGetClaims(tokenString string) (*MyCustomClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &MyCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return JwtSecret, nil
 	})

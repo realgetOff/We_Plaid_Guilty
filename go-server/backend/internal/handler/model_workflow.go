@@ -1,20 +1,11 @@
 package handler
 
 import (
-	"main.go/gamemanager"
+	"github.com/realgetOff/We_Plaid_Guilty/internal/gamemanager"
 	"sync"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/websocket"
 )
-
-var JwtSecret = []byte("replace_with_env_or_equivalent_later")
-
-type MyCustomClaims struct {
-	Username string `json:"username"`
-	UserID   string `json:"id"`
-	jwt.RegisteredClaims
-}
 
 type Client struct {
 	CurrUsrID		*string				// UserID, to identify the

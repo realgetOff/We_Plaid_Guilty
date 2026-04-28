@@ -3,7 +3,7 @@ package handler
 import (
 	"fmt"
 
-	"main.go/gamemanager"
+	"github.com/realgetOff/We_Plaid_Guilty/internal/gamemanager"
 )
 
 func (d *Dispatcher) HandleJoinGame(ctx *WSContext, msg Message) {

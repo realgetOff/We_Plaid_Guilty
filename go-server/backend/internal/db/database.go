@@ -1,4 +1,4 @@
-package main
+package db
 
 import (
 	"fmt"
@@ -14,7 +14,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	
-	"main.go/metrics"
+	"github.com/realgetOff/We_Plaid_Guilty/internal/metrics"
 )
 
 
@@ -29,7 +29,7 @@ func (d *DBSafe) GetPool() (pool *pgxpool.Pool){
 	return d.Pool
 }
 
-func reloadConfig(sdb *DBSafe) {
+func ReloadConfig(sdb *DBSafe) {
 	
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGHUP)
@@ -86,7 +86,7 @@ func reloadConfig(sdb *DBSafe) {
 	}
 }
 
-func startupUserMetrics (dbs *DBSafe) {
+func StartupUserMetrics (dbs *DBSafe) {
 	var total float64
 	var standard float64
 	var guests float64
@@ -103,7 +103,7 @@ func startupUserMetrics (dbs *DBSafe) {
 
 	err := DBQuery(dbs, startupQuery, nil, &total, &standard, &guests, &api)
 	if (err != nil) {
-		fmt.Printf("Couldn't get the number of users in the database: %v", err)
+		fmt.Printf("Couldn't get the number of users in the database: %v\n", err)
 		return
 	}
 
@@ -114,7 +114,7 @@ func startupUserMetrics (dbs *DBSafe) {
 }
 
 
-func connectToDatabase () (*pgxpool.Pool, error) {
+func ConnectToDatabase () (*pgxpool.Pool, error) {
 
 	myMap, err := godotenv.Read("/vault/secrets/app/config")
 

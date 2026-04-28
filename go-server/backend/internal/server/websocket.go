@@ -1,20 +1,19 @@
-package main
+package server
 
 import (
 	"fmt"
 	"time"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 
-	"net/http"
-
-	"main.go/gamemanager"
-	"main.go/metrics"
-	"main.go/handler"
+	"github.com/realgetOff/We_Plaid_Guilty/internal/gamemanager"
+	"github.com/realgetOff/We_Plaid_Guilty/internal/handler"
+	"github.com/realgetOff/We_Plaid_Guilty/internal/metrics"
 )
 
-func socketLogic(client *handler.Client, serverVars *serverVarsStruct) {
+func socketLogic(client *handler.Client, serverVars *ServerVarsStruct) {
 	dispatcher := handler.NewDispatcher()
 
 	ctx := handler.WSContext{
@@ -78,7 +77,7 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func handleWebsocket(c *gin.Context, serverVars *serverVarsStruct) {
+func handleWebsocket(c *gin.Context, serverVars *ServerVarsStruct) {
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		return

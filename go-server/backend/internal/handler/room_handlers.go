@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"context"
 
-	"main.go/gamemanager"
-	"main.go/metrics"
+	"github.com/realgetOff/We_Plaid_Guilty/internal/metrics"
+	"github.com/realgetOff/We_Plaid_Guilty/internal/gamemanager"
+
 )
 
 func (d *Dispatcher) HandleCreateRoom(ctx *WSContext, msg Message) {

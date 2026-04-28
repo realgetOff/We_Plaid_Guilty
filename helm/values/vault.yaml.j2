@@ -1,11 +1,9 @@
 global:
   enabled: true
-  imagePullSecrets:
-    - name: ecr-secret
 
 injector:
   enabled: true
-  image:
+  agentImage:
     repository: 437836833311.dkr.ecr.eu-north-1.amazonaws.com/vault-custom
     tag: "1.21.2"
   env:

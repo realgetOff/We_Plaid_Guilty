@@ -187,28 +187,10 @@ tasks:
   # ─── Deployment ────────────────────────────────────────────────────────────
 
   deploy:
-    desc: Deploy full infrastructure (interactive)
+    desc: "Use CI/CD pipeline — push a tag to deploy"
     cmds:
-      - task: fetch-secrets
-      - task: ask-vault-password
-      - task: bootstrap
-      - echo "--- Step 1/3 Terraform AWS infra ---"
-      - task: tf-infra
-      - echo "Waiting for SSH (30s)..."
-      - sleep 30
-      - echo "--- Step 2/3 Ansible (K3s + Vault init) ---"
-      - |
-        cd {{.ANSIBLE_DIR}} && ansible-playbook {{.PLAYBOOK}} \
-          -e "master_private_ip=$(cd ../{{.TF_INFRA_DIR}} && terraform output -raw master_private_ip)" \
-          -e "kms_key_id=$(cd ../{{.TF_INFRA_DIR}} && terraform output -raw kms_key_id)" \
-          -e "aws_account_id=$(cd ../{{.TF_INFRA_DIR}} && terraform output -raw aws_account_id)" \
-          -e "deploy_user={{.DEPLOY_USER}}" \
-          --vault-password-file {{.VAULT_FILE}}
-      - task: upload-secrets
-      - echo "--- Step 3/3 Terraform Vault ---"
-      - task: wait-vault
-      - task: apply-vault-tf
-      - echo "Deployed by {{.DEPLOY_USER}} — done!"
+      - echo "Deploy via CI/CD only — push a git tag v*.*.* to trigger deployment"
+      - exit 1
 
   deploy-ci:
     desc: Deploy infrastructure (CI/CD, no prompt)

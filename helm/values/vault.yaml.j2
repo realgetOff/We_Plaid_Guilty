@@ -6,6 +6,8 @@ injector:
   agentImage:
     repository: 437836833311.dkr.ecr.eu-north-1.amazonaws.com/vault-custom
     tag: "1.21.2"
+  agentImagePullSecrets:
+    - ecr-secret
   env:
     - name: AGENT_INJECT_VAULT_ADDR
       value: "http://vault.vault.svc.cluster.local:8200"

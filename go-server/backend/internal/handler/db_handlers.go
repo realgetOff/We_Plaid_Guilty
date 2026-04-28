@@ -36,7 +36,7 @@ func (d *Dispatcher) HandleGetFriend(ctx *WSContext, msg Message) {
 		JOIN friends f ON (u.id = f.requester_id OR u.id = f.addressee_id)
 		WHERE (f.requester_id = $1 OR f.addressee_id = $1) AND u.id != $1 AND f.status = 'accepted'`
 
-	rows, err := db.DBQueryRows(ctx.Chub.Db, qAccepted, qAccepted, userID)
+	rows, err := db.DBQueryRows(ctx.Chub.Db, qAccepted, userID)
 
 	if err != nil {
 		fmt.Printf("Failed to open accepted friends :: %v\n", err)

@@ -53,6 +53,20 @@ var ( // PROMETHEUS METRICS
 	})
 )
 
+func UserStandardIncrease() {
+	UserCountTotal.Inc()
+	UserCountStandard.Inc()
+}
+
+func UserGuestIncrease() {
+	UserCountTotal.Inc()
+	UserCountGuest.Inc()
+}
+
+func UserAPIIncrease() {
+	UserCountTotal.Inc()
+	UserCountAPI.Inc()
+}
 
 
 func RegisterMetrics () {

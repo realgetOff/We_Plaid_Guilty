@@ -11,9 +11,9 @@ func (r *Room) waitForPhase(timeout time.Duration) {
 
 	select {
 	case <-timer:
-		fmt.Printf("Time out !\n")
+		fmt.Printf("Timeout!\n")
 	case <-r.FinishedChan:
-		fmt.Printf("Everybody finished !\n")
+		fmt.Printf("Everybody's finished!\n")
 	}
 }
 
@@ -97,7 +97,7 @@ func (r *Room) RunGameLoop() {
 	fmt.Printf("DEBUG: End of go_routine RunGameLoop: Room %s\n", r.ID)
 }
 
-func (r *Room) SubmiteAction(playerID string, data map[string]interface{}, isFinal bool) error {
+func (r *Room) SubmitAction(playerID string, data map[string]interface{}, isFinal bool) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -209,11 +209,11 @@ func (r *Room) StartGame() error {
 	defer r.mu.Unlock()
 
 	if len(r.Players) < 3 {
-		return fmt.Errorf("Number of players under 3 games can’t start")
+		return fmt.Errorf("3 or more players are required to play")
 	}
 
 	if r.Status != StateWaiting {
-		return fmt.Errorf("Game already start")
+		return fmt.Errorf("The game has already started.")
 	}
 
 	r.Status = "started"

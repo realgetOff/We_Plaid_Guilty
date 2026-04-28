@@ -19,7 +19,7 @@ WORKDIR /app/backend
 COPY backend/go.mod backend/go.sum ./
 RUN go mod download
 COPY backend/ .
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=${GO_ARCH} go build -o /app/server .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=${GO_ARCH} go build -o /app/server ./cmd/main.go
 
 # checkov:skip=CKV_DOCKER_7:sonarqube stage uses latest by design
 FROM sonarsource/sonar-scanner-cli:latest AS sonarqube

@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"strings"
 	"crypto/rand"
-	"main.go/metrics"
+	"github.com/realgetOff/We_Plaid_Guilty/internal/metrics"
 )
 
 func (r *Room) GetID() string   { return r.ID }

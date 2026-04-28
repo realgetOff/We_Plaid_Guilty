@@ -1,4 +1,4 @@
-module main.go
+module github.com/realgetOff/We_Plaid_Guilty
 
 go 1.25.6
 

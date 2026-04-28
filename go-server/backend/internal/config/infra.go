@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"fmt"
@@ -10,6 +10,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+
+	"golang.org/x/oauth2"
 )
 
 type Config struct {
@@ -27,6 +29,31 @@ func vaultstatus(c *gin.Context) {
 		"jwt_secret_loaded":	config.JWTSecret != "",
 	})
 }
+
+// https://api.intra.42.fr/apidoc/guides/web_application_flow#exchange-your-code-for-an-access-token
+// https://pkg.go.dev/golang.org/x/oauth2#Endpoint
+
+var (
+	redirectUrl = os.Getenv("REDIRECT_URL_42")
+	clientId = os.Getenv("CLIENT_ID")
+	clientSecret = os.Getenv("CLIENT_SECRET")
+	authUrl = os.Getenv("AUTH_URL")
+	tokenUrl = os.Getenv("TOKEN_URL")
+
+	FortyTwoOauthConfig = &oauth2.Config {
+		RedirectURL: redirectUrl,
+		ClientID: clientId,
+		ClientSecret: clientSecret,
+		Scopes: []string{"public"},
+		Endpoint:	oauth2.Endpoint {
+			AuthURL: authUrl,
+			TokenURL: tokenUrl,
+		},
+	}
+	// this should be turned into a randomly generated string
+	OauthStateString = "pseudo-random-state"
+)
+
 
 // loadSecrets reads secrets injected by Vault Agent Injector
 // into /vault/secrets/app-secrets and sources them as env vars.
@@ -54,7 +81,7 @@ func loadSecrets() error {
 	return nil
 }
 
-func addnewlinestotls() []byte {
+func Addnewlinestotls() []byte {
 	content, err := os.ReadFile("/vault/secrets/tls")
 	if err != nil {
 		return nil

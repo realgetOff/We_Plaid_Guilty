@@ -100,6 +100,6 @@ func FortyTwoCallback(c *gin.Context, dbs *db.DBSafe) {
 		return
 	}
 
-	frontendRedirectURL := fmt.Sprintf("http://localhost:8080/callback?token=%s", SignedString)
+	frontendRedirectURL := fmt.Sprintf("https://play-stupid.games:30443/callback?token=%s", SignedString)
 	c.Redirect(http.StatusTemporaryRedirect, frontendRedirectURL)
 }

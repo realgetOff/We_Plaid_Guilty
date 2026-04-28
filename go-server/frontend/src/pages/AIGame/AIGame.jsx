@@ -83,7 +83,7 @@ const AIGame = () =>
 	{
     	send({
     	    type: 'ai_drawing_submitted',
-    		    code: code?.toUpperCase(),
+    		code: code?.toUpperCase(),
        		drawing: dataURL,
         	title: title || '',
         	description: description || '',

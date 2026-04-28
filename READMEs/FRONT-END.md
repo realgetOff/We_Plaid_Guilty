@@ -23,12 +23,12 @@ The application is **desktop-only** (mobile is blocked at the App level by user-
 | Real-time | WebSocket (custom singleton client) |
 | Notifications | React Context API |
 | Toasts | react-hot-toast + custom ToastContainer |
-| Styling | Custom CSS (https://alticreation.com/blog/bem-pour-le-css/), no CSS framework |
+| Styling | Custom CSS - BEM typo, no CSS framework |
 | Auth | JWT (localStorage) + 42 OAuth callback |
 | Build tool | Vite |
 
 <p align="center">
-  <img src="./readme_img/stack_explanation.png">
+  <img src="../readme_img/stack_explanation.png">
 </p>
 
 ---
@@ -98,7 +98,7 @@ src/
 - **Sign out**: clears all localStorage keys and reloads
 
 <p align="center">
-  <img src="./readme_img/auth_explanation.png">
+  <img src="../readme_img/auth_explanation.png">
 </p>
 
 ### Navigation & Layout
@@ -128,7 +128,7 @@ src/
 - `AIGallery`: sorted leaderboard with medal rankings and star display
 
 <p align="center">
-  <img src="./readme_img/game_explanation.png">
+  <img src="../readme_img/game_explanation.png">
 </p>
 
 ### Profile
@@ -145,7 +145,7 @@ src/
 - Guest accounts see a blocked state
 
 <p align="center">
-  <img src="./readme_img/friendsprofile.png">
+  <img src="../readme_img/friendsprofile.png">
 </p>
 
 ### Legal
@@ -169,7 +169,7 @@ All real-time communication goes through a **singleton WebSocket client** (`src/
 - Closes with code `4000` → forces logout redirect
 
 <p align="center">
-  <img src="./readme_img/socket_explanation.png">
+  <img src="../readme_img/socket_explanation.png">
 </p>
 
 ---

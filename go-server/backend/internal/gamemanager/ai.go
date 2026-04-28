@@ -77,7 +77,7 @@ func loadLocalEnv() (string, error) {
 
 func CallAI(prompt string) (string, error) {
 	apiKey, ok := loadAPI()
-	if apiKey, ok = loadLocalEnv(); ok == nil {
+	if apiKey, ok = loadLocalEnv(); ok != nil {
 		return "", fmt.Errorf("API_KEY not set")
 	}
 

@@ -3,8 +3,9 @@ package handler
 import (
 	"github.com/realgetOff/We_Plaid_Guilty/internal/gamemanager"
 	"sync"
-	"github.com/jackc/pgx/v5/pgxpool"
+	// "github.com/jackc/pgx/v5/pgxpool"
 	"github.com/gorilla/websocket"
+	"github.com/realgetOff/We_Plaid_Guilty/internal/db"
 )
 
 type Client struct {
@@ -19,7 +20,7 @@ type Client struct {
 type ClientHub struct {
 	Clients map[string]*Client
 
-	Db		*pgxpool.Pool
+	Db		*db.DBSafe
 	Mu		sync.RWMutex
 }
 

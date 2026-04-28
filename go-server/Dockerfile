@@ -2,7 +2,7 @@ ARG GO_ARCH=arm64
 ARG FINAL_PLATFORM=linux/arm64
 
 # checkov:skip=CKV_DOCKER_3:builder stage, not final image
-FROM --platform=linux/amd64 node:20-alpine AS frontend-builder
+FROM --platform=linux/amd64 node:24-alpine AS frontend-builder
 ARG VERSION
 ENV VITE_VERSION=$VERSION
 WORKDIR /app/frontend

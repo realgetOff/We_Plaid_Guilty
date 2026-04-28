@@ -39,6 +39,7 @@ func NewServerStructure () *ServerVarsStruct {
 	gin_prom.Use(r)
 
 	db.StartupUserMetrics(&dbs)
+	config.LoadSecretsIntoOauth()
 
 	chub := &handler.ClientHub{
 		Clients:	make(map[string]*handler.Client),

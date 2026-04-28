@@ -12,114 +12,184 @@
 
 .aigallery
 {
-	display: flex;
+	display:        flex;
 	flex-direction: column;
-	align-items: center;
-	gap: 2.5rem;
-	width: 100%;
+	align-items:    center;
+	gap:            2.5rem;
+	width:          100%;
+	padding:        1.5rem 1rem;
+	font-family:    'Inter', sans-serif;
 }
 
-.aigallery__title
+.aigallery__drawing-title
 {
-	font-size: 2.5rem;
-	font-weight: 900;
-	color: #111;
-	text-transform: uppercase;
+	font-size:     0.9rem;
+	font-weight:   600;
+	color:         #4488ff;
+	text-align:    center;
+	padding:       0.2rem 0.8rem;
+	background:    #eef4ff;
+	border-radius: 20px;
+	max-width: 100%;
+	overflow-wrap: break-word;
+	word-break: break-word;
 }
 
 .aigallery__grid
 {
-	display: grid;
+	display:               grid;
 	grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-	gap: 2.5rem;
-	width: 100%;
+	gap:                   2.5rem;
+	width:                 100%;
 }
 
 .aigallery__card
 {
-	background: #fff;
-	border: 3px solid #eee;
-	border-radius: 15px;
-	padding: 1.5rem;
-	position: relative;
-	display: flex;
+	background:     #fff;
+	border:         3px solid #eee;
+	border-radius:  15px;
+	padding:        1.5rem 1.5rem 1.2rem;
+	position:       relative;
+	display:        flex;
 	flex-direction: column;
-	align-items: center;
-	gap: 1rem;
-	transition: transform 0.3s ease;
+	align-items:    center;
+	gap:            0.8rem;
+	transition:     transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .aigallery__card--winner
 {
 	border-color: #ffcc00;
-	transform: scale(1.05);
-	box-shadow: 0 15px 35px rgba(255, 204, 0, 0.2);
+	transform:    scale(1.04);
+	box-shadow:   0 15px 35px rgba(255, 204, 0, 0.25);
 }
 
 .aigallery__rank
 {
-	position: absolute;
-	top: -20px;
-	left: -20px;
-	width: 50px;
-	height: 50px;
-	background: #111;
-color: #fff;
+	position:      absolute;
+	top:           -18px;
+	left:          -18px;
+	width:         48px;
+	height:        48px;
+	background:    #111;
+	color:         #fff;
 	border-radius: 50%;
-	display: flex;
-	align-items: center;
+	display:       flex;
+	align-items:   center;
 	justify-content: center;
-	font-weight: 900;
-	font-size: 1.2rem;
-	border: 4px solid #fff;
-	box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+	font-weight:   900;
+	font-size:     1.1rem;
+	border:        4px solid #fff;
+	box-shadow:    0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
 .aigallery__card--winner .aigallery__rank
 {
 	background: #ffcc00;
-	color: #111;
+	color:      #111;
 }
 
 .aigallery__player
 {
 	font-weight: 800;
-	font-size: 1.1rem;
-	text-align: center;
+	font-size:   1.05rem;
+	text-align:  center;
+	color:       #111;
+}
+
+.aigallery__drawing-title
+{
+	font-size:     0.9rem;
+	font-weight:   600;
+	color:         #4488ff;
+	text-align:    center;
+	padding:       0.2rem 0.8rem;
+	background:    #eef4ff;
+	border-radius: 20px;
 }
 
 .aigallery__img
 {
-	max-width: 100%;
-	max-height: 280px;
-	object-fit: contain;
-	border: 2px solid #eee;
+	max-width:    100%;
+	max-height:   240px;
+	object-fit:   contain;
+	border:       2px solid #eee;
 	border-radius: 8px;
+	background:   #fafafa;
+}
+
+.aigallery__img-placeholder
+{
+	width:         100%;
+	height:        120px;
+	display:       flex;
+	align-items:   center;
+	justify-content: center;
+	background:    #f5f5f5;
+	border-radius: 8px;
+	color:         #aaa;
+	font-size:     2rem;
+}
+
+.aigallery__description
+{
+	font-size:   0.82rem;
+	color:       #666;
+	text-align:  center;
+	font-style:  italic;
+	margin:      0;
+	line-height: 1.4;
+	max-width: 100%;
+	overflow-wrap: break-word;
+	word-break: break-word;
 }
 
 .aigallery__score
 {
-	font-size: 1.8rem;
-	font-weight: 900;
-	color: #ffcc00;
-	text-shadow: 1px 1px 0 #111;
+	margin-top: 0.2rem;
+}
+
+.aigallery__stars
+{
+	font-size:      1.7rem;
+	font-weight:    900;
+	color:          #ffcc00;
+	text-shadow:    1px 1px 0 #bbb;
+	letter-spacing: 2px;
 }
 
 .aigallery__score-num
 {
 	margin-left: 0.5rem;
-	font-size: 0.9rem;
-	color: #333;
+	font-size:   0.85rem;
+	color:       #444;
+	font-weight: 600;
 	text-shadow: none;
+	vertical-align: middle;
+}
+
+.aigallery__empty
+{
+	color:       #888;
+	font-size:   1.1rem;
+	margin:      3rem 0;
 }
 
 .aigallery__btn
 {
-	padding: 1rem 2.5rem;
-	background: #111;
-	color: #fff;
-	border: none;
+	padding:       0.9rem 2.5rem;
+	background:    #111;
+	color:         #fff;
+	border:        none;
 	border-radius: 8px;
-	font-weight: 700;
-	cursor: pointer;
+	font-weight:   700;
+	font-size:     1rem;
+	cursor:        pointer;
+	transition:    opacity 0.2s, transform 0.1s;
+}
+
+.aigallery__btn:hover
+{
+	opacity:   0.85;
+	transform: translateY(-1px);
 }

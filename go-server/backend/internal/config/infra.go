@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/joho/godotenv"
 	"golang.org/x/oauth2"
 )
 
@@ -12,9 +13,22 @@ import (
 // https://pkg.go.dev/golang.org/x/oauth2#Endpoint
 
 var (
+	FortyTwoOauth *oauth2.Config
+	OauthStateString = "pseudo-random-state"
+)
+
+func LoadSecretsIntoOauth() {
+	var redirectUrl, clientId, clientSecret, authUrl, tokenUrl string
+	myMap, err := godotenv.Read("/vault/secrets/app/config")
+
+	if err == nil {
+		clientId = myMap["CLIENT_ID"]
+		clientSecret = myMap["CLIENT_SECRET"]
+	} else { // LOCAL
+		clientId = os.Getenv("CLIENT_ID")
+		clientSecret = os.Getenv("CLIENT_SECRET")
+	}
 	redirectUrl = os.Getenv("REDIRECT_URL_42")
-	clientId = os.Getenv("CLIENT_ID")
-	clientSecret = os.Getenv("CLIENT_SECRET")
 	authUrl = os.Getenv("AUTH_URL")
 	tokenUrl = os.Getenv("TOKEN_URL")
 
@@ -28,12 +42,12 @@ var (
 			TokenURL: tokenUrl,
 		},
 	}
-	OauthStateString = "pseudo-random-state"
-)
+}
 
 func DEBUGgetalloauthvars () {
 	fmt.Println(" -- DEBUG -- ")
-	fmt.Printf(`REDIRURL : %v | ID : %v | SECRET : %v | AUTH : %v | TOKEN : %v\n`, redirectUrl, clientId, clientSecret, authUrl, tokenUrl)
+	fmt.Printf(`REDIRURL : %v | ID : %v | SECRET : %v | AUTH : %v | TOKEN : %v\n`,
+	FortyTwoOauth.RedirectURL, FortyTwoOauth.ClientID, FortyTwoOauth.ClientSecret)
 }
 
 func Addnewlinestotls() []byte {

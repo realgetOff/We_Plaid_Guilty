@@ -24,8 +24,10 @@ type AIVote struct {
 const StateAIGallery = "gallery"
 
 type AIResult struct {
-	PlayerID   string  `json:"player_id"`
-	PlayerName string  `json:"player_name"`
-	Drawing    string  `json:"drawing"`
-	Score      float64 `json:"score"`
+	PlayerID    string  `json:"player_id"`
+	PlayerName  string  `json:"player_name"`
+	Drawing     string  `json:"drawing"`
+	Title       string  `json:"title"`
+	Description string  `json:"description"`
+	Score       float64 `json:"score"`
 }

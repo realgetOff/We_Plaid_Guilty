@@ -209,8 +209,10 @@ func (r *AIRoom) RunAIGameLoop(prompt string) {
 			if d.PlayerID != pID { 
 				filteredList = append(filteredList, map[string]interface{}{
 					"player_id": d.PlayerID,
-					"name":      d.PlayerName,
-					"drawing":   d.Drawing,
+					"player_name": d.PlayerName,
+					"drawing": d.Drawing,
+					"title": d.Title,
+					"description": d.Description,
 				})
 			}
 		}
@@ -264,10 +266,12 @@ func (r *AIRoom) ComputeResults() []AIResult {
 			avg = float64(sum) / float64(len(s))
 		}
 		results = append(results, AIResult{
-			PlayerID:   pID,
-			PlayerName: d.PlayerName,
-			Drawing:    d.Drawing,
-			Score:      avg,
+			PlayerID:    pID,
+			PlayerName:  d.PlayerName,
+			Drawing:     d.Drawing,
+			Title:       d.Title,
+			Description: d.Description,
+			Score:       avg,
 		})
 		fmt.Printf("DEBUG ComputeResults: %d drawings, %d votes\n", len(r.Drawings), len(r.Votes))
 	}

@@ -12,112 +12,187 @@
 
 .aivote
 {
-	display: flex;
+	display:        flex;
 	flex-direction: column;
+	align-items:    center;
+	gap:            2rem;
+	width:          100%;
+	max-width:      1100px;
+	margin:         0 auto;
+	padding:        1.5rem 1rem;
+	font-family:    'Inter', sans-serif;
+}
+
+.aivote__header
+{
+	display:     flex;
 	align-items: center;
-	gap: 2rem;
-	width: 100%;
-	max-width: 1000px;
+	gap:         1rem;
+}
+
+.aivote__title
+{
+	font-size:   1.6rem;
+	font-weight: 900;
+	color:       #111;
+	margin:      0;
 }
 
 .aivote__hint
 {
-	background: #f0f0f0;
-	padding: 0.6rem 1.2rem;
+	background:    #f0f0f0;
+	padding:       0.4rem 1rem;
 	border-radius: 30px;
-	font-size: 0.9rem;
-	color: #555;
+	font-size:     0.85rem;
+	color:         #555;
+	font-weight:   600;
 }
 
 .aivote__grid
 {
-	display: grid;
+	display:               grid;
 	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-	gap: 2rem;
-	width: 100%;
+	gap:                   2rem;
+	width:                 100%;
 }
 
 .aivote__card
 {
-	background: #fff;
-	border: 2px solid #eee;
-	border-radius: 12px;
-	padding: 1.5rem;
-	display: flex;
+	background:     #fff;
+	border:         2px solid #e0e0e0;
+	border-radius:  14px;
+	padding:        1.5rem;
+	display:        flex;
 	flex-direction: column;
-	align-items: center;
-	gap: 1.2rem;
-	transition: border-color 0.3s ease;
+	align-items:    center;
+	gap:            1rem;
+	transition:     border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
-.aivote__card:hover
+.aivote__card--voted
 {
-	border-color: #ddd;
+	border-color: #4488ff;
+	box-shadow:   0 4px 18px rgba(68, 136, 255, 0.15);
 }
 
 .aivote__card-label
 {
 	font-weight: 700;
-	color: #222;
-	font-size: 1.1rem;
+	color:       #222;
+	font-size:   1rem;
+	text-align:  center;
+	max-width: 100%;
+	overflow-wrap: break-word;
+	word-break: break-word;
+}
+
+.aivote__drawing-title
+{
+	color:       #4488ff;
+	font-weight: 600;
+	overflow-wrap: break-word;
+	word-break: break-word;
+}
+
+.aivote__description
+{
+	font-size:   0.85rem;
+	color:       #666;
+	text-align:  center;
+	margin:      0;
+	font-style:  italic;
+	line-height: 1.4;
+	max-width: 100%;
+	overflow-wrap: break-word;
+	word-break: break-word;
 }
 
 .aivote__img
 {
-	width: 100%;
-	aspect-ratio: 1/1;
-	object-fit: contain;
+	width:        100%;
+	aspect-ratio: 700 / 380;
+	object-fit:   contain;
 	border-radius: 8px;
-	background: #f9f9f9;
-	border: 1px solid #eee;
+	background:   #f9f9f9;
+	border:       1px solid #eee;
 }
 
 .aivote__score-row
 {
 	display: flex;
-	gap: 0.6rem;
+	gap:     0.6rem;
 }
 
 .aivote__score-btn
 {
-	width: 42px;
-	height: 42px;
+	width:         44px;
+	height:        44px;
 	border-radius: 50%;
-	border: 2px solid #eee;
-	background: #fff;
-	font-weight: 800;
-	cursor: pointer;
-	transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+	border:        2px solid #ddd;
+	background:    #f7f7f7;
+	color:         #333;
+	font-weight:   800;
+	font-size:     1rem;
+	cursor:        pointer;
+	transition:    all 0.18s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+	line-height:   1;
+	padding:       0;
 }
 
 .aivote__score-btn:hover
 {
 	border-color: #111;
-	transform: translateY(-2px);
+	background:   #efefef;
+	transform:    translateY(-2px);
+	color:        #111;
 }
 
 .aivote__score-btn--active
 {
-	background: #111 !important;
-	color: #fff !important;
+	background:   #111 !important;
+	color:        #fff !important;
 	border-color: #111 !important;
-	transform: scale(1.15) !important;
-	box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+	transform:    scale(1.18) !important;
+	box-shadow:   0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.aivote__selected-score
+{
+	font-size:   1.4rem;
+	color:       #ffcc00;
+	text-shadow: 0 1px 0 #999;
+	letter-spacing: 2px;
 }
 
 .aivote__submit
 {
-	margin-top: 2rem;
-	padding: 1rem 3rem;
-	background: #111;
-	color: #fff;
-	border: none;
+	margin-top:    1rem;
+	padding:       0.9rem 3rem;
+	background:    #111;
+	color:         #fff;
+	border:        none;
 	border-radius: 50px;
-	font-size: 1.1rem;
-	font-weight: 700;
-	cursor: pointer;
-	transition: opacity 0.2s, transform 0.1s;
+	font-size:     1.05rem;
+	font-weight:   700;
+	cursor:        pointer;
+	transition:    opacity 0.2s, transform 0.1s;
 }
 
-.aivote__submit:active { transform: scale(0.98); }
-.aivote__submit:disabled { background: #ccc; cursor: not-allowed; }
+.aivote__submit:hover:not(:disabled)
+{
+	opacity:   0.85;
+	transform: translateY(-1px);
+}
+
+.aivote__submit:active:not(:disabled)
+{
+	transform: scale(0.98);
+}
+
+.aivote__submit--disabled,
+.aivote__submit:disabled
+{
+	background: #ccc;
+	color:      #888;
+	cursor:     not-allowed;
+}

@@ -42,7 +42,7 @@ func NewServerStructure () *ServerVarsStruct {
 
 	chub := &handler.ClientHub{
 		Clients:	make(map[string]*handler.Client),
-		Db:			dbPool,
+		Db:			&dbs,
 	}
 
 	return &ServerVarsStruct{

@@ -2,10 +2,10 @@ package handler
 
 import (
 	"fmt"
-	"context"
 
 	"github.com/realgetOff/We_Plaid_Guilty/internal/metrics"
 	"github.com/realgetOff/We_Plaid_Guilty/internal/gamemanager"
+	"github.com/realgetOff/We_Plaid_Guilty/internal/db"
 
 )
 
@@ -20,7 +20,9 @@ func (d *Dispatcher) HandleCreateRoom(ctx *WSContext, msg Message) {
 		metrics.DbRequests.Inc()
 		query := `SELECT color, font FROM profiles WHERE id = $1`
 
-		err := ctx.Chub.Db.QueryRow(context.Background(), query, ctx.Client.CurrUsrID).Scan(&color, &font)
+		// err := ctx.Chub.Db.QueryRow(context.Background(), query, ctx.Client.CurrUsrID).Scan(&color, &font)
+		err := db.DBQuery(ctx.Chub.Db, query, []any{ ctx.Client.CurrUsrID }, &color, &font)
+		
 
 		if err != nil {
 			fmt.Printf(NOT_FOUND_DB)
@@ -70,7 +72,9 @@ func (d *Dispatcher) HandleJoinRoom(ctx *WSContext, msg Message) {
 		metrics.DbRequests.Inc()
 		query := `SELECT color, font FROM profiles WHERE id = $1`
 
-		err := ctx.Chub.Db.QueryRow(context.Background(), query, ctx.Client.CurrUsrID).Scan(&color, &font)
+		// err := ctx.Chub.Db.QueryRow(context.Background(), query, ctx.Client.CurrUsrID).Scan(&color, &font)
+		err := db.DBQuery(ctx.Chub.Db, query, []any{ ctx.Client.CurrUsrID }, &color, &font)
+
 
 		if err != nil {
 			fmt.Printf(NOT_FOUND_DB)
@@ -139,7 +143,8 @@ func (d *Dispatcher) HandleCreateAIRoom(ctx *WSContext, msg Message) {
 		metrics.DbRequests.Inc()
 		query := `SELECT color, font FROM profiles WHERE id = $1`
 
-		err := ctx.Chub.Db.QueryRow(context.Background(), query, ctx.Client.CurrUsrID).Scan(&color, &font)
+		// err := ctx.Chub.Db.QueryRow(context.Background(), query, ctx.Client.CurrUsrID).Scan(&color, &font)
+		err := db.DBQuery(ctx.Chub.Db, query, []any{ ctx.Client.CurrUsrID }, &color, &font)
 
 		if err != nil {
 			fmt.Printf(NOT_FOUND_DB)
@@ -213,7 +218,8 @@ func (d *Dispatcher) HandleJoinAIRoom(ctx *WSContext, msg Message) {
 		metrics.DbRequests.Inc()
 		query := `SELECT color, font FROM profiles WHERE id = $1`
 
-		err := ctx.Chub.Db.QueryRow(context.Background(), query, ctx.Client.CurrUsrID).Scan(&color, &font)
+		// err := ctx.Chub.Db.QueryRow(context.Background(), query, ctx.Client.CurrUsrID).Scan(&color, &font)
+		err := db.DBQuery(ctx.Chub.Db, query, []any{ ctx.Client.CurrUsrID }, &color, &font)
 
 		if err != nil {
 			fmt.Printf(NOT_FOUND_DB)

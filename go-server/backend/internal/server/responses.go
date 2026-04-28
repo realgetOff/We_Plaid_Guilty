@@ -2,14 +2,19 @@ package server
 
 import (
 	"fmt"
+	// "log"
 	"net/http"
+	// "os"
 	"strings"
+	// "time"
 
 	"github.com/gin-gonic/gin"
+	// "golang.org/x/oauth2"
 
-	"github.com/realgetOff/We_Plaid_Guilty/internal/webutil"
+	// "github.com/joho/godotenv"
 	"github.com/realgetOff/We_Plaid_Guilty/internal/config"
-
+	"github.com/realgetOff/We_Plaid_Guilty/internal/webutil"
+	// "github.com/realgetOff/We_Plaid_Guilty/internal/config"
 )
 
 func ping(c *gin.Context) {
@@ -61,6 +66,39 @@ func Routing(serverVars *ServerVarsStruct) {
 		webutil.HandleGuestAuth(c, serverVars.db)
 	})
 
+	// secretsFile := "/vault/secrets/app/config"
+// 
+	// maxRetries := 10
+	// for i := 0; i < maxRetries; i++ {
+		// if _, err := os.Stat(secretsFile); err == nil {
+			// break
+		// }
+		// log.Printf("Waiting for secrets file %s... (%d/%d)", secretsFile, i+1, maxRetries)
+		// time.Sleep(2 * time.Second)
+	// }
+// 
+	// if err := godotenv.Load(secretsFile); err != nil {
+		// return
+	// }
+// 
+	// redirectUrl := os.Getenv("REDIRECT_URL_42")
+	// clientId := os.Getenv("CLIENT_ID")
+	// clientSecret := os.Getenv("CLIENT_SECRET")
+	// authUrl := os.Getenv("AUTH_URL")
+	// tokenUrl := os.Getenv("TOKEN_URL")
+
+	// FortyTwoOauthConfig := &oauth2.Config {
+		// RedirectURL: redirectUrl,
+		// ClientID: clientId,
+		// ClientSecret: clientSecret,
+		// Scopes: []string{"public"},
+		// Endpoint:	oauth2.Endpoint {
+			// AuthURL: authUrl,
+			// TokenURL: tokenUrl,
+		// },
+	// }
+	// this should be turned into a randomly generated string
+	// OauthStateString := "pseudo-random-state"
 
 	// NEW LOGIN CODE
 	serverVars.router.GET("/api/auth/42/url", func (c *gin.Context){

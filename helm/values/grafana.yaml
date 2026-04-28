@@ -83,3 +83,14 @@ persistence:
   enabled: false
 
 dnsPolicy: ClusterFirstWithHostNet
+
+livenessProbe:
+  httpGet:
+    path: /api/health
+    port: 3000
+    scheme: HTTPS
+readinessProbe:
+  httpGet:
+    path: /api/health
+    port: 3000
+    scheme: HTTPS

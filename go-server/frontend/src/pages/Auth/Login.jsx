@@ -61,21 +61,21 @@ const AuthModal = ({ type, onClose, onSubmit, loading, error }) =>
 						<label className="login-page__lead" style={{ fontSize: '0.8rem', marginBottom: '5px', display: 'block' }}>
 							{'>'} user_id
 						</label>
-						<input name="username" type="text" className="login-page__input" onChange={handleChange} autoComplete="off" />
+						<input name="username" type="text" className="login-page__input" onChange={handleChange} autoComplete="off" maxLength={16}/>
 					</div>
 					{type === 'register' && (
 						<div className="form-group" style={{ marginTop: '10px' }}>
 							<label className="login-page__lead" style={{ fontSize: '0.8rem', marginBottom: '5px', display: 'block' }}>
 								{'>'} email_addr
 							</label>
-							<input name="email" type="email" className="login-page__input" onChange={handleChange} autoComplete="off" />
+							<input name="email" type="email" className="login-page__input" onChange={handleChange} autoComplete="off" maxLength={255}/>
 						</div>
 					)}
 					<div className="form-group" style={{ marginTop: '10px' }}>
 						<label className="login-page__lead" style={{ fontSize: '0.8rem', marginBottom: '5px', display: 'block' }}>
 							{'>'} access_key
 						</label>
-						<input name="password" type="password" className="login-page__input" onChange={handleChange} />
+						<input name="password" type="password" className="login-page__input" onChange={handleChange} maxLength={64}/>
 					</div>
 					<div className="login-page__actions" style={{ marginTop: '25px' }}>
 						<button type="submit" className="login-page__btn" disabled={loading}>
@@ -181,7 +181,7 @@ const Login = () =>
 				body: JSON.stringify(formData)
 			});
 			if (!data.token)
-				throw new Error(data.message || 'reg_denied');
+				throw new Error(data.error || 'reg_denied');
 			finalizeAuth(data.token);
 		}
 		catch (e)
@@ -211,7 +211,7 @@ const Login = () =>
 				body: JSON.stringify(formData)
 			});
 			if (!data.token)
-				throw new Error(data.message || 'auth_denied');
+				throw new Error(data.error || 'auth_denied');
 			finalizeAuth(data.token);
 		}
 		catch (e)

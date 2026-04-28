@@ -86,7 +86,7 @@ const Profile = () =>
     });
 
     return () => removeListener(handler);
-  }, [username]);
+  }, [username, navigate]);
 
   const handleSave = async () =>
   {
@@ -120,6 +120,12 @@ const Profile = () =>
     });
   };
 
+  const getFontClass = (f) => {
+    if (f === 'bold') return 'profile__text--bold';
+    if (f === 'italic') return 'profile__text--italic';
+    return '';
+  };
+
   if (status === 'loading')
   {
     return (
@@ -147,28 +153,17 @@ const Profile = () =>
 
   const initials = user.username.slice(0, 2).toUpperCase();
 
-  const usernameStyle =
-  {
-    color:      user.style?.color || '#000000',
-    fontWeight: user.style?.font === 'bold'   ? 'bold'   : 'normal',
-    fontStyle:  user.style?.font === 'italic' ? 'italic' : 'normal',
-  };
-
   const isGuestProfile = !!user.is_guest;
   const canEditProfile = isMe && !isGuestProfile;
+
+  const userFontClass = getFontClass(user.style?.font);
+  const previewFontClass = getFontClass(font);
 
   return (
     <div className="profile">
 
       {isGuestProfile && (
-        <p className="profile__guest-banner" style={{
-          margin: '0 0 1rem',
-          padding: '0.75rem 1rem',
-          background: '#f5f0e0',
-          border: '1px solid #ccb',
-          borderRadius: '8px',
-          fontSize: '0.95rem',
-        }}>
+        <p className="profile__guest-banner">
           {isMe
             ? 'You are on a guest account. Profile editing is disabled.'
             : 'This is a guest account.'}
@@ -182,7 +177,10 @@ const Profile = () =>
         </div>
 
         <div className="profile__info">
-          <span className="profile__username" style={usernameStyle}>
+          <span 
+            className={`profile__username ${userFontClass}`.trim()} 
+            style={{ color: user.style?.color || '#000000' }}
+          >
             {user.username}
           </span>
           <span className="profile__email">{user.email}</span>
@@ -250,10 +248,7 @@ const Profile = () =>
                       className={cls}
                       onClick={() => setFont(f)}
                     >
-                      <span style={{
-                        fontWeight: f === 'bold'   ? 'bold'   : 'normal',
-                        fontStyle:  f === 'italic' ? 'italic' : 'normal',
-                      }}>
+                      <span className={getFontClass(f)}>
                         {f}
                       </span>
                     </button>
@@ -264,11 +259,10 @@ const Profile = () =>
 
             <div className="profile__edit-footer">
               <span className="profile__preview-label">preview :</span>
-              <span className="profile__preview" style={{
-                color,
-                fontWeight: font === 'bold'   ? 'bold'   : 'normal',
-                fontStyle:  font === 'italic' ? 'italic' : 'normal',
-              }}>
+              <span 
+                className={`profile__preview ${previewFontClass}`.trim()} 
+                style={{ color: color }}
+              >
                 {editName || user.username}
               </span>
               <button className="profile__save-btn" onClick={handleSave}>

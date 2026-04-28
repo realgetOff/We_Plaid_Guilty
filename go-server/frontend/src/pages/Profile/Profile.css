@@ -22,6 +22,16 @@
   margin: 0 auto;
 }
 
+.profile__guest-banner
+{
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  background: #f5f0e0;
+  border: 1px solid #ccb;
+  border-radius: 8px;
+  font-size: 0.95rem;
+}
+
 .profile__guard
 {
   display: flex;
@@ -401,4 +411,14 @@
 {
   outline: 3px solid #000000;
   outline-offset: 2px;
+}
+
+.profile__text--bold
+{
+  font-weight: bold;
+}
+
+.profile__text--italic
+{
+  font-style: italic;
 }

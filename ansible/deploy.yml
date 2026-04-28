@@ -167,7 +167,6 @@
         - flannel-wg
       ignore_errors: true
 
-
 - name: "Monitoring"
   hosts: MASTER
   become: true
@@ -189,6 +188,19 @@
     - name: "Create namespace monitoring"
       shell: |
         /usr/local/bin/kubectl create namespace monitoring \
+          --dry-run=client -o yaml | \
+        /usr/local/bin/kubectl apply -f -
+      environment:
+        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+    - name: "Create ECR secret for monitoring namespace"
+      shell: |
+        TOKEN=$(aws ecr get-login-password --region eu-north-1)
+        /usr/local/bin/kubectl create secret docker-registry ecr-secret \
+          --docker-server=437836833311.dkr.ecr.eu-north-1.amazonaws.com \
+          --docker-username=AWS \
+          --docker-password=$TOKEN \
+          --namespace=monitoring \
           --dry-run=client -o yaml | \
         /usr/local/bin/kubectl apply -f -
       environment:
@@ -306,6 +318,19 @@
     - name: "Create namespace logging"
       shell: |
         /usr/local/bin/kubectl create namespace logging \
+          --dry-run=client -o yaml | \
+        /usr/local/bin/kubectl apply -f -
+      environment:
+        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+    - name: "Create ECR secret for monitoring logging"
+      shell: |
+        TOKEN=$(aws ecr get-login-password --region eu-north-1)
+        /usr/local/bin/kubectl create secret docker-registry ecr-secret \
+          --docker-server=437836833311.dkr.ecr.eu-north-1.amazonaws.com \
+          --docker-username=AWS \
+          --docker-password=$TOKEN \
+          --namespace=logging \
           --dry-run=client -o yaml | \
         /usr/local/bin/kubectl apply -f -
       environment:

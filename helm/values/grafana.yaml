@@ -22,7 +22,6 @@ nodeSelector:
 ingress:
   enabled: false
 
-
 admin:
   # checkov:skip=CKV_SECRET_6:K8s secret name not a secret value
   existingSecret: "grafana-admin-secret"
@@ -62,7 +61,6 @@ datasources:
         isDefault: true
         jsonData: {}
 
-
 dashboardProviders:
   dashboardproviders.yaml:
     apiVersion: 1
@@ -83,14 +81,3 @@ persistence:
   enabled: false
 
 dnsPolicy: ClusterFirstWithHostNet
-
-extraVolumes:
-  - name: split-certs
-    hostPath:
-      path: /usr/local/bin/split-certs
-      type: File
-
-extraVolumeMounts:
-  - name: split-certs
-    mountPath: /usr/local/bin/split-certs
-    readOnly: true

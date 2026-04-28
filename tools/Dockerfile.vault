@@ -1,0 +1,2 @@
+FROM --platform=linux/arm64 hashicorp/vault:1.21.2
+COPY --chmod=755 split-certs-arm64 /usr/local/bin/split-certs

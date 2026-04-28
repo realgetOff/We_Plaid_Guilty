@@ -83,7 +83,7 @@ spec:
             - name: VERSION
               value: "{{ .Values.image.tag }}"
             - name: REDIRECT_URL_42
-              value: "http://play-stupid.games:30443/api/auth/42/callback"
+              value: "https://play-stupid.games:30443/api/auth/42/callback"
             - name: AUTH_URL
               value: "https://api.intra.42.fr/oauth/authorize"
             - name: TOKEN_URL

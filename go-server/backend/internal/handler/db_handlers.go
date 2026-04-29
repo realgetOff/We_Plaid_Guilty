@@ -382,7 +382,7 @@ func (d* Dispatcher) HandleProfileUpdate(ctx *WSContext, msg Message) {
 					WHERE id = $1;
 					`
 
-	err = db.DBQuery(ctx.Chub.Db, query, []any{ usrnmQuery, ctx.Client.CurrUsrID, msg.Username })
+	err = db.DBQuery(ctx.Chub.Db, query, []any{ ctx.Client.CurrUsrID, msg.Username })
 
 	if (err != nil ) { 
 		fmt.Printf("FAILED TO UPDATE THE USERNAME FOR USER %v : %v\n", *ctx.Client.CurrUsrName, err)
@@ -439,8 +439,8 @@ func (d *Dispatcher) HandleAuth(ctx *WSContext, msg Message) {
 		return
 	}
 	
-	ctx.Client.CurrUsrName = &claims.Username
-	ctx.Client.CurrUsrID = &claims.UserID
+	*ctx.Client.CurrUsrName = claims.Username
+	*ctx.Client.CurrUsrID = claims.UserID
 
 	var clientType string
 
@@ -453,6 +453,8 @@ func (d *Dispatcher) HandleAuth(ctx *WSContext, msg Message) {
 	ctx.Chub.Mu.Lock()
 	ctx.Chub.Clients[claims.UserID] = ctx.Client
 	ctx.Chub.Mu.Unlock()
+
+	HandleUserConnect(ctx, claims.UserID, claims.Username)
 
 	_ = ctx.Client.Conn.WriteJSON(map[string]interface{}{
 		"type":     "auth_ok",

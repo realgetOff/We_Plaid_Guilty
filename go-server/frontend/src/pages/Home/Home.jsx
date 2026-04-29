@@ -19,13 +19,8 @@ const Home = () =>
 {
   const navigate = useNavigate();
 
-
 	useEffect(() => {
-	  const login_check = localStorage.getItem("authToken");
-	 
-	  if (login_check) {
 	    connect();
-	  }
 	}, []);
 
   return (

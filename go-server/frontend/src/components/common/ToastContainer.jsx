@@ -62,9 +62,12 @@ const ToastContainer = () =>
 
   const handleAccept = (notif) =>
   {
-    dismiss(notif.id);
-    navigate(`/game/join/${notif.code}`);
-  };
+	dismiss(notif.id);
+	if (notif.isAI)
+		navigate(`/aigame/join/${notif.code}`);
+	else
+		navigate(`/game/join/${notif.code}`);
+	};
 
   const handleRefuse = (notif) =>
   {

@@ -24,7 +24,6 @@ resources:
     cpu: "1000m"
     memory: "1Gi"
 
-# TODO: migrer vers Vault PKI + Cilium pour le mTLS complet
 createCert: true
 
 secret:

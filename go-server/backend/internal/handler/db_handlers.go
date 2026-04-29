@@ -382,7 +382,7 @@ func (d* Dispatcher) HandleProfileUpdate(ctx *WSContext, msg Message) {
 					WHERE id = $1;
 					`
 
-	err = db.DBQuery(ctx.Chub.Db, query, []any{ ctx.Client.CurrUsrID, msg.Username })
+	err = db.DBQuery(ctx.Chub.Db, usrnmQuery, []any{ ctx.Client.CurrUsrID, msg.Username })
 
 	if (err != nil ) { 
 		fmt.Printf("FAILED TO UPDATE THE USERNAME FOR USER %v : %v\n", *ctx.Client.CurrUsrName, err)

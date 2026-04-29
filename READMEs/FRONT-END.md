@@ -118,7 +118,7 @@ src/
 - All phases auto-submit on timer expiry
 
 <p align="center">
-  <img src="./readme_img/aigame_explanation.png">
+  <img src="../readme_img/game_explanation.png">
 </p>
 
 ### AI Game Mode
@@ -128,7 +128,7 @@ src/
 - `AIGallery`: sorted leaderboard with medal rankings and star display
 
 <p align="center">
-  <img src="../readme_img/game_explanation.png">
+  <img src="../readme_img/aigame_explanation.png">
 </p>
 
 ### Profile

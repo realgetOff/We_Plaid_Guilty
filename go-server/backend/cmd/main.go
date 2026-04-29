@@ -17,7 +17,6 @@ func main() {
 	defer server.CloseDB(serverVars)
 	
 	gin.SetMode(gin.ReleaseMode)
-	// https://github.com/gin-gonic/gin/blob/master/docs/doc.md#dont-trust-all-proxies 
 
 	server.Routing(serverVars)
 	go server.HealthChecker()

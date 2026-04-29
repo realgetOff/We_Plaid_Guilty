@@ -439,8 +439,8 @@ func (d *Dispatcher) HandleAuth(ctx *WSContext, msg Message) {
 		return
 	}
 	
-	*ctx.Client.CurrUsrName = claims.Username
-	*ctx.Client.CurrUsrID = claims.UserID
+	ctx.Client.CurrUsrName = &claims.Username
+	ctx.Client.CurrUsrID = &claims.UserID
 
 	var clientType string
 

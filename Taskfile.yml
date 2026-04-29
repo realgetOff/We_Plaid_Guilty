@@ -194,6 +194,8 @@ tasks:
       - git tag {{.CLI_ARGS}}
       - git push origin main
       - git push origin {{.CLI_ARGS}}
+      - git push github main
+      - git push github {{.CLI_ARGS}}
 
   deploy:
     desc: "Use CI/CD pipeline — push a tag to deploy"

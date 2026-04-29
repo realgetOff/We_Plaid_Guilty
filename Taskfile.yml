@@ -186,14 +186,30 @@ tasks:
 
   # ─── Deployment ────────────────────────────────────────────────────────────
 
+  setup:
+    desc: "Setup git remotes after clone from vogsphere (run once)"
+    cmds:
+      - git remote add github git@github.com:AtomicDeploy42/We_Plaid_Guilty.git
+      - git pull github main --rebase
+      - echo "Setup done — use 'task release -- v1.x.x' to deploy"
+
+  sync:
+    desc: "Sync github remote with local branch"
+    cmds:
+      - git pull github main --rebase
+      - git push github main
+
   release:
     desc: "Release a new version (task release -- v1.2.3)"
     cmds:
+      - task: sync
       - git add .
       - git commit -m "release {{.CLI_ARGS}}" --allow-empty
       - git tag {{.CLI_ARGS}}
       - git push origin main
       - git push origin {{.CLI_ARGS}}
+      - git push github main
+      - git push github {{.CLI_ARGS}}
 
   deploy:
     desc: "Use CI/CD pipeline — push a tag to deploy"

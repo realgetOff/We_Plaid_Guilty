@@ -71,6 +71,11 @@ task release -- v1.x.x
 
 This commits, tags, and pushes — GitHub Actions handles the build and deploy automatically.
 
+### After cloning from vogsphere
+```bash
+task setup   # Configure github remote (run once)
+```
+
 ### First-time Infrastructure Setup
 
 ```bash

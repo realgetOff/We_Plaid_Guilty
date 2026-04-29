@@ -15,7 +15,6 @@ CREATE TABLE IF NOT EXISTS users (
 		OR
 		(type = 'standard' AND email IS NOT NULL AND password_hash IS NOT NULL)
 	)
-	--created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TYPE friendship_status AS ENUM ('pending', 'accepted', 'rejected');
@@ -55,12 +54,3 @@ CREATE TABLE IF NOT EXISTS profiles (
 	color VARCHAR(7) DEFAULT '#000000', -- Allows hexadecimal RGB colours like #008800 to be stored
 	font VARCHAR(6) DEFAULT 'normal' -- bold, italic, normal
 );
-
--- CREATE EXTENSION IF NOT EXISTS pg_cron;
-
--- SELECT cron.schedule(
--- 	'guest-cleanup', '0 */4 * * *', $$
--- 	DELETE FROM users
--- 	WHERE type = 'guest'
--- 	AND created_at < NOW() - INTERVAL '4 hours';
--- $$)

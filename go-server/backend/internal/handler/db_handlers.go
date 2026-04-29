@@ -439,8 +439,8 @@ func (d *Dispatcher) HandleAuth(ctx *WSContext, msg Message) {
 		return
 	}
 	
-	ctx.Client.CurrUsrName = &claims.Username
-	ctx.Client.CurrUsrID = &claims.UserID
+	*ctx.Client.CurrUsrName = claims.Username
+	*ctx.Client.CurrUsrID = claims.UserID
 
 	var clientType string
 
@@ -453,6 +453,8 @@ func (d *Dispatcher) HandleAuth(ctx *WSContext, msg Message) {
 	ctx.Chub.Mu.Lock()
 	ctx.Chub.Clients[claims.UserID] = ctx.Client
 	ctx.Chub.Mu.Unlock()
+
+	HandleUserConnect(ctx, claims.UserID, claims.Username)
 
 	_ = ctx.Client.Conn.WriteJSON(map[string]interface{}{
 		"type":     "auth_ok",

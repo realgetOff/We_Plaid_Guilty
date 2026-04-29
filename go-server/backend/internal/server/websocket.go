@@ -39,6 +39,10 @@ func socketLogic(client *handler.Client, serverVars *ServerVarsStruct) {
 		dispatcher.Dispatch(&ctx, msg)
 	}
 
+	if (client.CurrUsrID != nil && *client.CurrUsrID != "") && (client.CurrUsrName != nil && *client.CurrUsrName != "") {
+	    handler.HandleUserDisconnect(&ctx, *client.CurrUsrID, *client.CurrUsrName)
+	}
+
 	if client.CurrentRoom == nil || client.CurrUsrID == nil || *client.CurrUsrID == "" {
 		return
 	}

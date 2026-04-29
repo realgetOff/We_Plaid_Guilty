@@ -363,6 +363,12 @@ Even though we have to submit the project now, we plan to keep working on it to 
 - **mTLS everywhere** — Grafana, Kibana, Prometheus all behind mutual TLS, not just the app ↔ database path
 - **Inspektor Gadget eBPF** — syscall tracing on the app Go pod and nginx (trace_open, trace_tcp, trace_exec) — we want to practice profiling and runtime security
 - **Seccomp / AppArmor / KubeArmor** — tighten the kernel-level security posture of every workload in the cluster
+- **Tower Defense + Tron** — two new games we plan to add to the platform
+- **Terratest** — infrastructure testing to validate Terraform modules automatically
+- **Transition to Hubble** — replace the ELK stack with Hubble for network observability, and migrate metrics to **Loki/Mimir** (ELK was required by the subject, but Loki/Mimir is lighter and more Kubernetes-native)
+- **Wolfi-based images** — replace current Docker images with [Wolfi](https://wolfi.dev/) (apko + melange) for minimal, reproducible, CVE-free base images
+- **Talos Linux on master** — replace AlmaLinux with Talos Linux on the master node for an immutable, API-driven OS
+- **Kepler** — add [Kepler](https://github.com/sustainable-computing-io/kepler) for energy consumption monitoring of Kubernetes workloads
 
 ---
 
@@ -380,6 +386,9 @@ Even though we have to submit the project now, we plan to keep working on it to 
 - [Checkov Documentation](https://www.checkov.io/1.Welcome/What%20is%20Checkov.html)
 - [Prometheus + Grafana](https://prometheus.io/docs/)
 - [Elastic Stack](https://www.elastic.co/guide/index.html)
+- [Go Documentation](https://go.dev/doc/)
+- [Go by Example](https://gobyexample.com/)
+- [Go Language — GeeksforGeeks](https://www.geeksforgeeks.org/go-language)
 
 ### AI Usage
 

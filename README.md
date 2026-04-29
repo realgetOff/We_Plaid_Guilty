@@ -6,6 +6,10 @@
 
 > *"This project was brought to you with hate by pmilner-, mforest-, namichel & lviravon!"*
 
+<p align="center">
+  <img src="./readme_img/team.png">
+</p>
+
 ---
 
 ## Description
@@ -389,6 +393,8 @@ Even though we have to submit the project now, we plan to keep working on it to 
 - [Go Documentation](https://go.dev/doc/)
 - [Go by Example](https://gobyexample.com/)
 - [Go Language — GeeksforGeeks](https://www.geeksforgeeks.org/go-language)
+- [42 API](https://api.intra.42.fr/apidoc/guides/getting_started)
+- [SQL Tutorial](https://www.w3schools.com/sql/default.asp)
 
 ### AI Usage
 
